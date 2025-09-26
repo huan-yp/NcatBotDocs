@@ -26,4 +26,5 @@ packages/@vuepress/shared-utils/types/
 /docs/.vuepress/.cache
 /docs/.vuepress/.temp
 
+.history/
 dist/
