@@ -23,6 +23,9 @@ export default defineUserConfig({
       shiki: {
         languages: ['yaml', 'python', 'shell', 'json'],
       },
+      markdownEnhance:{
+        mermaid: true, // ✅ 启用 Mermaid 支持
+      },
       comment: {
         provider: 'Giscus', // "Artalk“ | "Giscus" | "Twikoo" | "Waline"
         comment: true,
