@@ -6,7 +6,10 @@
   "scripts": {
     "docs:dev": "vuepress dev docs",
     "docs:build": "vuepress build docs",
-    "export-pdf": "press-export-pdf export docs"
+    "export-pdf": "press-export-pdf export docs",
+    "generate:docs": "node scripts/concat-md.js",
+    "install:hooks": "node scripts/install-hooks.js",
+    "precommit": "npm run generate:docs"
   },
   "devDependencies": {
     "@vuepress/bundler-vite": "^2.0.0-rc.20",

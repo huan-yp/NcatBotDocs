@@ -1,67 +1,89 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-const outputFilePath = path.join(__dirname, '../all-guides.md');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// 明确列出的 .md 文件路径
-const mdFiles = [
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\1. 快速开始\\1. 快速开始.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\1. 快速开始\\1.3 MacOS 安装.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\1. 快速开始\\1.4 Windows 一键安装.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\1. 快速开始\\1.5 极简安装指南.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\other\\AI-开发指南.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\other\\AI-插件最小示例.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\2. 基本开发\\2. 主动模式最小示例.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\2. 基本开发\\3. NcatBot 生命周期.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\2. 基本开发\\4. 配置项.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\3. 事件处理\\1. 回调函数.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\3. 事件处理\\2. 事件上报.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\3. 事件处理\\3. 解析消息.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\4. API 参考\\1. API 调用.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\4. API 参考\\2. 主要 API 及其使用.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\4. API 参考\\3. 其它 API 介绍.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\5. 杂项\\1. 认识 NcatBot.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\5. 杂项\\2. 使用远端 napcat 接口.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\5. 杂项\\3. 日志.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\5. 杂项\\4. 轻松上云.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\5. 杂项\\5. CLI.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\5. 杂项\\7. AI+NcatBot.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\5. 杂项\\8. 开发技巧.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\6. 开发 NcatBot 插件\\1. 了解 NcatBot 插件.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\6. 开发 NcatBot 插件\\2. 插件的加载和卸载.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\6. 开发 NcatBot 插件\\5. 发布你的插件.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\6. 开发 NcatBot 插件\\6. 个人插件.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\6. 开发 NcatBot 插件\\3. 插件的交互系统\\3.1 事件的发布和订阅.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\6. 开发 NcatBot 插件\\3. 插件的交互系统\\3.2 注册功能.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\6. 开发 NcatBot 插件\\3. 插件的交互系统\\3.3 权限系统.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\6. 开发 NcatBot 插件\\3. 插件的交互系统\\3.4 内置功能.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\6. 开发 NcatBot 插件\\4. 插件高级功能\\4.1. 内置可持久化数据.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\6. 开发 NcatBot 插件\\4. 插件高级功能\\4.2. 依赖其它插件.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\6. 开发 NcatBot 插件\\4. 插件高级功能\\4.3. 依赖第三方 Python 库.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\6. 开发 NcatBot 插件\\4. 插件高级功能\\4.4 私有工作目录.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\6. 开发 NcatBot 插件\\4. 插件高级功能\\4.5 定时任务.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\7. 常见问题\\1. 安装时常见问题.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\7. 常见问题\\2. 运行时常见问题.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\7. 常见问题\\3. 开发时常见问题.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\8. 实际项目参考\\1. 简单 BotClient 项目.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\other\\AI-LLM_API 插件项目.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\8. 实际项目参考\\教程项目\\上传和获取文件.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\8. 实际项目参考\\教程项目\\主动发送消息.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\8. 实际项目参考\\教程项目\\发送合并转发消息.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\8. 实际项目参考\\教程项目\\发送复杂消息.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\docs\\notes\\guide\\8. 实际项目参考\\教程项目\\处理好友请求和加群请求.md',
-  'C:\\Users\\huany\\Desktop\\Projects\\QQ-Bot\\docs.ncatbot.xyz\\other\\AI-定时任务插件.md'
-];
+const outputFilePath = path.join(__dirname, '../LLM.md');
+
+// 递归查找指定目录下的所有 .md 文件
+function findMarkdownFiles(dir) {
+  const mdFiles = [];
+  
+  try {
+    const files = fs.readdirSync(dir);
+    
+    for (const file of files) {
+      const fullPath = path.join(dir, file);
+      const stat = fs.statSync(fullPath);
+      
+      if (stat.isDirectory()) {
+        // 递归查找子目录
+        mdFiles.push(...findMarkdownFiles(fullPath));
+      } else if (stat.isFile() && path.extname(file).toLowerCase() === '.md') {
+        // 找到 .md 文件
+        mdFiles.push(fullPath);
+      }
+    }
+  } catch (error) {
+    console.warn(`无法读取目录 ${dir}: ${error.message}`);
+  }
+  
+  return mdFiles;
+}
+
+// 对文件路径进行排序，确保按照文件夹和文件名的字母数字顺序排列
+function sortFiles(files) {
+  return files.sort((a, b) => {
+    // 标准化路径分隔符
+    const pathA = a.replace(/\\/g, '/').toLowerCase();
+    const pathB = b.replace(/\\/g, '/').toLowerCase();
+    
+    // 按路径排序
+    return pathA.localeCompare(pathB, 'zh-CN', { numeric: true });
+  });
+}
+
+// docs/notes/guide 目录的路径
+const guideDir = path.join(__dirname, '../docs/notes/guide');
+
+// 自动发现所有 .md 文件
+const mdFiles = sortFiles(findMarkdownFiles(guideDir));
 
 // 拼接所有 .md 文件内容
 function concatMarkdownFiles(mdFiles, outputPath) {
+  if (mdFiles.length === 0) {
+    console.warn('未找到任何 .md 文件');
+    return;
+  }
+  
+  console.log(`找到 ${mdFiles.length} 个 .md 文件:`);
+  mdFiles.forEach((file, index) => {
+    const relativePath = path.relative(path.join(__dirname, '../docs/notes/guide'), file);
+    console.log(`${index + 1}. ${relativePath}`);
+  });
+  
   const content = "本文档供 AI 阅读. NcatBot 文档 base_url 为 `https://docs.ncatbot.xyz/`, 文档中包含相对链接，为用户生成链接时必须加上这个前缀生成绝对链接。\n\n" + 
-    mdFiles.map((file) => fs.readFileSync(file, 'utf-8')).join('\n\n');
+    mdFiles.map((file) => {
+      try {
+        const fileContent = fs.readFileSync(file, 'utf-8');
+        const relativePath = path.relative(path.join(__dirname, '../docs/notes/guide'), file);
+        return `# 文件: ${relativePath}\n\n${fileContent}`;
+      } catch (error) {
+        console.warn(`无法读取文件 ${file}: ${error.message}`);
+        return `# 文件: ${file}\n\n[无法读取文件内容: ${error.message}]`;
+      }
+    }).join('\n\n---\n\n');
   
   fs.writeFileSync(outputPath, content);
 }
 
 // 主程序
-concatMarkdownFiles(mdFiles, outputFilePath);
-
-console.log(`所有指定 .md 文件已拼接到 ${outputFilePath}`);
+if (fs.existsSync(guideDir)) {
+  concatMarkdownFiles(mdFiles, outputFilePath);
+  console.log(`\n所有 .md 文件已拼接到 ${outputFilePath}`);
+} else {
+  console.error(`目录不存在: ${guideDir}`);
+  process.exit(1);
+}
