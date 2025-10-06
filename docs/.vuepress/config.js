@@ -30,9 +30,9 @@ export default defineUserConfig({
         provider: 'Giscus', // "Artalk“ | "Giscus" | "Twikoo" | "Waline"
         comment: true,
         repo: 'huan-yp/NcatBotDocs',
-        repoId: 'R_kgDONolemw',
-        category: 'General',
-        categoryId: 'DIC_kwDONolem84CmvqM',
+        repoId: 'R_kgDOP5C1xA',
+        category: 'Announcements',
+        categoryId: 'DIC_kwDOP5C1xM4CwTIS',
       },
       markdownPower: {
         imageSize: 'all', // 'local' | 'all'
