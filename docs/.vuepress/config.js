@@ -16,7 +16,7 @@ export default defineUserConfig({
   },
   theme: plumeTheme({
     hostname: 'http://docs.ncatbot.xyz',
-    docsRepo: 'https://github.com/Isaaczhr/NcatBotDocs',
+    docsRepo: 'https://github.com/huan-yp/NcatBotDocs',
     docsBranch: 'master',
     docsDir: 'docs',
     plugins: {
@@ -29,7 +29,7 @@ export default defineUserConfig({
       comment: {
         provider: 'Giscus', // "Artalk“ | "Giscus" | "Twikoo" | "Waline"
         comment: true,
-        repo: 'Isaaczhr/NcatBotDocs',
+        repo: 'huan-yp/NcatBotDocs',
         repoId: 'R_kgDONolemw',
         category: 'General',
         categoryId: 'DIC_kwDONolem84CmvqM',
