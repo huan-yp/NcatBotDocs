@@ -1510,6 +1510,7 @@ BotClient 同时提供「函数式 API」与「装饰器 API」。两种方式�
 - handler 可以是同步或异步函数，内部会自动判断并在合适的上下文中执行。
 - 「消息类事件」支持 `filter` 参数，用于对 `event.message` 做类型过滤。`filter` 必须是 `MessageSegment` 的子类；若过滤后没有消息片段，处理器会被跳过。
 - 请求事件的 `filter` 用于筛选「好友请求」或「群请求」。
+- ==NoticeEvent 会接收 Bot 自身触发的 Notice，例如戳一戳，实现这些场景时，务必注意不要反复回调。==
 
 示例（函数式）：
 
@@ -2604,14 +2605,17 @@ Markdown("**bold**").to_dict() == {"type": "markdown", "data": {"content": "**bo
 
 ## 互动类
 
-### Rps（猜拳）、Dice（骰子）、Shake（窗口抖动）、Poke（戳一戳）、Anonymous（匿名）
+### Rps（猜拳）、Dice（骰子）、Shake（窗口抖动）、Anonymous（匿名）
+
+::: warning
+Poke 已经不再支持，请使用 [send_poke](../5.%20API%20参考/2.%20Message%20有关%20API.md#group_poke) 有关 API。
+:::
 
 ```python
 from ncatbot.core.event.message_segment import Rps, Dice, Shake, Poke, Anonymous
 Rps().to_dict() == {"type": "rps", "data": {}}
 Dice().to_dict() == {"type": "dice", "data": {}}
 Shake().to_dict() == {"type": "shake", "data": {}}
-Poke("123").to_dict() == {"type": "poke", "data": {"id": "123", "type": None}}
 Anonymous().to_dict() == {"type": "anonymous", "data": {}}
 ```
 
@@ -4501,6 +4505,26 @@ async def your_request_handler(event: RequestEvent):
 ```
 
 ---
+
+### 群聊戳一戳反戳
+
+```python
+from ncatbot.core import BotClient, NoticeEvent, MessageArray
+from ncatbot.utils import config
+
+bot = BotClient()
+
+@bot.on_notice() # type: ignore
+async def on_notice(event: NoticeEvent):
+    notice = event.sub_type
+    if notice == 'poke' and event.is_group_event(): # 群聊戳一戳消息            
+        if event.target_id == event.self_id: 
+            # Bot 被戳时戳回去
+            await bot.api.send_poke(user_id=event.user_id, group_id=event.group_id)
+
+bot.run_frontend()
+
+```
 
 ### 群消息：回复并 @ 对方
 ```python
