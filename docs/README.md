@@ -27,7 +27,7 @@ config:
           suffixIcon: material-symbols:start-rounded
         - theme: alt
           text: NcatBot
-          link: https://github.com/liyihao1110/NcatBot
+          link: https://github.com/ncatbot/NcatBot
           icon: mdi:github
         - theme: alt
           text: NcatBotDocs

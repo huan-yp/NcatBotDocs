@@ -1,6 +1,6 @@
 # NcatBotDocs
 
-本项目是 [NcatBot](https://github.com/liyihao1110/ncatbot) 的文档项目, 用于文档的编写和发布.
+本项目是 [NcatBot](https://github.com/ncatbot/ncatbot) 的文档项目, 用于文档的编写和发布.
 
 ## Contribution
 

@@ -9,7 +9,7 @@ permalink: /guide/zxn1zv1t/
 ---
 ## 最好的 NcatBot
 
-![NcatBot](https://socialify.git.ci/liyihao1110/NcatBot/image?description=1&forks=1&issues=1&language=1&logo=https%3a%2f%2fdocs.ncatbot.xyz%2fimages%2flogo.png&name=1&owner=1&pulls=1&stargazers=1&theme=Auto)
+![NcatBot](https://socialify.git.ci/ncatbot/NcatBot/image?description=1&forks=1&issues=1&language=1&logo=https%3a%2f%2fdocs.ncatbot.xyz%2fimages%2flogo.png&name=1&owner=1&pulls=1&stargazers=1&theme=Auto)
 
 ## NcatBot 和 NapCat 的关系
 
@@ -23,7 +23,7 @@ NcatBot 是 NapCat 的 Python SDK. NcatBot 实现了连接和调用 NapCat 的�
 
 呀, 木子喵真的太可爱了, 我也想...
 
-咳咳, 嗯, 如果你对项目有更好的想法, 欢迎加入我们! 如果可以, 为我们的[项目](https://github.com/liyihao1110/ncatbot)点一个小小的 star 就是对我们最大的支持啦~
+咳咳, 嗯, 如果你对项目有更好的想法, 欢迎加入我们! 如果可以, 为我们的[项目](https://github.com/ncatbot/ncatbot)点一个小小的 star 就是对我们最大的支持啦~
 
 这是我们的[交流群](https://qm.qq.com/q/L6XGXYqL86), 群里面有用我们的项目搭建的 QQ 机器人, 所谓百闻不如一见, 大家可以进群体验喵~
 
@@ -5808,7 +5808,7 @@ CPU 使用率: 12.5%
 内存使用率: 45.3%
 NcatBot 版本: 4.1.0
 Star NcatBot Meow~:
-https://github.com/liyihao1110/ncatbot
+https://github.com/ncatbot/ncatbot
 ```
 
 
@@ -11835,7 +11835,7 @@ Windows 的防火墙策略拦截了 6099 端口, 请检查防火墙设置。
 
 Package configuration 紫色页面
 
-[参见](https://github.com/liyihao1110/ncatbot/issues/240)
+[参见](https://github.com/ncatbot/ncatbot/issues/240)
 
 Linux 终端环境可能会遇到这个报错，物理重启电脑后重试即可。
 
