@@ -40,7 +40,7 @@ export default defineUserConfig({
         lang: 'zh-CN',
       },
       markdownPower: {
-        imageSize: 'all', // 'local' | 'all'
+        imageSize: 'local', // 'local' | 'all'
         plot: true,
       },
     }
