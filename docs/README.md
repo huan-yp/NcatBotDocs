@@ -23,7 +23,7 @@ config:
       actions:
         - theme: brand
           text: 快速开始
-          link: /guide/dto79lp7/
+          link: /guide/
           suffixIcon: material-symbols:start-rounded
         - theme: alt
           text: NcatBot

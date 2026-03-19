@@ -14,7 +14,9 @@ export default defineThemeConfig({
   navbarSocialInclude: ['github', 'qq', 'docs'],
   navbar: [
     { text: '首页', link: '/' },
-    { text: '快速开始', link: '/guide/dto79lp7/' },
+    { text: '使用指南', link: '/guide/' },
+    { text: 'API 参考', link: '/reference/' },
+    { text: '贡献指南', link: '/contributing/' },
   ],
   sidebar: 'auto',
   notes,

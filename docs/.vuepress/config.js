@@ -6,6 +6,7 @@ export default defineUserConfig({
   // 请不要忘记设置默认语言
   blog: false,
   lang: 'zh-CN',
+  pagePatterns: ['**/*.md', '!.vuepress', '!node_modules', '!examples/**'],
   head: [
     [
         'link', { rel: 'icon', href: '/images/logo.png' },
@@ -21,7 +22,7 @@ export default defineUserConfig({
     docsDir: 'docs',
     plugins: {
       shiki: {
-        languages: ['yaml', 'python', 'shell', 'json'],
+        languages: ['yaml', 'python', 'shell', 'json', 'bash', 'text', 'toml', 'markdown', 'jsonc', 'ini', 'powershell'],
       },
       markdownEnhance:{
         mermaid: true, // ✅ 启用 Mermaid 支持

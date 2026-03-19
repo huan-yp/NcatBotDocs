@@ -1,0 +1,6 @@
+name = "private_message_bilibili"
+version = "1.0.0"
+main = "main.py"
+entry_class = "BiliPrivateMessagePlugin"
+author = "NcatBot"
+description = "Bilibili 私信操作"

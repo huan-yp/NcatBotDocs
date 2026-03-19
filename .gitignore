@@ -28,3 +28,7 @@ packages/@vuepress/shared-utils/types/
 
 .history/
 dist/
+
+# Python cache (examples)
+__pycache__/
+*.pyc

@@ -1,11902 +1,11284 @@
 本文档供 AI 阅读. NcatBot 文档 base_url 为 `https://docs.ncatbot.xyz/`, 文档中包含相对链接，为用户生成链接时必须加上这个前缀生成绝对链接。
 
-# 文件: 1. 开始\1. 认识 NcatBot.md
+# 文件: 1. 快速开始\1. 安装与配置.md
 
 ---
-title: 认识 NcatBot
-createTime: 2025/01/23 20:00:05
-permalink: /guide/zxn1zv1t/
+title: 安装与配置
+createTime: 2026/03/19 17:26:45
+permalink: /guide/0y9ejqdf/
 ---
-## 最好的 NcatBot
 
-![NcatBot](https://socialify.git.ci/ncatbot/NcatBot/image?description=1&forks=1&issues=1&language=1&logo=https%3a%2f%2fdocs.ncatbot.xyz%2fimages%2flogo.png&name=1&owner=1&pulls=1&stargazers=1&theme=Auto)
+> 安装 NcatBot、编写 config.yaml、确认 NapCat 连接 — 运行 Bot 前的必要准备。
 
-## NcatBot 和 NapCat 的关系
+---
 
-[NapCat](https://github.com/NapNeko/NapCatQQ) 是基于 TypeScript 构建的 Bot 框架, 通过相应的启动器或者框架, 主动调用 QQ Node 模块提供给客户端的接口, 实现Bot 的功能.
+## 前提条件
 
-NcatBot 是 NapCat 的 Python SDK. NcatBot 实现了连接和调用 NapCat 的接口, 大家无需关心复杂的 HTTP 和 WebSocket 通讯协议, 只需要像使用任何 Python 第三方库一样使用 NcatBot, 即可完成 QQ Bot 的开发.
+- Python ≥ 3.12
+- NapCat 已安装并运行（提供 WebSocket 服务）
 
-因此, 只有**同时运行** NcatBot 和 Napcat, QQ Bot 才能正常运行哟~ 嗯, NcatBot 会**自动运行** Napcat, 所以大部分时候你无需担心 Napcat 的运行问题.
+## 1. 安装 NcatBot
 
-## 加入我们
+```bash
+pip install ncatbot5
+```
 
-呀, 木子喵真的太可爱了, 我也想...
+或使用 uv：
 
-咳咳, 嗯, 如果你对项目有更好的想法, 欢迎加入我们! 如果可以, 为我们的[项目](https://github.com/ncatbot/ncatbot)点一个小小的 star 就是对我们最大的支持啦~
+```bash
+uv add ncatbot5
+```
 
-这是我们的[交流群](https://qm.qq.com/q/L6XGXYqL86), 群里面有用我们的项目搭建的 QQ 机器人, 所谓百闻不如一见, 大家可以进群体验喵~
+验证安装：
 
-![NcatBot](https://foruda.gitee.com/images/1737622167903015509/9f9590eb_13790314.png)
+```bash
+python -c "import ncatbot; print('NcatBot 可用')"
+```
 
-## 开源声明
+## 2. 编写 config.yaml
 
-::: caution
-任何使用该项目的自然人都必须了解并遵守本开源声明，一切因不遵守该声明所造成的不良后果，NcatBot开发项目组不承担任何责任。
+在项目根目录创建 `config.yaml`：
+
+```yaml
+bot_uin: '你的QQ号'
+root: '管理员QQ号'
+adapters:
+  - type: napcat
+    platform: qq
+    enabled: true
+    config:
+      ws_uri: ws://localhost:3001
+      ws_token: napcat_ws
+plugin:
+  load_plugin: true
+```
+
+**关键字段说明**：
+
+| 字段 | 说明 |
+|------|------|
+| `bot_uin` | Bot 登录的 QQ 号 |
+| `root` | 超级管理员 QQ 号，拥有所有权限 |
+| `ws_uri` | NapCat WebSocket 地址，默认 `ws://localhost:3001` |
+| `ws_token` | NapCat WebSocket 认证 Token |
+| `load_plugin` | 是否启用插件加载（非插件模式可设为 `false`） |
+
+> 也可以使用 `ncatbot init` 交互式生成此文件。
+
+## 3. 确认 NapCat 连接
+
+确保 NapCat 已启动并监听在 `ws_uri` 指定的地址。NcatBot 启动时会自动连接。
+
+连接成功后终端会输出类似：
+
+```text
+[INFO] WebSocket 连接已建立: ws://localhost:3001
+```
+
+---
+
+## 延伸阅读
+
+- 配置项完整说明 → [配置管理指南](../configuration/)
+- 各平台适配器登录与配置 → [适配器指南](../adapter/)（NapCat/Bilibili/GitHub/Mock）
+- 下一步：选择启动模式 → [非插件模式](2.non-plugin-mode.md) 或 [插件模式](3.plugin-mode.md)
+
+
+---
+
+# 文件: 1. 快速开始\2. 非插件模式.md
+
+---
+title: 非插件模式启动
+createTime: 2026/03/19 17:26:45
+permalink: /guide/1tn9cgux/
+---
+
+> 在 main.py 中直接用 registrar 装饰器注册回调 — 最快的启动方式，适合快速原型和简单 Bot。
+
+---
+
+## 前提条件
+
+- 已完成 [安装与配置](1.install-config.md)
+
+## 完整示例
+
+创建 `main.py`：
+
+```python
+from ncatbot.app import BotClient
+from ncatbot.core import registrar
+from ncatbot.event.qq import GroupMessageEvent, PrivateMessageEvent
+
+bot = BotClient()
+
+@registrar.on_group_command("hello", ignore_case=True)
+async def on_hello(event: GroupMessageEvent):
+    await event.reply(text="Hello, NcatBot!")
+
+@registrar.on_private_command("ping")
+async def on_ping(event: PrivateMessageEvent):
+    await event.reply(text="pong!")
+
+if __name__ == "__main__":
+    bot.run()
+```
+
+启动：
+
+```bash
+python main.py
+```
+
+在群聊发送 `hello`，Bot 回复 "Hello, NcatBot!" 即成功。
+
+## 项目结构
+
+```text
+my-bot/
+├── config.yaml    # 配置文件
+└── main.py        # 入口文件，所有逻辑写在这里
+```
+
+## 异步非阻塞启动
+
+上面的 `bot.run()` 是**同步阻塞**调用——它会占据主线程直到 Bot 关闭。如果你需要在启动后继续执行自定义的异步逻辑（例如事件驱动主循环、定时推送、与其他异步服务集成），可以使用 `run_async()`：
+
+```python
+import asyncio
+from ncatbot.app import BotClient
+from ncatbot.core import registrar, from_event, msg_equals
+from ncatbot.event.qq import GroupMessageEvent
+
+bot = BotClient()
+
+# 装饰器注册依然可用
+@registrar.on_group_command("hello")
+async def on_hello(event: GroupMessageEvent):
+    await event.reply(text="Hello!")
+
+async def main():
+    await bot.run_async()
+    # 此处 bot.api / bot.dispatcher 已可用，Bot 在后台监听事件
+
+    # 示例：用 dispatcher 直接等待特定事件
+    print("Bot 已就绪，等待第一条群消息...")
+    first_msg = await bot.dispatcher.wait_event(
+        predicate=lambda e: e.type.startswith("message.group"),
+        timeout=60.0,
+    )
+    print(f"收到: {first_msg.data.raw_message}")
+
+    # 保持运行，直到 Ctrl+C
+    try:
+        await asyncio.Event().wait()
+    except asyncio.CancelledError:
+        pass
+    finally:
+        await bot.shutdown()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+### `run()` vs `run_async()` 对比
+
+| 维度 | `run()` | `run_async()` |
+|------|---------|---------------|
+| 阻塞性 | 同步阻塞，占据主线程 | 异步返回，Bot 在后台监听 |
+| 调用方式 | `bot.run()` | `await bot.run_async()` |
+| 适用场景 | 简单 Bot，无需启动后自定义逻辑 | 需要启动后执行异步编排、与其他服务集成 |
+| `bot.api` | 阻塞期间可用（在 handler 内） | 返回后立即可用 |
+| `bot.dispatcher` | 阻塞期间可用（在 handler 内） | 返回后立即可用 |
+
+`run_async()` 完成 startup 后立即返回——适配器连接、分发器、API 客户端、插件全部就绪，后台 task 负责持续监听事件。
+
+> 更多非阻塞启动与事件编排的高级用法，参见 [复杂工作流模式](../plugin/4b.event-advanced.md#复杂工作流模式) 和 [事件驱动工作流编排](../plugin/7a.patterns.md#事件驱动工作流编排)。
+
+---
+
+## 适用场景与限制
+
+**适合**：快速验证想法、简单的单文件 Bot、学习框架基础。
+
+**不支持**：Mixin 能力（配置持久化 / 数据存储 / RBAC / 定时任务）、热重载、插件依赖管理。
+
+需要这些能力时 → [插件模式](3.plugin-mode.md)。
+
+---
+
+## 延伸阅读
+
+- 消息发送方式 → [消息发送指南](../send_message/)
+- 更多事件类型 → [事件注册方式](../plugin/4a.event-registration.md)
+- 完整 Bot API → [API 使用指南](../api_usage/)
+
+
+---
+
+# 文件: 1. 快速开始\3. 插件模式.md
+
+---
+title: 插件模式启动
+createTime: 2026/03/19 17:26:45
+permalink: /guide/k587fhub/
+---
+
+> 创建插件目录 + manifest.toml + NcatBotPlugin 子类 — 推荐的正式项目启动方式，支持配置持久化、权限控制、定时任务和热重载。
+
+---
+
+## 前提条件
+
+- 已完成 [安装与配置](1.install-config.md)
+
+## 方式一：使用 CLI 快速初始化
+
+```bash
+mkdir my-bot && cd my-bot
+ncatbot init          # 交互式生成 config.yaml + 模板插件
+ncatbot run           # 启动 Bot
+```
+
+`ncatbot init` 会生成完整的项目结构，包括一个可运行的模板插件。
+
+开发时使用 `ncatbot dev` 代替 `ncatbot run`，自动开启 debug 模式和热重载。
+
+## 方式二：手动创建
+
+### 1. 项目结构
+
+```text
+my-bot/
+├── config.yaml
+├── main.py              # 入口文件
+└── plugins/
+    └── hello_world/     # 插件目录
+        ├── manifest.toml
+        └── plugin.py
+```
+
+### 2. manifest.toml
+
+```toml
+name = "hello_world"
+version = "1.0.0"
+main = "plugin.py"
+entry_class = "HelloWorldPlugin"
+author = "你的名字"
+description = "最小可运行插件"
+
+[dependencies]
+pip_dependencies = []
+```
+
+### 3. plugin.py
+
+```python
+from ncatbot.plugin import NcatBotPlugin
+from ncatbot.core import registrar
+from ncatbot.event.qq import GroupMessageEvent
+from ncatbot.utils import get_log
+
+LOG = get_log("HelloWorld")
+
+class HelloWorldPlugin(NcatBotPlugin):
+    name = "hello_world"
+    version = "1.0.0"
+
+    async def on_load(self):
+        LOG.info("HelloWorld 插件已加载！")
+
+    async def on_close(self):
+        LOG.info("HelloWorld 插件已卸载。")
+
+    @registrar.on_group_command("hello", ignore_case=True)
+    async def on_group_hello(self, event: GroupMessageEvent):
+        await event.reply(text="Hello from plugin!")
+```
+
+### 4. main.py
+
+```python
+from ncatbot.app import BotClient
+
+bot = BotClient()
+
+if __name__ == "__main__":
+    bot.run()
+```
+
+### 5. 启动
+
+```bash
+python main.py
+```
+
+## 插件模式 vs 非插件模式
+
+| 能力 | 非插件模式 | 插件模式 |
+|------|-----------|---------|
+| 配置持久化（ConfigMixin） | ❌ | ✅ |
+| 数据存储（DataMixin） | ❌ | ✅ |
+| 权限控制（RBACMixin） | ❌ | ✅ |
+| 定时任务（TimeTaskMixin） | ❌ | ✅ |
+| 热重载 | ❌ | ✅ |
+| 依赖管理 | ❌ | ✅ |
+
+---
+
+## 延伸阅读
+
+- 插件结构详解 → [插件结构](../plugin/2.structure.md)
+- 插件生命周期 → [生命周期](../plugin/3.lifecycle.md)
+- Mixin 能力 → [配置与数据](../plugin/5a.config-data.md)
+- 事件注册方式 → [事件注册](../plugin/4a.event-registration.md)
+
+
+---
+
+# 文件: 1. 快速开始\README.md
+
+---
+title: Quick Start
+createTime: 2026/03/19 17:26:45
+permalink: /guide/695ruqzj/
+---
+
+> 从零开始，5 分钟运行你的第一个 NcatBot。覆盖安装、配置、非插件模式和插件模式两种启动方式。
+
+---
+
+## Quick Reference
+
+### 最小非插件模式
+
+安装 → 写 config.yaml → 写 main.py → 运行：
+
+```bash
+pip install ncatbot5
+```
+
+```python
+# main.py
+from ncatbot.app import BotClient
+from ncatbot.core import registrar
+from ncatbot.event.qq import GroupMessageEvent
+
+bot = BotClient()
+
+@registrar.on_group_command("hello", ignore_case=True)
+async def on_hello(event: GroupMessageEvent):
+    await event.reply(text="Hello, NcatBot!")
+
+if __name__ == "__main__":
+    bot.run()
+```
+
+### 最小插件模式
+
+```bash
+pip install ncatbot5
+ncatbot init        # 交互式生成 config.yaml + 模板插件
+ncatbot run         # 启动 Bot
+```
+
+---
+
+## 本目录索引
+
+| 文件 | 内容 |
+|------|------|
+| [1.install-config.md](1.install-config.md) | 安装 NcatBot、编写 config.yaml、确认 NapCat 连接 |
+| [2.non-plugin-mode.md](2.non-plugin-mode.md) | 非插件模式完整流程 — 直接在 main.py 注册回调，适合快速原型 |
+| [3.plugin-mode.md](3.plugin-mode.md) | 插件模式完整流程 — 创建插件目录 + manifest + 插件类，适合正式项目 |
+
+---
+
+## 交叉引用
+
+- 两种模式的区别 → [使用指南首页](../README.md)
+- 插件开发深入 → [插件开发指南](../plugin/)
+- CLI 命令详解 → [CLI 指南](../cli/)
+
+
+---
+
+# 文件: 2. 适配器\1. NapCat QQ.md
+
+---
+title: NapCat / QQ 适配器
+createTime: 2026/03/19 17:26:45
+permalink: /guide/1xckxeos/
+---
+
+> NapCat (OneBot v11) 适配器完整指南 — 两种运行模式、WebUI 登录、配置与诊断。
+
+---
+
+## Quick Reference
+
+| 属性 | 值 |
+|------|-----|
+| 适配器名称 | `napcat` |
+| 平台标识 | `qq` |
+| 协议 | OneBot v11 (WebSocket) |
+| 类 | `NapCatAdapter` |
+| 导入 | `from ncatbot.adapter import NapCatAdapter` |
+
+```yaml
+# 最小配置
+adapters:
+  - type: napcat
+    platform: qq
+    enabled: true
+    config:
+      ws_uri: ws://localhost:3001
+      ws_token: napcat_ws
+```
+
+---
+
+## 两种运行模式
+
+NapCat 适配器提供两种模式，适应不同的部署场景：
+
+### Setup 模式（默认）
+
+自动完成 NapCat 安装、配置、启动和登录。适合**本地开发**和**首次部署**。
+
+```yaml
+config:
+  ws_uri: ws://localhost:3001
+  ws_token: napcat_ws
+  enable_webui: true
+  webui_token: napcat_webui
+  # skip_setup 默认为 false，即 Setup 模式
+```
+
+**流程**：
+
+```text
+检测 NapCat 服务是否在线
+  ├─ 已在线 → 验证账号 → 完成
+  └─ 未在线 → 安装/更新 NapCat → 生成配置 → 启动进程 → 登录 → 完成
+```
+
+登录优先尝试**快速登录**（如果该 QQ 号之前登录过），失败则自动切换到**二维码登录**（在终端显示 ASCII 二维码，使用手机 QQ 扫码）。
+
+### Connect 模式
+
+直接连接已运行的 NapCat 服务，不管理 NapCat 进程。适合 **NapCat 独立部署** 或 **Docker 环境**。
+
+```yaml
+config:
+  ws_uri: ws://your-napcat-host:3001
+  ws_token: napcat_ws
+  skip_setup: true
+```
+
+**流程**：
+
+```text
+尝试连接 WebSocket
+  ├─ 成功 → 完成
+  └─ 失败 → 抛出错误（不会自动安装或启动 NapCat）
+```
+
+---
+
+## 配置项详解
+
+```yaml
+bot_uin: '123456789'           # Bot 登录的 QQ 号
+root: '987654321'              # 超级管理员 QQ 号
+
+adapters:
+  - type: napcat
+    platform: qq
+    enabled: true
+    config:
+      # WebSocket 连接
+      ws_uri: ws://localhost:3001     # NapCat WebSocket 地址
+      ws_token: napcat_ws             # WebSocket 认证 Token
+
+      # WebUI（Setup 模式用于登录引导）
+      enable_webui: true              # 是否启用 WebUI
+      webui_token: napcat_webui       # WebUI 认证 Token
+      # webui_host 和 webui_port 从 webui_uri 解析，默认 localhost:6099
+
+      # 运行模式
+      skip_setup: false               # true = Connect 模式, false = Setup 模式
+```
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `ws_uri` | string | `ws://localhost:3001` | NapCat WebSocket 地址 |
+| `ws_token` | string | `napcat_ws` | WebSocket 认证 Token，需与 NapCat 配置一致 |
+| `enable_webui` | bool | `true` | 启用 WebUI（Setup 模式下用于登录引导） |
+| `webui_token` | string | `napcat_webui` | WebUI 认证 Token |
+| `skip_setup` | bool | `false` | `true` = Connect 模式，`false` = Setup 模式 |
+
+---
+
+## 登录流程详解
+
+### 快速登录
+
+NapCat 会缓存之前登录过的 QQ 号。如果目标 QQ 号在快速登录列表中，会自动完成登录，无需扫码。
+
+### 二维码登录
+
+快速登录不可用时，会在终端打印 ASCII 二维码：
+
+```text
+[INFO] 快速登录列表: []
+[INFO] 正在获取二维码...
+
+█████████████████████████████
+█████████████████████████████
+████ ▄▄▄▄▄ █ ▀▄▀█ ▄▄▄▄▄ ████
+...
+请使用手机 QQ 扫描二维码登录
+```
+
+扫码后系统会自动检测登录状态并继续。二维码有效期约 60 秒，超时前会提示。
+
+### 缓存登录
+
+NapCat 启动后会先检查本地缓存的 session。如果 session 仍有效，会跳过登录流程直接连接。
+
+---
+
+## 连接诊断
+
+使用 CLI 工具诊断连接问题：
+
+```bash
+ncatbot napcat diagnose
+```
+
+诊断内容包括：
+- WebSocket 连接测试
+- WebUI 可达性
+- Token 验证
+- NapCat 进程状态
+
+### 常见问题
+
+| 问题 | 原因 | 解决方案 |
+|------|------|---------|
+| WebSocket 连接超时 | NapCat 未启动或端口不对 | 检查 `ws_uri` 和 NapCat 是否运行 |
+| Token 错误 (retcode=1403) | `ws_token` 与 NapCat 配置不一致 | 确认两端 Token 匹配 |
+| WebUI 认证失败 | `webui_token` 不匹配 | 检查 NapCat WebUI 配置中的 Token |
+| 账号不匹配 | 当前登录 QQ 号与 `bot_uin` 不同 | 确认 `bot_uin` 正确，或重新登录 |
+| 不支持 Setup 模式 | 运行在不受支持的平台 | 使用 `skip_setup: true` 手动管理 NapCat |
+
+---
+
+## 示例
+
+- `examples/qq/01_hello_world/` — 最简 QQ Bot
+- `examples/qq/02_event_handling/` — 事件处理
+- `examples/qq/03_message_types/` — 消息类型
+- `examples/qq/04_bot_api/` — Bot API 调用
+- `examples/qq/09_full_featured_bot/` — 完整功能 Bot
+
+---
+
+## 延伸阅读
+
+- 消息发送 → [send_message/qq/](../send_message/qq/)
+- QQ Bot API → [api_usage/qq/](../api_usage/qq/)
+- 连接管理参考 → [reference/adapter/1_connection.md](../../reference/adapter/1_connection.md)
+- 协议处理参考 → [reference/adapter/2_protocol.md](../../reference/adapter/2_protocol.md)
+- NapCat Setup 内部 → `ncatbot/adapter/napcat/setup/README.md`
+
+
+---
+
+# 文件: 2. 适配器\2. Bilibili.md
+
+---
+title: Bilibili 适配器
+createTime: 2026/03/19 17:26:45
+permalink: /guide/1dg3rfzt/
+---
+
+> Bilibili 平台适配器完整指南 — 扫码登录、凭据持久化、直播/私信/评论多数据源。
+
+---
+
+## Quick Reference
+
+| 属性 | 值 |
+|------|-----|
+| 适配器名称 | `bilibili` |
+| 平台标识 | `bilibili` |
+| 协议 | bilibili-api-python (WebSocket + REST Polling) |
+| 类 | `BilibiliAdapter` |
+| 导入 | `from ncatbot.adapter.bilibili import BilibiliAdapter` |
+| 额外依赖 | `bilibili-api-python >= 17.0.0`（自动安装） |
+
+```yaml
+# 最小配置（首次运行会弹出扫码）
+adapters:
+  - type: bilibili
+    platform: bilibili
+    enabled: true
+    config:
+      live_rooms: [12345]
+```
+
+---
+
+## 扫码登录
+
+Bilibili 适配器使用**二维码扫码登录**获取凭据。
+
+### 首次登录流程
+
+1. 启动 Bot 时，若 `config.yaml` 中未配置凭据（`sessdata` 为空），自动触发扫码登录
+2. 终端显示压缩的 ASCII 二维码，同时保存 PNG 图片到临时目录
+
+```text
+==================================================
+  Bilibili 扫码登录 (第 1/3 次)
+==================================================
+█▀▀▀▀▀█ ▀▄█▀ █▀▀▀▀▀█
+█ ███ █ █▄▀  █ ███ █
+...
+  二维码图片: C:\Users\...\Temp\ncatbot_bilibili_qr.png
+  请使用 Bilibili APP 扫描上方二维码
+==================================================
+```
+
+3. 使用 Bilibili 手机 APP 扫描二维码并确认
+4. 登录成功后，凭据**自动写回 `config.yaml`**
+
+### 凭据持久化
+
+登录成功后，`sessdata`、`bili_jct`、`dedeuserid`、`ac_time_value` 会自动保存到 `config.yaml` 的 bilibili 适配器配置中。下次启动时直接使用已保存的凭据，无需重复扫码。
+
+如果凭据过期，适配器会自动检测并重新触发扫码登录。
+
+### 手动填写凭据
+
+也可以跳过扫码，直接在配置中填入 Cookie 凭据（从浏览器开发者工具获取）：
+
+```yaml
+config:
+  sessdata: "your_sessdata_here"
+  bili_jct: "your_bili_jct_here"
+  dedeuserid: "your_uid_here"
+  ac_time_value: "your_ac_time_value_here"
+```
+
+---
+
+## 配置项详解
+
+```yaml
+adapters:
+  - type: bilibili
+    platform: bilibili
+    enabled: true
+    config:
+      # 认证凭据（扫码后自动填入，也可手动配置）
+      sessdata: ""
+      bili_jct: ""
+      buvid3: ""
+      dedeuserid: ""
+      ac_time_value: ""
+
+      # 数据源 — 直播间
+      live_rooms:              # 监听的直播间房间号列表
+        - 12345
+        - 67890
+
+      # 数据源 — 私信
+      enable_session: false    # 是否启用私信监听
+
+      # 数据源 — 视频评论
+      comment_watches:         # 监听评论的视频/动态列表
+        - id: "BV1xx411c7xx"
+          type: video
+
+      # 轮询间隔
+      session_poll_interval: 6.0    # 私信轮询间隔（秒）
+      comment_poll_interval: 30.0   # 评论轮询间隔（秒）
+
+      # 连接重试
+      max_retry: 5             # 最大重连次数
+      retry_after: 1.0         # 重连初始延迟（秒）
+```
+
+### 配置项说明
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `sessdata` | string | `""` | Bilibili SESSDATA Cookie |
+| `bili_jct` | string | `""` | Bilibili CSRF Token |
+| `buvid3` | string | `""` | 设备指纹标识 |
+| `dedeuserid` | string | `""` | 用户 UID |
+| `ac_time_value` | string | `""` | 账号时间戳凭据 |
+| `live_rooms` | list[int] | `[]` | 监听的直播间房间号 |
+| `enable_session` | bool | `false` | 启用私信监听 |
+| `comment_watches` | list | `[]` | 监听评论的视频列表（`id` + `type`） |
+| `session_poll_interval` | float | `6.0` | 私信轮询间隔（秒） |
+| `comment_poll_interval` | float | `30.0` | 评论轮询间隔（秒） |
+| `max_retry` | int | `5` | 连接断开后最大重试次数 |
+| `retry_after` | float | `1.0` | 重连初始延迟（秒） |
+
+---
+
+## 三种数据源
+
+Bilibili 适配器通过 `SourceManager` 同时管理三种独立的数据源：
+
+### 1. 直播间弹幕（WebSocket）
+
+通过 WebSocket 实时接收直播间事件：弹幕、SC（SuperChat）、礼物、上舰、点赞等。
+
+```yaml
+live_rooms:
+  - 12345    # 房间号
+  - 67890
+```
+
+可通过 API 动态添加/移除监听的直播间。
+
+### 2. 私信（REST Polling）
+
+定时轮询 Bilibili 私信接口，获取新消息。
+
+```yaml
+enable_session: true
+session_poll_interval: 6.0   # 每 6 秒轮询一次
+```
+
+### 3. 视频评论（REST Polling）
+
+定时轮询指定视频的评论区，获取新回复。
+
+```yaml
+comment_watches:
+  - id: "BV1xx411c7xx"
+    type: video
+comment_poll_interval: 30.0  # 每 30 秒轮询一次
+```
+
+---
+
+## 常见问题
+
+| 问题 | 原因 | 解决方案 |
+|------|------|---------|
+| 扫码登录超时 | 二维码约 3 分钟过期 | 过期后自动重新生成（最多 3 次） |
+| 凭据失效 | Cookie 过期（通常几天到几周） | 适配器自动检测并触发重新扫码 |
+| 直播间无事件 | 房间号错误或主播未开播 | 确认房间号正确；部分事件仅在开播时产生 |
+| 依赖安装失败 | `bilibili-api-python` 安装问题 | 手动 `pip install bilibili-api-python>=17.0.0` |
+| 私信无响应 | `enable_session` 未开启 | 设置 `enable_session: true` |
+
+---
+
+## 示例
+
+- `examples/bilibili/01_hello_world/` — 最简 Bilibili Bot
+- `examples/bilibili/02_live_room/` — 直播间弹幕处理
+- `examples/bilibili/03_private_message/` — 私信收发
+- `examples/bilibili/04_comment/` — 视频评论处理
+- `examples/bilibili/05_live_manager/` — 直播间管理
+
+---
+
+## 延伸阅读
+
+- Bilibili 消息发送 → [send_message/bilibili/](../send_message/bilibili/)
+- Bilibili Bot API → [api_usage/bilibili/](../api_usage/bilibili/)
+- 多平台开发 → [multi_platform/](../multi_platform/)
+
+
+---
+
+# 文件: 2. 适配器\3. GitHub.md
+
+---
+title: GitHub 适配器
+createTime: 2026/03/19 17:26:45
+permalink: /guide/edaizgkz/
+---
+
+> GitHub 平台适配器完整指南 — Token 认证、Webhook / Polling 双模式、内网穿透方案。
+
+---
+
+## Quick Reference
+
+| 属性 | 值 |
+|------|-----|
+| 适配器名称 | `github` |
+| 平台标识 | `github` |
+| 协议 | GitHub Webhook (HTTP) / REST API Polling |
+| 类 | `GitHubAdapter` |
+| 导入 | `from ncatbot.adapter.github import GitHubAdapter` |
+
+```yaml
+# 最小配置
+adapters:
+  - type: github
+    platform: github
+    enabled: true
+    config:
+      token: "ghp_xxxxxxxxxxxx"
+      repos:
+        - "owner/repo"
+      mode: webhook
+```
+
+---
+
+## Token 认证
+
+GitHub 适配器使用 **Personal Access Token (PAT)** 认证，无交互式登录流程。
+
+### 创建 Token
+
+1. 访问 [GitHub Settings → Developer settings → Personal access tokens](https://github.com/settings/tokens)
+2. 点击 **Generate new token (classic)** 或使用 Fine-grained tokens
+3. 勾选所需权限（推荐最小权限）：
+   - `repo` — 仓库读写（Issue / PR / Comment）
+   - `read:org` — 组织仓库（如需要）
+4. 生成后复制 Token，填入 `config.yaml`
+
+### 验证
+
+适配器启动时自动调用 `GET /user` 验证 Token 有效性。验证失败会报错并终止启动。
+
+::: tip
+不配置 Token 也可运行（适用于公开仓库 Webhook 接收），但 API 调用会受到严格速率限制（60 次/小时 vs 5000 次/小时）。
 :::
 
-本项目采用 `NcatBot Non-Commercial License` 开源, 在 `Apache License 2.0` 协议的基础上, **限制**对 **NcatBot 源代码的二次开发**以及**任何形式的商业用途**, 具体条款如下:
 
-```
-NcatBot Non-Commercial License
+---
 
-Copyright (c) 2025 NcatBot开发项目组
+## 两种模式
 
-在遵守以下条款的前提下，特此免费授予任何获得本软件及相关文档文件（以下简称“软件”）的人员不受限制地处置本软件的权利，包括但不限于使用、复制、修改、合并、发布、分发、再许可的权利：
+### Webhook 模式（默认）
 
-一、约束条款
-1. 未经授权，禁止商业用途
-   - 不得直接或间接通过本软件获利，包括但不限于：
-     * 售卖软件副本或衍生作品
-     * 作为商业产品或服务组成部分
-     * 用于广告推广或流量变现
-     * 其他以营利为目的的使用场景
+启动 HTTP Server 监听 GitHub Webhook 推送，**实时性最好**。
 
-2. 二次开发授权
-   - 修改后的衍生作品需满足：
-     * 必须保留原始版权声明
-     * 需通过邮件(lyh_02@foxmail.com)提交授权申请
-     * 获得书面授权后方可分发
-
-二、违约处理
-1. 违反上述条款自动终止授权
-2. 需承担因此造成的所有法律责任
-3. 侵权方需承担维权产生的合理费用
-
-三、免责声明
-本软件按"原样"提供，不做任何明示或暗示的担保，包括但不限于对适销性、特定用途适用性的担保。在任何情况下，作者或版权持有人均不对任何索赔、损害或其他责任负责。
-
-四、管辖法律
-本协议适用中华人民共和国法律，任何争议应提交厦门仲裁委员会仲裁解决。
-
-本协议最终解释权归 NcatBot 开发项目组所有。
+```yaml
+config:
+  token: "ghp_xxxx"
+  repos: ["owner/repo"]
+  mode: webhook
+  webhook_host: "0.0.0.0"
+  webhook_port: 8080
+  webhook_path: "/webhook"
+  webhook_secret: "your-secret"    # 推荐配置，用于签名验证
 ```
 
-本项目仅用于学习交流, 使用本项目造成的任何后果由使用者承担, 与项目开发组无关.
+**流程**：
 
-**严禁**将本项目用于以下用途:
+```text
+GitHub → POST /webhook → NcatBot HTTP Server → 解析事件 → Dispatcher
+```
 
-- 传播反动、淫秽、赌博、暴力、电信诈骗等违法信息.
+配置 GitHub 仓库的 Webhook：
 
-## 我们的合作伙伴
+1. 仓库 → Settings → Webhooks → Add webhook
+2. **Payload URL**: `http://your-server:8080/webhook`
+3. **Content type**: `application/json`
+4. **Secret**: 与 `webhook_secret` 一致
+5. 选择需要接收的事件（或 "Send me everything"）
 
-感谢 [IppClub](https://github.com/IppClub/) 对本项目的大力支持。
+#### 内网环境使用 Webhook
 
-> 欢迎来到 I++ 俱乐部!！我们是一个充满激情的开发者、创作者和创新者社区，致力于通过协作与开源开发的力量，推动有意义的项目与技术的诞生。最初，I++ 俱乐部起源于大学里的学生社团，随着核心成员的毕业与加入工作，俱乐部活动逐渐拓展到了社会范围，现也面向同样来自打工阶层的程序员们。我们鼓励技术爱好者共同探索IT领域的无限可能，推动技术交流与创新，创造更加开放、包容的技术文化。
+如果 Bot 运行在内网（无公网 IP），可以使用 [smee.io](https://smee.io) + [gosmee](https://github.com/chmouel/gosmee) 方案将 Webhook 转发到本地。
 
-感谢 [NapCat](https://github.com/NapNeko) 为本项目提供底层支持。
+**方案一：smee.io（推荐入门）**
 
-感谢 [林枫云](https://www.dkdun.cn/) 为本项目提供上云服务。
+[smee.io](https://smee.io) 是 GitHub 官方推荐的 Webhook 代理服务，免费使用。
 
-二次开发项目 [FcatBot](https://github.com/Fish-LP/FcatBot)。
+1. 访问 https://smee.io ，点击 **Start a new channel**，获得一个唯一 URL（如 `https://smee.io/AbCdEfGh`）
+2. 将该 URL 填入 GitHub 仓库的 Webhook Payload URL
+3. 本地安装 smee-client 并启动转发：
+
+```bash
+npm install -g smee-client
+smee -u https://smee.io/AbCdEfGh -t http://localhost:8080/webhook
+```
+
+4. smee-client 会将 GitHub 发到 smee.io 的 Webhook 请求实时转发到本地的 NcatBot HTTP Server
+
+**方案二：gosmee（推荐生产）**
+
+[gosmee](https://github.com/chmouel/gosmee) 是用 Go 编写的高性能 smee 兼容客户端，支持自建服务端，适合生产环境。
+
+1. 安装 gosmee：
+
+```bash
+# Go install
+go install github.com/chmouel/gosmee@latest
+
+# 或下载二进制
+# https://github.com/chmouel/gosmee/releases
+```
+
+2. 使用 smee.io 作为中转（与 smee-client 兼容）：
+
+```bash
+gosmee client https://smee.io/AbCdEfGh http://localhost:8080/webhook
+```
+
+3. 或者自建 gosmee server（完全自托管，无需依赖第三方服务）：
+
+```bash
+# 在有公网 IP 的服务器上启动 gosmee server
+gosmee server --port 3333
+
+# GitHub Webhook Payload URL 填: http://your-server:3333/webhook-channel-id
+# 本地运行 gosmee client 连接到自建 server
+gosmee client http://your-server:3333/webhook-channel-id http://localhost:8080/webhook
+```
+
+**整体拓扑**：
+
+```text
+GitHub ──POST──→ smee.io / gosmee server (公网)
+                        │
+                    SSE 推送
+                        │
+              smee-client / gosmee client (内网)
+                        │
+                   POST 转发
+                        │
+              NcatBot HTTP Server (localhost:8080)
+```
+
+::: warning
+smee.io 的 channel 是公开的，不要依赖它做安全控制。始终配置 `webhook_secret` 进行签名验证。
+:::
+
+
+### Polling 模式
+
+定时调用 GitHub Events API 获取事件。适合**无法接收 Webhook** 的环境（如防火墙限制且不想配内网穿透）。
+
+```yaml
+config:
+  token: "ghp_xxxx"
+  repos: ["owner/repo"]
+  mode: polling
+  poll_interval: 60.0    # 每 60 秒轮询一次
+```
+
+**流程**：
+
+```text
+NcatBot → GET /repos/{owner}/{repo}/events → 解析新事件 → Dispatcher
+```
+
+| 对比 | Webhook | Polling |
+|------|---------|---------|
+| 实时性 | 秒级 | poll_interval 延迟 |
+| 网络要求 | 需要公网可达或内网穿透 | 仅需出站 HTTPS |
+| API 配额 | 不消耗 | 消耗 REST API 配额 |
+| 适用场景 | 生产环境 | 开发/测试、防火墙内 |
 
 ---
 
-# 文件: 1. 开始\2. 快速开始.md
+## 配置项详解
+
+```yaml
+adapters:
+  - type: github
+    platform: github
+    enabled: true
+    config:
+      # 认证
+      token: "ghp_xxxx"          # GitHub Personal Access Token
+
+      # 监听仓库
+      repos:                     # 仅 Polling 模式需要配置
+        - "owner/repo1"          # Webhook 模式下 GitHub 自行推送
+        - "owner/repo2"
+
+      # 连接模式
+      mode: webhook              # "webhook" 或 "polling"
+
+      # Webhook 配置
+      webhook_host: "0.0.0.0"   # HTTP Server 监听地址
+      webhook_port: 8080         # HTTP Server 监听端口
+      webhook_path: "/webhook"   # Webhook 路径
+      webhook_secret: ""         # Webhook Secret（用于签名验证）
+
+      # Polling 配置
+      poll_interval: 60.0        # 轮询间隔（秒）
+```
+
+### 配置项说明
+
+| 配置项 | 类型 | 默认值 | 说明 |
+|--------|------|--------|------|
+| `token` | string | `""` | GitHub PAT，为空时 API 受限 |
+| `repos` | list[string] | `[]` | 监听的仓库列表（格式 `owner/repo`） |
+| `mode` | string | `"webhook"` | `"webhook"` 或 `"polling"` |
+| `webhook_host` | string | `"0.0.0.0"` | Webhook HTTP Server 监听地址 |
+| `webhook_port` | int | `8080` | Webhook HTTP Server 端口 |
+| `webhook_path` | string | `"/webhook"` | Webhook 接收路径 |
+| `webhook_secret` | string | `""` | 用于验证 Webhook 签名（推荐配置） |
+| `poll_interval` | float | `60.0` | Polling 模式轮询间隔（秒） |
 
 ---
-title: 快速开始
-createTime: 2025/02/07 15:21:39
-permalink: /guide/dto79lp7/
----
 
-## 什么是 NcatBot
+## Webhook 签名验证
 
-NcatBot 是 [NapCat](https://github.com/NapNeko/NapCatQQ) 的 Python SDK (开发者套件)， 旨在简化 QQ Bot 的开发和部署流程。
+配置 `webhook_secret` 后，适配器会对每个 Webhook 请求验证 `X-Hub-Signature-256` 头，使用 HMAC-SHA256 算法比对签名。签名不匹配的请求返回 403。
 
-## 核心优势
-
-- **配置简单**：NcatBot 只需要 pip 就能安装， 只需要配置 QQ 号就能运行， 适合快速上手， 快速开发。
-  
-- **功能丰富**：NcatBot 拥有丰富的内置功能， 如**配置项管理**， **权限系统**， **数据持久化**， 涵盖大部分场景， 免去重复造轮子的烦恼。
-
-- **文档齐全**：NcatBot 拥有同类产品中最完善的文档， 包含**安装指南**， **开发指南**， **API 参考**， **FAQ** 等， 帮助你快速上手。
-
-- **AI 友好**：NcatBot 在设计之初就考虑到了 AI 辅助开发的需求，其代码逻辑结构和命名均按照 AI 友好的方式设计，你可以利用 AI 非常高效的开发自己的 Bot。
-
-## 让我们开始
-
-1. [通用安装指南](./3.%20安装教程/1%20通用安装指南.md)
-2. [开发指南](3.%20开发指南.md)
-
+```yaml
+webhook_secret: "my-super-secret"  # 与 GitHub Webhook 设置中的 Secret 一致
+```
 
 ---
 
-# 文件: 1. 开始\3. 安装教程\1 通用安装指南.md
+## 常见问题
+
+| 问题 | 原因 | 解决方案 |
+|------|------|---------|
+| Token 验证失败 | Token 过期或权限不足 | 重新生成 Token 并确认权限 |
+| Webhook 不触发 | GitHub 无法访问 Bot 服务器 | 确认公网可达或使用 smee/gosmee 内网穿透 |
+| Webhook 端口冲突 | 端口已被占用 | 修改 `webhook_port` |
+| Polling 无事件 | `repos` 列表为空或 Token 无权限 | 确认仓库配置和 Token 权限 |
+| 签名验证失败 | Secret 不匹配 | 确认两端 `webhook_secret` 一致 |
 
 ---
-title: 通用安装指南
-createTime: 2025/04/22 15:21:39
-permalink: /guide/minimali/
+
+## 示例
+
+- `examples/github/01_hello_world/` — 最简 GitHub Bot
+- `examples/github/02_issue_bot/` — Issue 自动处理
+
 ---
 
-本通用指南提供最简单的叙述，如果需要详细指导，可以查看下面的详细指南。
+## 延伸阅读
 
-## 详细安装指南
+- GitHub 消息发送 → [send_message/github/](../send_message/github/)
+- GitHub Bot API → [api_usage/github/](../api_usage/github/)
+- 多平台开发 → [multi_platform/](../multi_platform/)
+- 适配器接口参考 → [reference/adapter/](../../reference/adapter/)
 
-- [Linux](./2.%20Linux%20安装.md)
-- [Windows](./3.%20Windows%20安装.md)
-- [Windows Server](./4.%20Windows%20Server%20安装.md)
-- [MacOS](./4.%20MacOS%20安装.md)
 
-## 环境检查
+---
 
-- Python：版本 >= 3.8
-- 操作系统：
-  - Win10、Win11
-    - 更新电脑 QQ 到最新版本
-  - Linux
-    - 安装好 curl sudo。
-- 网络环境：使用本机 6099 和 3001 端口。如果确实存在占用，参考[配置项](../../2.%20基本开发/4.%20配置项.md)解决。
+# 文件: 2. 适配器\4. Mock 适配器.md
+
+---
+title: Mock 适配器
+createTime: 2026/03/19 17:26:45
+permalink: /guide/obgl9txz/
+---
+
+> Mock 适配器使用指南 — 用于插件集成测试的内存适配器，无需网络连接。
+
+---
+
+## Quick Reference
+
+| 属性 | 值 |
+|------|-----|
+| 适配器名称 | `mock` |
+| 平台标识 | `mock`（可自定义） |
+| 协议 | 内存模拟 |
+| 类 | `MockAdapter` |
+| 导入 | `from ncatbot.adapter import MockAdapter` |
+
+---
+
+## 概述
+
+Mock 适配器不连接任何外部服务，完全在内存中运行。它的主要用途是：
+
+- **插件集成测试**：注入模拟事件，验证插件行为
+- **API 调用验证**：记录所有 API 调用，断言调用参数和次数
+- **无网络开发**：不需要运行 NapCat 或其他外部服务
+
+---
+
+## 基本用法
+
+```python
+from ncatbot.app import BotClient
+from ncatbot.adapter import MockAdapter
+
+adapter = MockAdapter()
+bot = BotClient(adapter=adapter)
+
+# 启动后注入事件
+await adapter.inject_event(some_event_data)
+
+# 检查 API 调用
+assert adapter.mock_api.called("send_group_msg")
+
+# 停止
+adapter.stop()
+```
+
+### 自定义平台标识
+
+Mock 适配器的 `platform` 可以自定义，模拟不同平台的事件：
+
+```python
+adapter = MockAdapter(platform="qq")      # 模拟 QQ 平台
+adapter = MockAdapter(platform="bilibili") # 模拟 Bilibili 平台
+```
+
+---
+
+## MockBotAPI
+
+`MockBotAPI` 实现了 `IQQAPIClient` 接口，所有 API 方法均可调用但不会发送网络请求。API 调用会被记录，可用于断言。
+
+### 断言方法
+
+| 方法 | 签名 | 说明 |
+|------|------|------|
+| `called` | `(action) → bool` | 检查 action 是否被调用过 |
+| `call_count` | `(action) → int` | 获取调用次数 |
+| `get_calls` | `(action) → List[APICall]` | 获取指定 action 的所有调用记录 |
+| `last_call` | `(action=None) → Optional[APICall]` | 获取最后一次调用 |
+| `set_response` | `(action, response) → None` | 为指定 action 预设返回值 |
+| `reset` | `() → None` | 清除所有记录和预设 |
+
+### 示例
+
+```python
+# 预设 API 返回值
+adapter.mock_api.set_response("send_group_msg", {"message_id": 12345})
+
+# 触发插件逻辑（注入事件）
+await adapter.inject_event(event_data)
+
+# 验证 API 被调用
+assert adapter.mock_api.called("send_group_msg")
+assert adapter.mock_api.call_count("send_group_msg") == 1
+
+# 检查调用参数
+call = adapter.mock_api.last_call("send_group_msg")
+assert call.params["group_id"] == 123456
+```
+
+---
+
+## 与 TestHarness 的关系
+
+`TestHarness` 和 `PluginTestHarness` 内部使用 `MockAdapter`。如果你使用测试框架，通常不需要直接操作 `MockAdapter`：
+
+```python
+from ncatbot.testing import PluginTestHarness
+
+async with PluginTestHarness(MyPlugin) as harness:
+    await harness.send_group_message("hello", group_id=123)
+    harness.assert_replied("Hello!")
+```
+
+直接使用 `MockAdapter` 适合需要更底层控制的测试场景。
+
+---
+
+## 延伸阅读
+
+- 插件测试指南 → [testing/](../testing/)
+- 适配器接口参考（含 MockAdapter API）→ [reference/adapter/](../../reference/adapter/)
+- TestHarness 详解 → [testing/2.harness.md](../testing/2.harness.md)
+
+
+---
+
+# 文件: 2. 适配器\README.md
+
+---
+title: 适配器登录与使用指南
+createTime: 2026/03/19 17:26:45
+permalink: /guide/vagz7643/
+---
+
+> 各内置适配器的认证、配置与使用流程 — 从零开始接入每个平台。
+
+---
+
+## 适配器一览
+
+| 适配器 | 平台 | 认证方式 | 协议 | 适用场景 |
+|--------|------|---------|------|---------|
+| [NapCat](1_napcat_qq.md) | QQ | WebUI 扫码 / 快速登录 | OneBot v11 (WebSocket) | QQ 群聊/私聊 Bot |
+| [Bilibili](2_bilibili.md) | Bilibili | 终端扫码 | bilibili-api-python | 直播弹幕 / 私信 / 视频评论 |
+| [GitHub](3_github.md) | GitHub | Personal Access Token | Webhook / REST Polling | Issue/PR/Push 事件处理 |
+| [Mock](4_mock.md) | 测试 | 无需认证 | 内存模拟 | 插件集成测试 |
+
+## 配置入口
+
+所有适配器均通过 `config.yaml` 的 `adapters` 列表配置：
+
+```yaml
+adapters:
+  - type: napcat          # 适配器名称
+    platform: qq          # 平台标识
+    enabled: true
+    config:               # 适配器专属配置
+      ws_uri: ws://localhost:3001
+      ws_token: napcat_ws
+```
+
+多个适配器可同时运行：
+
+```yaml
+adapters:
+  - type: napcat
+    platform: qq
+    enabled: true
+    config:
+      ws_uri: ws://localhost:3001
+  - type: bilibili
+    platform: bilibili
+    enabled: true
+    config:
+      live_rooms: [12345]
+  - type: github
+    platform: github
+    enabled: true
+    config:
+      token: "ghp_xxxx"
+      repos: ["owner/repo"]
+```
+
+## 本目录索引
+
+| 文档 | 说明 | 难度 |
+|------|------|------|
+| [1_napcat_qq.md](1_napcat_qq.md) | NapCat/QQ — Setup/Connect 两种模式、WebUI 登录、诊断 | ⭐ |
+| [2_bilibili.md](2_bilibili.md) | Bilibili — 扫码登录、凭据持久化、多数据源配置 | ⭐ |
+| [3_github.md](3_github.md) | GitHub — Token 认证、Webhook/Polling 双模式、内网穿透 | ⭐⭐ |
+| [4_mock.md](4_mock.md) | Mock — 测试用内存适配器 | ⭐ |
+
+---
+
+## 交叉引用
+
+- 跨平台编程模式（Trait / Platform Filter）→ [multi_platform/](../multi_platform/)
+- 适配器接口参考（BaseAdapter / AdapterRegistry）→ [reference/adapter/](../../reference/adapter/)
+- 消息发送（按平台）→ [send_message/](../send_message/)
+- Bot API（按平台）→ [api_usage/](../api_usage/)
+
+
+---
+
+# 文件: 3. 插件开发\1. 快速开始.md
+
+---
+title: 快速入门
+createTime: 2026/03/19 17:26:45
+permalink: /guide/nht6dmu3/
+---
+
+> 5 分钟跑通你的第一个 NcatBot 插件。
+
+---
+
+## 目录
+
+- [环境准备](#环境准备)
+- [asyncio 速查](#asyncio-速查)
+- [安装 NcatBot](#安装-ncatbot)
+- [准备配置文件](#准备配置文件)
+- [启动 Bot](#启动-bot)
+- [编写第一个插件](#编写第一个插件)
+- [运行与测试](#运行与测试)
+- [下一步](#下一步)
+
+---
+
+## 环境准备
+
+| 依赖 | 要求 | 说明 |
+|------|------|------|
+| Python | ≥ 3.12 | `python --version` 验证 |
+| uv | 最新版 | 推荐的包管理器，[安装指南](https://docs.astral.sh/uv/) |
+| NapCat | 最新版 | QQ 协议端，NcatBot 会自动下载安装 |
+
+::: tip
+如果你还没有 uv，也可以直接用 pip。NapCat 在首次运行时会自动下载配置。
+:::
+
+
+---
+
+## asyncio 速查
+
+NcatBot 是一个 **异步框架**，插件中的事件处理器都是异步函数。如果你不熟悉 Python 异步编程，这里是 5 个核心概念：
+
+```python
+import asyncio
+
+# 1. async def 定义协程函数
+async def greet(name: str) -> str:
+    return f"Hello, {name}"
+
+# 2. await 等待协程完成并获取结果
+async def main():
+    result = await greet("World")
+    print(result)  # Hello, World
+
+# 3. asyncio.create_task() 并发执行多个协程
+async def main():
+    task1 = asyncio.create_task(greet("A"))
+    task2 = asyncio.create_task(greet("B"))
+    results = await asyncio.gather(task1, task2)
+
+# 4. async for 异步迭代
+async def consume(stream):
+    async for item in stream:
+        print(item)
+
+# 5. async with 异步上下文管理器
+async def use_resource():
+    async with some_resource() as res:
+        await res.do_something()
+```
+
+**在 NcatBot 中**，你只需记住：
+- 事件处理器用 `async def` 定义
+- 调用 API 时用 `await`（如 `await event.reply("hello")`）
+- 框架负责运行事件循环，你不需要手动调用 `asyncio.run()`
+
+---
 
 ## 安装 NcatBot
 
 ```bash
-pip install ncatbot -U -i https://mirrors.aliyun.com/pypi/simple/
+# 推荐：使用 uv
+uv add ncatbot5
+
+# 或者：使用 pip
+pip install ncatbot5
 ```
 
-## Hello NcatBot
+验证安装：
 
-```python
-from ncatbot.core import BotClient
-bot = BotClient()
-api = BotClient.run_blocking(bt_uin="234567", root="345678") # bt_uin 是 Bot 账号, root 是拥有 Bot 最高权限的账号。
-api.post_private_msg_sync("345678", "Hello NcatBot~meow") # 第一个参数表示发送消息的对象（QQ 号）
-print("程序生命周期结束")
+```bash
+python -c "import ncatbot; print(ncatbot.__version__)"
 ```
 
-- NcatBot 组件中内置一个 QQ 客户端，运行前请在电脑上退出 `bt_uin` 对应 QQ 的登录。
-
-- 运行后在终端用手机扫码登录 Bot QQ。
-
-
 ---
 
-# 文件: 1. 开始\3. 安装教程\2. Linux 安装.md
+## 准备配置文件
 
----
-title: Linux 安装
-createTime: 2025-03-25 15:50:00
-permalink: /guide/linuxins/
----
-
-## 检查基本环境
-
-推荐使用 Ubuntu 24.04 LTS 版本.
-
-### Python
-
-==使用 Python3.8 及以上的版本。==
-
-### 其它基本工具
-
-`curl sudo` 必须安装, 其它工具的安装可以跳过.
-
-::: code-tabs
-@tab Debian/Ubuntu
-```shell
-sudo apt-get update -y -qq && sudo apt-get -y -qq install curl sudo
-```
-@tab RPM/CentOS
-```shell
-sudo dnf install -y epel-release && sudo dnf install --allowerasing -y curl sudo
-```
-:::
-
-
-## 安装 NcatBot
-
-项目已经发布到 PYPI, 可以使用 pip 直接下载本项目.
-
-==请不要从 GitHub 上下载 .zip 压缩包，如果下载过，请删掉所有相关的文件。==
-
-先进入 root 用户模式。
-
-::: code-tabs
-@tab linux
-```shell
-sudo su
-```
-:::
-
-执行该命令，在用户目录创建虚拟环境、激活环境并下载有关资源。
-
-::: code-tabs
-@tab pip
-```shell
-cd ~
-python3 -m venv .ncatbot
-. ~/.ncatbot/bin/activate
-pip install ncatbot -U -i https://mirrors.aliyun.com/pypi/simple
-```
-:::
-
-
-## 运行
-
-### 准备 QQ 号
-
-为了测试, 需要两个 QQ 号：
-
-- **Bot**: 由 NcatBot 控制, 可以使用接口收发消息.
-- **root**: 由你控制, 用于测试 Bot 的功能.
-
-NcatBot 相当于一个电脑 QQ 客户端，因此在登陆前，你需要退出 Bot 在其它电脑客户端上的登录。
-
-### 执行代码
-
-以下代码是一个最小可运行示例，将它保存到 `main.py` 中。
-
-先在手机上登录 Bot，然后执行 `python3 main.py` 运行。按照提示输入 Bot QQ 号，然后手机扫码登录。
-
-接着使用 root 向 Bot 发送一条消息 "测试"，收到回复即正常运行。
-
-::: code-tabs
-@tab Python
-```python
-# ========= 导入必要模块 ==========
-from ncatbot.core import BotClient, PrivateMessage
-
-# ========== 创建 BotClient ==========
-bot = BotClient()
-
-# ========= 注册回调函数 ==========
-@bot.private_event()
-async def on_private_message(msg: PrivateMessage):
-    if msg.raw_message == "测试":
-        await bot.api.post_private_msg(msg.user_id, text="NcatBot 测试成功喵~")
-
-# ========== 启动 BotClient==========
-bot.run() # 一直执行，不会结束
-```
-:::
-
-## 常见问题
-
-查阅 [FAQ](../../10.%20常见问题/1.%20安装时常见问题.md) 页面.
-
-
----
-
-# 文件: 1. 开始\3. 安装教程\3. Windows 安装.md
-
----
-title: Windows 安装
-createTime: 2025/02/07 15:21:39
-permalink: /guide/wininsta/
----
-
-::: warning
-此教程只适用 Window10、Windows11 操作系统。
-:::
-
-::: warning
-请不要在云电脑上使用本项目，如果需要上云请使用 Linux 操作系统。
-:::
-
-## 任务列表
-
-我们给出一个简单的任务清单, 你可以按照下面的步骤来安装 NcatBot.
-
-1. 正确安装 Python3.12
-
-2. 通过 pip 安装 NcatBot
-
-3. 安装最新版 QQ
-
-4. 运行代码并扫码登录
-
-## 1. 安装 Python
-
-[教程](https://zhuanlan.zhihu.com/p/111168324)
-
-## 2. 安装 NcatBot
-
-::: warning
-不要从 GitHub 上下载 .zip 压缩包；如果下载并解压过，请删掉解压出来的文件。
-:::
-
-项目已经发布到 PYPI, 可以使用 pip 直接下载本项目.
-
-按下 `Win+R`, 在左下角打开**运行**, 输入 `powershell` 并回车, 打开**终端**.
-
-复制下面的代码, 粘贴到**终端**中, 按回车执行.
-
-::: code-tabs
-@tab pip(稳定版, 推荐)
-
-```shell
-pip install ncatbot -U -i https://mirrors.aliyun.com/pypi/simple
-```
-:::
-
-## 3. 安装最新版 QQ
-
-:::tip
-如果出现无法登录的问题，请先卸载掉 QQ，再去官网下载安装最新版 QQ。
-:::
-
-卸载掉电脑上已经安装的 QQ。
-
-前往 [QQ 官网](im.qq.com) 下载安装最新版 QQ。
-
-## 4. NcatBot 启动
-
-### 准备 QQ 号
-
-为了测试, 需要两个 QQ 号：
-
-- **Bot**: 由 NcatBot 控制, 可以使用接口收发消息.
-- **root**: 由你控制, 用于测试 Bot 的功能.
-
-NcatBot 相当于一个电脑 QQ 客户端，因此在登陆前，==你需要退出 Bot 在其它电脑客户端上的登录。==
-
-### 开始运行
-
-建立一个==新的工作目录==(文件夹)，文件夹名为 `ncatbot`。
-
-1. 双击进入 `ncatbot` 文件夹.
-
-2. 在文件夹中新建一个 `main.py` 文件，注意[后缀名](https://zhuanlan.zhihu.com/p/112226609) 是 `.py`
-
-3. 用记事本或者其它文本编辑器打开 `main.py` 文件，复制以下代码进去，并**保存**。
-
-::: code-tabs
-@tab Python
-```python
-# ========= 导入必要模块 ==========
-from ncatbot.core import BotClient, PrivateMessage
-
-# ========== 创建 BotClient ==========
-bot = BotClient()
-
-# ========= 注册回调函数 ==========
-@bot.private_event()
-async def on_private_message(msg: PrivateMessage):
-    if msg.raw_message == "测试":
-        await bot.api.post_private_msg(msg.user_id, text="NcatBot 测试成功喵~")
-
-# ========== 启动 BotClient==========
-bot.run()
-```
-:::
-
-4. 右键文件夹（就像你新建那个文件一样），选择 "在终端中打开"。在跳出的窗口（即终端，通常为黑底白字）输入 `python main.py` 执行代码。
-
-:::details 没有**在终端中打开**
-
-部分 Windows10 操作系统确实没有这个选项。
-
-打开你的 ncatbot 文件夹。看到窗口最上方那条地址栏了吗？（写着“此电脑 > 桌面 > ncatbot”之类）
-
-用鼠标在这条地址栏里点一下，整条路径就会变成蓝底白字。直接按 Ctrl + C 就复制好了。
-
-打开 PowerShell（Win+R → 输入 powershell → 回车），输入 cd "Ctrl+V 粘贴刚才复制的路径"，回车，路径就切进去了。
-:::
-
-5. 在手机上登录 Bot。电脑上按照提示输入 Bot QQ 号，然后手机扫码登录。
-
-6. 接着使用 root 向 Bot 发送一条消息 "测试"，收到回复即正常运行。
-
-## 5. 常见问题
-
-### `python main.py` 后没有反应
-
-[查看](../../10.%20常见问题/2.%20运行时常见问题.md)
-
-### 卡在登录中
-
-- 如果使用的是云电脑，安全机制会阻止 NcatBot 正常运行。此时建议
-  - 使用自己的电脑。
-  - 使用 Linux 操作系统。
-
-### 有一步做不下去怎么办？
-
-- 将本教程全数复制下来，发给 AI（kimi 等），并将你的疑惑告诉它，它会教你。
-
-### 好像有红色的报错？ 
-
-- 将出现**红色错误提示**的页面，**尽可能全的截取下来**，交给 Kimi 等 AI 助手并请求它们的帮助。
-
-
-
----
-
-# 文件: 1. 开始\3. 安装教程\4. Windows Server 安装.md
-
----
-title: Windows Server 安装
-createTime: 2025/10/23 00:26:37
-permalink: /guide/winServerinsta/
----
-
-如果是使用云服务器进行部署，建议使用Linux环境，如果没有Linux基础，或者有特殊业务需求，那也可参考本篇关于Windows Server的安装教程。
-
-::: warning
-此教程适用 Windows Server 2019、Windows Server 2022 操作系统。
-:::
-
-> [!IMPORTANT]
-> 如果你使用的是Windows Server 2019，强烈建议你先使用ie安装Microsoft Edge浏览器，而不是直接使用ie。
-<br />无论使用什么版本的Windows Server，ncatbot都可能无法自行安装napcat，需要你自行安装napcat。
-<br />不建议在Windows Server 2025上运行本项目，因为大多数云服务器承担不起系统的性能开销，如果硬要用，可以基本参考本篇的教程。
-
----
-## 1. 安装 Python
-进入[Python官网](https://www.python.org/)下载Python3.12的安装包。
-
-以管理员身份运行安装包并安装Python。
-
-如果安装包报错`0x80070659 系统策略禁止这个安装`。
-
-那么尝试**以管理员身份运行**cmd并输入以下命令：
-```shell
-reg add "HKLM\Software\Policies\Microsoft\Windows\Installer" /v DisableMSI /t REG_DWORD /d 0 /f
-```
-或者使用 PowerShell(**管理员**) 运行以下命令：
-```shell
-New-Item -Path "HKLM:\Software\Policies\Microsoft\Windows" -Name "Installer" -Force | Out-Null
-New-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\Windows\Installer" -Name "DisableMSI" -PropertyType DWord -Value 0 -Force | Out-Null
-```
-然后再以管理员身份执行Python的安装。
-
-## 2. 手动安装napcat和qq（可选）
-
-::: note
-如果在第四步中，Ncatbot自动安装napcat时出错可以参考这一步。
-:::
-
-详细可参阅[NapCat.Shell - Win 手动启动教程](https://napneko.github.io/guide/boot/Shell#napcat-shell-win-%E6%89%8B%E5%8A%A8%E5%90%AF%E5%8A%A8%E6%95%99%E7%A8%8B)。
-
-从napcat的[Github仓库](https://github.com/NapNeko/NapCatQQ/releases)中下载最新的**NapCat.Shell.zip**。
-
-把下载的压缩包中的文件复制到一个叫`napcat`的文件夹中，并且把文件夹移动到**ncatbot入口程序**（例如`./main.py`）的**根目录**，就像`./napcat`。
-
-从QQ官网下载并安装最新的[QQNT](https://im.qq.com/pcqq/index.shtml)
-
-## 3. 安装 NcatBot
-::: warning
-不要从 GitHub 上下载 .zip 压缩包；如果下载并解压过，请删掉解压出来的文件。
-:::
-
-项目已经发布到 PYPI, 可以使用 pip 直接下载本项目。
-
-按下 `Win+R`, 在左下角打开**运行**, 输入 `powershell` 并回车, 打开**终端**。
-
-复制下面的代码, 粘贴到**终端**中, 按回车执行。
-
-::: code-tabs
-@tab pip(稳定版, 推荐)
-
-```shell
-pip install ncatbot -U -i https://mirrors.aliyun.com/pypi/simple
-```
-:::
-
-## 4. NcatBot 启动
-
-### 准备 QQ 号
-
-为了测试, 需要两个 QQ 号：
-
-- **Bot**: 由 NcatBot 控制, 可以使用接口收发消息.
-- **root**: 由你控制, 用于测试 Bot 的功能.
-
-NcatBot 相当于一个电脑 QQ 客户端，因此在登陆前，==你需要退出 Bot 在其它电脑客户端上的登录。==
-
-### 开始运行
-
-建立一个==新的工作目录==(文件夹)，文件夹名为 `ncatbot`。
-
-1. 双击进入 `ncatbot` 文件夹.
-
-2. 在文件夹中新建一个 `main.py` 文件，注意[后缀名](https://zhuanlan.zhihu.com/p/112226609) 是 `.py`
-
-3. 用记事本或者其它文本编辑器打开 `main.py` 文件，复制以下代码进去，并**保存**。
-
-::: code-tabs
-@tab Python
-```python
-# ========= 导入必要模块 ==========
-from ncatbot.core import BotClient, PrivateMessage
-
-# ========== 创建 BotClient ==========
-bot = BotClient()
-
-# ========= 注册回调函数 ==========
-@bot.private_event()
-async def on_private_message(msg: PrivateMessage):
-    if msg.raw_message == "测试":
-        await bot.api.post_private_msg(msg.user_id, text="NcatBot 测试成功喵~")
-
-# ========== 启动 BotClient==========
-bot.run()
-```
-:::
-
-4. 进入 ncatbot 文件夹，点击上方的地址栏（例如`C:\Users\admin\Desktop\ncat`）,清空地址栏。然后输入 powershell → 回车，打开PowerShell窗口，接着输入 `python main.py` 运行代码。
-
-5. 在手机上登录 Bot。电脑上按照提示输入 Bot QQ 号，然后手机扫码登录。
-
-6. 接着使用 root 向 Bot 发送一条消息 "测试"，收到回复即正常运行。
-
-## 5. 常见问题
-
-### 授权操作超时
-
-在保证napcat正常运行的前提下
-
-考虑在启动参数中加入 enable_webui_interaction=False 跳过
-
-即`bot.run(enable_webui_interaction=False)`
-
-### 自动安装napcat失败
-
-反复出现以下报错
-
-` <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1010)>`
-
-`安装失败: request timed out`
-
-尝试参考第二步[手动安装napcat](#_2-手动安装napcat和qq-可选)
-
-### napcat无法登录qq
-
-如果出现无法登录的问题，请先卸载掉 QQ，再去官网下载安装最新版 QQ。必要时参考第二条[手动安装napcat](#_2-手动安装napcat和qq-可选)。
-
----
-
-# 文件: 1. 开始\3. 安装教程\5. MacOS 安装.md
-
----
-title: MacOS 安装
-createTime: 2025/02/07 15:21:39
-permalink: /guide/MacOSins/
----
-
-建议换一台 Windows、Linux 的电脑使用，如果你非要用，那么：可以参考[通用安装指南](./1.5%20通用安装指南.md)。
-
-**NapCat 引导操作**会检查操作系统，MacOS 不受支持会直接报错，你需要自行完成 NapCat 引导，以便在启动时跳过它：
-
-- 按照 NapCat 文档[有关部分](https://napneko.github.io/guide/boot/Shell#napcat-macos-macos%E5%AE%89%E8%A3%85%E5%B7%A5%E5%85%B7) 正确安装 NapCat。
-
-- 在 NapCat WebUI 中[配置 websocket 服务](https://napneko.github.io/config/basic#%E9%80%9A%E8%BF%87-webui-%E9%85%8D%E7%BD%AE-onebot-%E6%9C%8D%E5%8A%A1)
-
-- 填写有关[配置项](../2.%20基本开发/4.%20配置项.md)。
-
-然后就和其它系统的启动无异。
-
-遇到困难可[进群](https://qm.qq.com/q/L6XGXYqL86)求助.
-
----
-
-# 文件: 1. 开始\3. 开发指南.md
-
----
-title: 开发指南
-createTime: 2025/03/25 23:21:39
-permalink: /guide/devguide/
----
-
-
-## NcatBot 的几种开发范式
-
-### 前台模式（大多数）
-
-:::tip
-3.x.y 版本中，该模式称为 "插件模式"
-:::
-
-前台模式下，你的代码只能通过**回调函数**被调用。（NcatBot 在前台运行）
-
-适合场景：
-- QQ Bot 是项目的核心，程序的生命周期就是 Bot 的生命周期。
-
-讲人话（以下几种情况都是）：
-- 收到消息、加群通知之后做点什么。
-- 定时发送一些消息。
-- 你无法明白前台模式和后台模式的差异。
-
-[参考代码](./3.%20安装教程/2.%20Linux%20安装.md#执行代码)。
-
-### 后台模式
-
-:::tip
-3.x.y 版本中，该模式称为 "主动模式"/"嵌入模式"
-:::
-
-后台模式启动后，会返回一个 `BotAPI` 示例，通过 API 可以调用有关接口完成对应操作。（NcatBot 在后台运行）
-
-可以注册回调函数以便接收 QQ 端的消息。
-
-适合场景：
-- QQ Bot 只是项目工作流的一个组件，程序的生命周期不应该由 NcatBot 管理。
-
-[参考代码](./3.%20安装教程/1%20通用安装指南.md#hello-ncatbot)
-
-
-## 文档导航
-
-### 1. 开始
-
-- [1. 认识 NcatBot](./1.%20认识%20NcatBot.md): 项目简介与社区信息。
-- [2. 快速开始](./2.%20快速开始.md): 最快 5 分钟跑通 NcatBot。
-- 安装教程：
-  - [通用安装指南](./3.%20安装教程/1%20通用安装指南.md)
-  - [Linux 安装](./3.%20安装教程/2.%20Linux%20安装.md)
-  - [Windows 安装](./3.%20安装教程/3.%20Windows%20安装.md)
-  - [MacOS 安装](./3.%20安装教程/4.%20MacOS%20安装.md)
-- [安装和使用插件](./4.%20安装和使用插件.md): 了解如何获取并启用社区插件。
-
-### 2. 基本开发
-
-- [1. 插件最小示例](../2.%20基本开发/1.%20插件最小示例.md)
-- [2. 前后台模式最小示例](../2.%20基本开发/2.%20前后台模式最小示例.md)
-- [3. NcatBot 生命周期](../2.%20基本开发/3.%20NcatBot%20生命周期.md)
-- [4. 配置项](../2.%20基本开发/4.%20配置项.md)
-- [5. 状态量](../2.%20基本开发/5.%20状态量.md)
-
-### 3. 组件介绍
-
-- [1. 核心组件概览](../3.%20组件介绍/1.%20核心组件概览.md)
-- [2. BotClient](../3.%20组件介绍/2.%20BotClient.md)
-- [3. PluginLoader](../3.%20组件介绍/3.%20PluginLoader.md)
-- [4. EventBus](../3.%20组件介绍/4.%20EventBus.md)
-- [5. Adapter](../3.%20组件介绍/5.%20Adapter.md)
-- [6. BotAPI](../3.%20组件介绍/6.%20BotAPI.md)
-
-### 4. 数据结构介绍
-
-- [1. 核心数据结构概览](../4.%20数据结构介绍/1.%20核心数据结构概览.md)
-- [2. BaseEventData](../4.%20数据结构介绍/2.%20BaseEventData.md)
-- [3. MessageArray](../4.%20数据结构介绍/3.%20MessageArray.md)
-- [4. MessageSegment](../4.%20数据结构介绍/4.%20MessageSegment.md)
-- [5. ForwardConstructor](../4.%20数据结构介绍/5.%20ForwardConstructor.md)
-
-### 5. API 参考
-
-- [1. 概览](../5.%20API%20参考/1.%20概览.md)
-- [2. Message 有关 API](../5.%20API%20参考/2.%20Message%20有关%20API.md)
-- [3. Account 有关 API](../5.%20API%20参考/3.%20Account%20有关%20API.md)
-- [4. Group 有关 API](../5.%20API%20参考/4.%20Group%20有关%20API.md)
-- [5. private 有关 API](../5.%20API%20参考/5.%20private%20有关%20API.md)
-- [6. Support 有关 API](../5.%20API%20参考/6.%20Support%20有关%20API.md)
-- 实战手册：
-  - [常见场景](../5.%20API%20参考/7.%20实战手册/1.%20常见场景.md)
-
-### 7. 插件系统
-
-- [1. 介绍](../7.%20插件系统/1.%20介绍.md)
-- [2. 插件类的成员](../7.%20插件系统/2.%20插件类的成员.md)
-- 插件的交互系统：
-  - [3.1 事件的发布和订阅](../7.%20插件系统/3.%20插件的交互系统/3.1%20事件的发布和订阅.md)
-  - [3.2 功能和命令](../7.%20插件系统/3.%20插件的交互系统/3.2%20功能和命令.md)
-  - [3.3 权限系统](../7.%20插件系统/3.%20插件的交互系统/3.3%20权限系统.md)
-  - [3.4 系统命令](../7.%20插件系统/3.%20插件的交互系统/3.4%20系统命令.md)
-  - [3.5 内置插件的拓展功能](../7.%20插件系统/3.%20插件的交互系统/3.5%20内置插件的拓展功能.md)
-- 插件高级功能：
-  - [4.1 添加依赖](../7.%20插件系统/4.%20插件高级功能/4.1.%20添加依赖.md)
-  - [4.2 私有工作目录](../7.%20插件系统/4.%20插件高级功能/4.2%20私有工作目录.md)
-  - [4.3 定时任务](../7.%20插件系统/4.%20插件高级功能/4.3%20定时任务.md)
-  - [4.4 插件配置项](../7.%20插件系统/4.%20插件高级功能/4.4%20插件配置项.md)
-- [5. 发布你的插件](../7.%20插件系统/5.%20发布你的插件.md)
-
-### 8. 高级教程
-
-- 统一命令注册器：
-  - [概览](../8.%20高级教程/1.%20统一命令注册器/1.%20概览.md)
-  - [快速开始](../8.%20高级教程/1.%20统一命令注册器/2.%20快速开始.md)
-  - [命令系统](../8.%20高级教程/1.%20统一命令注册器/3.%20命令系统.md)
-  - [参数解析](../8.%20高级教程/1.%20统一命令注册器/4.%20参数解析.md)
-  - [过滤器系统](../8.%20高级教程/1.%20统一命令注册器/5.%20过滤器系统.md)
-  - [测试指南](../8.%20高级教程/1.%20统一命令注册器/6.%20测试指南.md)
-  - [实战案例](../8.%20高级教程/1.%20统一命令注册器/7.%20实战案例.md)
-  - [最佳实践](../8.%20高级教程/1.%20统一命令注册器/8.%20最佳实践.md)
-  - [FAQ](../8.%20高级教程/1.%20统一命令注册器/9.%20FAQ.md)
-- 测试：
-  - [概览](../8.%20高级教程/2.%20测试/1.%20概览.md)
-  - [快速开始](../8.%20高级教程/2.%20测试/2.%20快速开始.md)
-  - [API 参考](../8.%20高级教程/2.%20测试/3.%20API%20参考.md)
-  - [函数式测试最佳实践](../8.%20高级教程/2.%20测试/4.%20函数式测试最佳实践.md)
-  - [集成测试最佳实践](../8.%20高级教程/2.%20测试/5.%20集成测试最佳实践.md)
-- 其他：
-  - [远端模式](../8.%20高级教程/3.%20其他/1.%20远端模式.md)
-  - [日志](../8.%20高级教程/3.%20其他/2.%20日志.md)
-  - [CLI](../8.%20高级教程/3.%20其他/3.%20CLI.md)
-  - [AI+NcatBot](../8.%20高级教程/3.%20其他/4.%20AI+NcatBot.md)
-  - [开发技巧](../8.%20高级教程/3.%20其他/5.%20开发技巧.md)
-- [最佳实践](../8.%20高级教程/4.%20最佳实践.md)
-
-### 9. 实际项目参考
-
-- 教程项目：
-  - [发送复杂消息](../9.%20实际项目参考/教程项目/1.%20发送复杂消息.md)
-  - [上传和获取文件](../9.%20实际项目参考/教程项目/3.%20上传和获取文件.md)
-  - [处理好友请求和加群请求](../9.%20实际项目参考/教程项目/4.%20处理好友请求和加群请求.md)
-- [1. 简单 BotClient 项目](../9.%20实际项目参考/1.%20简单%20BotClient%20项目.md)
-
-### 10. 常见问题
-
-- [1. 安装时常见问题](../10.%20常见问题/1.%20安装时常见问题.md)
-- [2. 运行时常见问题](../10.%20常见问题/2.%20运行时常见问题.md)
-- [3. 开发时常见问题](../10.%20常见问题/3.%20开发时常见问题.md)
-
-
-
----
-
-# 文件: 1. 开始\4. 安装和使用插件.md
-
----
-title: 安装和使用插件
-createTime: 2025/03/27 11:45:00
-permalink: /guide/inplugin/
----
-
-# 还没做好
-
-### 手动安装插件
-
-将**插件文件夹**放入(运行[引导程序](../5.%20杂项/6.%20术语表.md#引导程序)时的)工作目录下 `plugins` 文件夹下即可.
-
-### 自动安装插件
-
-参阅[CLI](../5.%20杂项/5.%20CLI.md)
-
-对于已经发布到[插件商店](https://github.com/ncatbot/ncatbot-plugins)的插件, 可以使用 CLI 的 `install` 命令自动安装.
-
-例如查看[插件列表](https://github.com/ncatbot/NcatBot-Plugins/tree/main/plugins)找到已有的插件 `TestPlugin` 后, 可以使用 `install TestPlugin` 命令安装插件.
-
----
-
-# 文件: 2. 基本开发\1. 插件最小示例.md
-
----
-title: 插件模式最小示例
-createTime: 2025/02/08 10:07:54
-permalink: /guide/minexample/
----
-
-## 文件结构
-
-文件结构（工作目录为 main.py 所在目录）：
-```
-main.py
-plugins/
-    hello_plugin/
-        hello_plugin.py
-        __init__.py
-```
-
-## hello_plugin/hello_plugin.py
-
-```python
-from ncatbot.plugin_system import NcatBotPlugin
-from ncatbot.plugin_system import command_registry
-from ncatbot.plugin_system import filter_registry
-from ncatbot.core.event import BaseMessageEvent, PrivateMessageEvent
-
-class HelloPlugin(NcatBotPlugin):
-    name = "HelloPlugin"
-    version = "1.0.0"
-
-    async def on_load(self):
-        # 可留空，保持轻量
-        pass
-
-    @command_registry.command("hello")
-    async def hello_cmd(self, event: BaseMessageEvent):
-        await event.reply("你好！我是插件 HelloPlugin。")
-
-    @filter_registry.private_filter
-    async def on_private_msg(self, event: PrivateMessageEvent):
-        await event.reply("你发送了一条私聊消息！")
-```
-
-### 插件类
-
-插件类可以利用 NcatBot 插件系统的强大功能，来定义一组功能的集合。一个插件作为一个整体能够非常灵活的迁移，[参见](../7.%20插件系统/1.%20介绍.md)。
-
-### command_registry
-
-用于以**命令**的形式识别和处理消息，[参见](../8.%20高级教程/1.%20统一命令注册器/1.%20概览.md)。
-
-### filter_registry
-
-用于以**非命令**的形式识别和处理消息，[参见](../8.%20高级教程/1.%20统一命令注册器/5.%20过滤器系统.md)。
-
-### ncatbot.core.event
-
-事件数据结构，用于描述收到的消息、加群请求等，[参见](../4.%20数据结构介绍/2.%20BaseEventData.md)。
-
-## hello_plugin/\_\_init\_\_.py
-
-```python
-from .hello_plugin import HelloPlugin
-
-__all__ = ["HelloPlugin"]
-```
-
-用于导出和整理插件，以便插件系统识别和加载插件。
-
-## main.py
-
-```python
-from ncatbot.core import BotClient
-
-bot = BotClient()
-bot.run_frontend()
-```
-
-### BotClient
-
-用于启动和终止 Bot，安装、配置、连接 NapCat；引导[插件系统](../7.%20插件系统/1.%20介绍.md)的加载；提供回调函数注册接口，[参见](../3.%20组件介绍/2.%20BotClient.md#BotClient：事件回调注册与运行方式)。
-
-## 运行
-
-工作目录下执行 `python main.py`。
-
-可以通过[配置项](4.%20配置项.md)指定 QQ 号等信息，以便无需每次输入 QQ 号。
-
-
-
-
----
-
-# 文件: 2. 基本开发\2. 前后台模式最小示例.md
-
----
-title: 前后台模式最小示例
-createTime: 2025/04/28 10:54:49
-permalink: /guide/activemode/
----
-
-## 前台模式
-
-### main.py
-
-```python
-from ncatbot.core import BotClient
-from ncatbot.core.event import PrivateMessageEvent
-
-bot = BotClient()
-
-@bot.on_private_message()
-async def on_private_message(event: PrivateMessageEvent):
-    print("收到私聊消息")
-
-bot.run_frontend()
-```
-
-### 运行
-
-终端执行 `python main.py` 直接运行，收到私聊消息会在终端打印 `收到私聊消息`。
-
-程序会**永远阻塞**在 `bot.run_frontend()`，除非按下 `Ctrl+C` 或者以其它方式终止，否则程序不会停止。
-
-## 后台模式
-
-### main.py
-
-```python
-from ncatbot.core import BotClient
-from ncatbot.core.event import PrivateMessageEvent
-
-bot = BotClient()
-
-@bot.on_private_message()
-async def on_private_message(event: PrivateMessageEvent):
-    print("收到私聊消息")
-
-api = bot.run_backend()
-# 同步接口主动发消息（示例群号/QQ 号请替换）
-api.send_private_text_sync(876543, "Bot 已经启动")
-print("后台已运行，继续做其他同步任务……")
-bot.exit() # 需要主动退出 Bot
-```
-
-### 运行
-
-终端执行 `python main.py` 直接运行。
-
-Bot **完成启动后**，会**返回** [BotAPI](../3.%20组件介绍/6.%20BotAPI.md) 实例。这个实例用于**调用各种接口**，如获取好友列表、群成员列表、收发消息、审核加群请求等。
-
-:::details 剩余部分的讲解
-`bot.run_backend()` **返回**后，程序将会继续执行：
-
-- 在这个示例中，程序接下来调用了 `api.send_private_text_sync` 向 QQ 用户 876543 发送了一条消息。
-
-- 接着打印了 `后台已运行，继续做其他同步任务……` 到终端。
-
-- 最后调用有关接口**退出**了 Bot。
-:::
-
-## 组件
-
-### BotAPI
-
-这个实例用于**调用各种接口**，如获取好友列表、群成员列表、收发消息、审核加群请求等，[参见](../3.%20组件介绍/6.%20BotAPI.md)
-
-### BotClient
-
-用于启动和终止 Bot，安装、配置、连接 NapCat；引导[插件系统](../7.%20插件系统/1.%20介绍.md)的加载；提供回调函数注册接口，[参见](../3.%20组件介绍/2.%20BotClient.md)。
-
-### ncatbot.core.event
-
-包括 `PrivateMessageEvent`、`GroupMessageEvent`、`BaseMessageEvent` 等。
-
-事件数据结构，用于描述收到的消息、加群请求等，[参见](../4.%20数据结构介绍/2.%20BaseEventData.md)。
-
----
-
-# 文件: 2. 基本开发\3. NcatBot 生命周期.md
-
----
-title: NcatBot 生命周期
-createTime: 2025/02/08 10:07:54
-permalink: /guide/lifespan/
----
-
-
-## 生命周期阶段
-
-1. 初始化
-2. 启动流程
-3. 插件装载
-4. 运行
-5. 关闭
-
-## 关键组件
-
-- `BotClient`: 生命周期协调者；注册官方事件回调 → 启动 NapCat 服务 → 建立 WS → 适配器事件转投 `event_bus`。
-- `PluginLoader`: 加载、扫描目录并识别和加载插件。
-- `NcatBotPlugin`: 插件基类，提供插件和插件系统交互所需的基本方法。
-- `EventBus`: 线程化事件总线，向插件系统分发事件。
-- `Adapter`: 接收 QQ 事件和消息。
-- `BotAPI`: 调用 QQ 接口。
-
-## 插件生命周期与持久化
-
-- 载入：若存在数据文件则反序列化 YAML → `_init_()` → `on_load()`。
-- 卸载：`unregister_all_handler()` → `_close_()` → `on_close()` → 序列化当前 `config` 并保存。
-- 重载：调用旧实例 `_reinit_()` + `on_reload()` → 卸载旧 → 动态 reload 模块 → 重新 `load_plugin()`。（此功能不稳定）
-
-## 关闭流程
-
-- 触发方式：前台模式 `Ctrl+C` 触发 `KeyboardInterrupt`；或后台模式调用 `bot_exit()`。
-- 步骤：设置 `status.exit` → `plugin_loader.unload_all()` → 插件写回配置 → 日志记录。
-
-## Mermaid 流程图
-
-```mermaid
-sequenceDiagram
-    participant U as User Code
-    participant B as BotClient
-    participant L as PluginLoader
-    participant P as Plugins
-    participant A as Adapter/WS
-    participant EB as EventBus
-
-    %% 通用初始化部分（与模式无关）
-    U->>U: 导入必要模块
-    U->>B: 创建 BotClient 实例
-    U->>U: 注册回调函数、修改配置项
-    U->>B: 调用 run_frontend() / run_backend()
-    B->>B: 统一 start，更新配置项
-    B->>L: load_plugins
-    L->>L: load_builtin_plugins
-    L->>L: 找到插件文件夹，读取并加载插件
-    B->>A: launch_napcat_service && connect_websocket
-    %% 区分 frontend / backend 两种模式
-    alt frontend 模式
-        A-->>B: on_event(callback)
-        B->>EB: publish(NcatBotEvent)
-        B->>U: 同步调用自定义回调函数
-    else backend 模式
-        A-->>B: 连接成功
-        %% 关键改动：立即返回，用户代码继续往下执行
-        B-->>U: 立即返回控制权（用户代码继续）
-        
-        %% 同时，在后台异步等待事件
-        par 后台事件循环
-            loop 事件循环
-                A-->>B: on_event(callback)
-                B->>EB: publish(NcatBotEvent)
-                B->>U: 异步调用自定义回调函数
-            end
-        and 用户代码继续
-            Note right of U: 用户代码可以立即<br/>执行后续逻辑，<br/>无需等待事件
-        end
-    end
-```
-
-## 1. 初始化
-
-调用 `BotClient.run_xxxend()` 之前的流程称为初始化。
-
-1. 导入必要的模块
-2. 创建 BotClient 实例
-3. 修改[配置项](../2.%20基本开发/4.%20配置项.md) (可选)
-4. 注册回调函数 (可选)
-
-
-## 2. 启动流程
-
-启动流程发生在调用 `BotClient.run_xxxend()` 后。
-
-### 2.1. 验证配置项
-
-1. 如果是公网监听模式，检查 ws_token 强度，过弱的 ws_token 会被强制修改。
-2. 如果启用了 WebUI，检查 webui_token 强度，过弱的 webui_token 会被强制修改。
-3. 不支持 https/wss，会被强制修改为 http/ws。
-4. 如果没有设置 bt_uin，会要求用户输入；如果没有设置 root，会 warning 提醒。
-5. 如果以 `mock_mode` 启动，则执行 `Adapter` 级别的 Mock 注入，然后直接进入 [3. 加载插件](#3-加载插件)。
-
-### 2.2 实际加载插件
-
-插件加载操作实际上在这里执行。
-
-### 2.3 安装或更新 NapCat (可选)
-
-1. 尝试连接到 ws_uri 指定的 NapCat WebSocket 服务。如果成功，直接进入 2.5.1，否则下一步。
-2. 检查操作系统，如果不是 Windows/Linux，直接报错。
-3. 检查 NapCat 是否被安装/是否有可用更新；用户输入 `y` 确认安装/更新操作。
-4. 安装对应的 NapCat 版本。
-
-### 2.4 配置和启动 NapCat
-
-1. 读取原有的 NapCat OneBot 配置文件（如果存在），检查当前配置和原有配置文件的兼容性：
-    1. 如果不兼容则进行提示，按照用户选择，停止运行或者进行覆盖。
-    2. 如果兼容，则正确合并配置。
-2. 启动 NapCat 服务。
-
-### 2.5 登录 NapCat（如果启用了 enable_webui_interaction）
-
-1. 尝试连接到 NapCat WebUI，获取所需的登录信息。
-2. 检查登录状态
-    1. 如果未登录，要求用户扫码登录。
-    2. 如果已登录，但登录信息有错，提示用户重启设备以刷新缓存。
-    3. 如果已登录且登录信息正确，继续下一步。
-
-### 2.6 建立 WebSocket 连接
-
-1. 连接到 NapCat WebSocket 服务。
-
-## 3. 加载插件
-
-加载插件发生在启动流程后。
-
-:::tip
-实际代码实现中，launch_napcat_service 和 connect_websocket 发生在插件加载之后。由于这些过程的顺序不影响最终结果，因此将 launch_napcat_service 和 connect_websocket 归类到启动流程中。
-:::
-
-1. 调用 `PluginLoader.load_builtin_plugins` 加载**[内置插件](../7.%20插件系统/3.%20插件的交互系统/3.5%20内置插件的拓展功能.md)**。
-2. 查找工作目录下的 `plugins` 目录, 读取插件 meta 信息.
-3. 根据插件 meta 中的依赖信息构建加载拓扑图.
-4. 加载每个插件
-   1. 加载插件私有可持久化数据(包括配置项).
-   2. 调用插件 `BasePlugin.on_load` 函数, 执行自定义初始化操作.
-   3. 事件总线注册**插件功能**和**插件配置项**.
-
-## 4. 运行
-
-1. `Adapter` 接收事件，调用 `BotClient` 传递的事件钩子。
-2. `BotClient` 的事件钩子执行以下操作：
-   1. 将事件转换为 `NcatBotEvent` 标准对象。
-   2. 将事件发布到插件系统的事件总线 `EventBus`。
-   3. 同步/异步调用用户直接注册的回调函数。
-3. 事件总线的行为
-    1. 将事件按照优先级顺序，分发给所有订阅了该事件的处理函数。
-    2. 如果事件被处理器拦截，则不再向后传递。
-    3. 收集事件的处理结果，返回给事件发布者。
-4. 内置插件的行为
-    1. `UnifiedRegistry` 订阅了所有消息事件，将这些事件正确分发到使用 `command_registry` 或 `filter_registry` 注册的处理函数。
-    2. `UnifiedRegistry` 订阅了通知事件、请求事件，将这些事件正确分发到使用 `command_registry` 或 `filter_registry` 注册的处理函数。
-    3. `SystemManager` 在 `UnifiedRegistry` 里注册了一些处理函数，用于获取一些系统信息。
-    <!-- 4. `GroupWhitelist` 以最高优先级订阅了所有消息事件 -->
-
-## 5. 退出
-
-:::warning
-点 X 关闭属于异常退出, 不会触发退出流程。
-:::
-
-前台模式按下 `Ctrl+C` 正常退出，或者后台模式调用对应 `BotClient` 实例的 `exit` 方法, 进入退出流程：
-1. 保存权限数据。
-2. 调用 `BasePlugin._unload_` 函数，完成自定义卸载操作。
-3. 保存插件配置项。
-4. 关闭 NapCat 服务 (可选，默认不关闭)。
-
-
-
----
-
-# 文件: 2. 基本开发\4. 配置项.md
-
----
-title: 配置项
-createTime: 2025/02/08 13:16:05
-permalink: /guide/kfcvme50/
----
-
-本文介绍 NcatBot 的各个配置项和配置项的指定方式。
-
-## 访问配置项
-
-可以从 `ncatbot.utils` 中导入配置项：
-
-```python
-from ncatbot.utils import ncatbot_config
-
-print(ncatbot_config.bt_uin) # 123456
-print(ncatbot.napcat.ws_uri) # ws://localhost:3001
-print(ncatbot.plugin.plugins_dir) # plugins
-```
-
-## 配置项列表
-
-### 根配置项
-
-通过 `ncatbot_config.<config_name>` 访问。
-
-| 配置项                       | 类型   | 默认值     | 说明                                                |
-| ---------------------------- | ------ | ---------- | --------------------------------------------------- |
-| `bt_uin`                     | `str`  | `"123456"` | 机器人 QQ 号                                        |
-| `root`                       | `str`  | `"123456"` | 根用户 QQ 号，用于权限管理                          |
-| `enable_webui_interaction`   | `bool` | `True`     | 是否启用 WebUI 交互                                 |
-| `debug`                      | `bool` | `False`    | 是否启用调试模式，调试模式会打印部分异常的堆栈信息  |
-| `github_proxy`               | `str`  | `None`     | GitHub 代理 URL，可通过环境变量 `GITHUB_PROXY` 设置 |
-| `check_ncatbot_update`       | `bool` | `True`     | 是否检查 NcatBot 更新                               |
-| `skip_ncatbot_install_check` | `bool` | `False`    | 是否跳过 NcatBot 安装检查                           |
-
-### NapCat 配置项
-
-通过 `ncatbot_config.napcat.<config_name>` 访问。
-
-| 配置项                          | 类型   | 默认值                    | 说明                     |
-| ------------------------------- | ------ | ------------------------- | ------------------------ |
-| `ws_uri`                        | `str`  | `"ws://localhost:3001"`   | WebSocket URI 地址       |
-| `ws_token`                      | `str`  | `"NcatBot"`               | WebSocket 令牌           |
-| `ws_listen_ip`                  | `str`  | `"localhost"`             | WebSocket 监听 IP        |
-| `webui_uri`                     | `str`  | `"http://localhost:6099"` | WebUI URI 地址           |
-| `webui_token`                   | `str`  | `"NcatBot"`               | WebUI 令牌               |
-| `enable_webui`                  | `bool` | `True`                    | 是否启用 WebUI           |
-| `check_napcat_update`           | `bool` | `False`                   | 是否检查 NapCat 更新     |
-| `stop_napcat`                   | `bool` | `False`                   | 退出时是否停止 NapCat    |
-| `remote_mode`                   | `bool` | `False`                   | 是否启用远程模式         |
-| `report_self_message`           | `bool` | `False`                   | 是否报告自身消息         |
-| `report_forward_message_detail` | `bool` | `True`                    | 是否上报解析合并转发消息 |
-
-#### 自动检测配置项
-
-这些配置项会根据其他配置自动生成，不需要手动设置：
-
-| 配置项       | 类型  | 说明                                 |
-| ------------ | ----- | ------------------------------------ |
-| `ws_host`    | `str` | WebSocket 主机，从 `ws_uri` 自动检测 |
-| `ws_port`    | `int` | WebSocket 端口，从 `ws_uri` 自动检测 |
-| `webui_host` | `str` | WebUI 主机，从 `webui_uri` 自动检测  |
-| `webui_port` | `int` | WebUI 端口，从 `webui_uri` 自动检测  |
-
-### Plugin 配置项
-
-通过 `ncatbot_config.plugin.<config_name>` 访问。
-
-| 配置项             | 类型        | 默认值      | 说明             |
-| ------------------ | ----------- | ----------- | ---------------- |
-| `plugins_dir`      | `str`       | `"plugins"` | 插件目录         |
-| `plugin_whitelist` | `List[str]` | `[]`        | 插件白名单       |
-| `plugin_blacklist` | `List[str]` | `[]`        | 插件黑名单       |
-| `skip_plugin_load` | `bool`      | `False`     | 是否跳过插件加载 |
-
-## 从文件设置配置项（推荐）
-
-NcatBot 使用 YAML 格式的配置文件。默认配置文件路径为**当前工作目录下**的 `config.yaml`，可以通过环境变量 `NCATBOT_CONFIG_PATH` 自定义。
-
-### 配置文件结构
+在项目根目录创建 `config.yaml`：
 
 ```yaml
-root: '123456' # Bot 管理员 QQ 号
-bt_uin: '123456' # Bot QQ 号
-enable_webui_interaction: true # 启用 webui 交互
-check_ncatbot_update: true # 检查 NcatBot 更新
-skip_ncatbot_install_check: false # 跳过 NcatBot 安装检查
-debug: false # 调试模式, 开启将会打印更多调试信息
-napcat:
-  ws_uri: ws://localhost:3001
-  webui_uri: http://localhost:6099
-  webui_token: NcatBot
-  ws_token: 'NcatBot'
-  ws_listen_ip: localhost
-  enable_webui: true
-  remote_mode: false
-  check_napcat_update: false
-  stop_napcat: false
-  report_self_message: false
-  report_forward_message_detail: true # 上报解析合并转发消息
+# 必填：你的 QQ 号
+bot_uin: '123456789'
+
+# 可选：超级管理员 QQ 号
+root: '123456'
+
+# 适配器配置（NapCat 连接）
+adapters:
+  - type: napcat
+    platform: qq
+    enabled: true
+    config:
+      ws_uri: ws://localhost:3001
+      ws_token: napcat_ws
+
+# 插件配置
 plugin:
-  plugin_whitelist: [] # 插件白名单, 留空表示不启用白名单, 只加载白名单内的插件
-  plugin_blacklist: [] # 插件黑名单, 留空表示不启用黑名单, 不加载黑名单内的插件
-  # 同时启用白名单和黑名单时, 白名单优先级更高(即只有白名单内的插件会被加载, 黑名单无效)
-  plugins_dir: plugins
-  skip_plugin_load: false
-
+  plugins_dir: plugins    # 插件目录
+  load_plugin: true       # 是否加载插件
 ```
 
-## 使用特定接口设置配置项
+> 将 `bot_uin` 替换为你的实际 QQ 号。其他配置项保持默认即可，完整配置说明参见 [配置管理指南](../configuration/)。
 
-NcatBot 提供了一些特定的方法来动态修改配置项，优先级高于从默认的配置文件加载：
+---
 
-### 基本配置修改
+## 启动 Bot
+
+创建入口文件 `main.py`：
 
 ```python
-from ncatbot.utils import ncatbot_config
-
-# 设置机器人 QQ 号
-ncatbot_config.set_bot_uin("1234567890")
-
-# 设置管理员 QQ 号
-ncatbot_config.set_root("9876543210")
-```
-
-### NapCat 配置修改
-
-```python
-# 设置 WebSocket 连接地址
-ncatbot_config.set_ws_uri("ws://127.0.0.1:3001")
-
-# 设置 WebSocket 令牌
-ncatbot_config.set_ws_token("new_secure_token")
-
-# 设置 WebUI 地址
-ncatbot_config.set_webui_uri("http://127.0.0.1:6099")
-
-# 设置 WebUI 令牌
-ncatbot_config.set_webui_token("new_webui_token")
-
-# 设置监听 IP
-ncatbot_config.set_ws_listen_ip("0.0.0.0")
-```
-
-### 从文件更新配置
-
-```python
-from ncatbot.config import Config
-
-# 从文件更新现有配置
-ncatbot_config.update_from_file("/path/to/new/config.yaml")
-```
-
-### 通用配置更新
-
-对于 NapCat 配置项和 Plugin 配置项，只需要写最后一级名字即可，例如 `ws_token`、`plugins_dir`。
-
-```python
-# 使用 update_config 方法批量更新
-ncatbot_config.update_config(
-    bt_uin="1234567890",
-    debug=True,
-    root="9876543210"
-)
-
-# 使用 update_value 方法更新单个配置
-# ncatbot_config.debug
-ncatbot_config.update_value("debug", True)
-# ncatbot_config.napcat.ws_token
-ncatbot_config.update_value("ws_token", "new_secure_token") 
-# ncatbot_config.plugin.plugins_dir
-ncatbot_config.update_value("plugins_dir", "/path/to/plugins") 
-```
-
-## 在运行时指定配置项
-
-执行 `BotClient.run_xxxend()` 时可以传入配置项参数，优先级最高。
-
-```python
-from ncatbot.core import BotClient
-bot = BotClient()
-bot.run_frontend(
-  bt_uin="1234567890", # ncatbot_config.bt_uin
-  root="9876543210", # ncatbot_config.root
-  ws_uri="ws://127.0.0.1:3001", # ncatbot_config.napcat.ws_uri
-  plugins_dir="/path/to/plugins" # ncatbot_config.plugin.plugins_dir
-)
-```
-
-## 注意事项
-
-### 文件编码
-
-配置文件必须使用 UTF-8 编码。
-
-### 自动检查项目
-
-1. **QQ 号格式验证**：QQ 号支持字符串和整数格式，处理时会自动转为字符串；使用默认 QQ 号时会要求手动输入。
-2. **URI 格式标准化**：使用 http/ws 协议，不支持 https/wss，会自动补充或替换协议前缀。
-3. **端口和主机提取**：从 URI 中自动提取主机名和端口。
-4. **目录存在性检查**：自动创建不存在的插件目录。
-
-### 安全检查
-
-- **强密码检查**：当 `ws_listen_ip` 设置为 `0.0.0.0` 时，要求 `ws_token` 为强密码
-- **WebUI 安全**：启用 WebUI 时要求 `webui_token` 为强密码
-- **远程连接警告**：连接非本地 NapCat 服务时给出提示
-
-强密码要求：
-- 至少 12 位字符
-- 包含数字、字母和特殊符号
-- 特殊符号包括：`!@#$%^&*()_+-=[]{}|;:,.<>?`
-
-## 常见问题
-
-### Q: 为什么我的配置项没有生效？
-
-A: 参阅[ NcatBot 生命周期](3.%20NcatBot%20生命周期.md)，配置项指定需要在调用 `BotClient.run_xxxend()` 之前完成。
-
-```python
-ncatbot_config.update_from_file("config.yaml")
-```
-
-
-
-
----
-
-# 文件: 2. 基本开发\5. 状态量.md
-
----
-title: 状态量
-createTime: 2025/9/26 13:16:05
-permalink: /guide/status/
----
-
-状态量是一些全局变量，包含必要的运行时信息，供插件和核心模块使用。
-
-## 状态量列表
-
-| 名称               | 类型    | 说明                     |
-| ------------------ | ------- | ------------------------ |
-| `status.exit`      | `bool`  | 全局退出标志             |
-| `status.global_api`| `BotAPI`| 全局 BotAPI 实例         |
-| `status.global_access_manager` | `RBACManager` | 全局权限管理器实例 |
-
-## 访问状态量
-
-可以从 `ncatbot.utils` 中导入状态量：
-
-```python
-from ncatbot.utils import status
-
-print(status.exit) # False
-print(status.global_api) # <ncatbot.core.api.BotAPI object at 0x...>
-print(status.global_access_manager) # <ncatbot.core.rbac.RBACManager object at 0x...>
-```
-
-## 状态量介绍
-
-### `status.exit`
-
-NcatBot 的全局退出标志，一般用于后台模式开发。
-
-### `status.global_api`
-
-可以用于调用 NcatBot 提供的 QQ 操作接口，用于发送消息、审核加群请求、获取群成员列表等 [参见](../3.%20组件介绍/6.%20BotAPI.md)。
-
-### `status.global_access_manager`
-
-用于访问 NcatBot 的内置权限管理器，实现权限控制，[参见](../7.%20插件系统/3.%20插件的交互系统/3.3%20权限系统.md)。
-
----
-
-# 文件: 3. 组件介绍\1. 核心组件概览.md
-
----
-title: "核心组件概览"
-createTime: 2025/09/26 10:00:00
-permalink: /guide/components/
----
-
-# NcatBot 核心组件概览
-
-- `BotClient`: 生命周期协调者；注册官方事件回调 → 启动 NapCat 服务 → 建立 WS → 适配器事件转投 `event_bus`。[BotClient 组件介绍](./2.%20BotClient.md)
-- `PluginLoader`: 加载、扫描目录并识别和加载插件。[PluginLoader 组件介绍](./6.%20PluginLoader.md)
-- `EventBus`: 线程化事件总线，向插件系统分发事件。 [EventBus 组件介绍](./4.%20EventBus.md)
-- `Adapter`: 接收 QQ 事件和消息。 [Adapter 组件介绍](./5.%20Adapter.md)
-- `BotAPI`: 调用 QQ 接口。[BotAPI 组件介绍](./6.%20BotAPI.md)
-
----
-
-# 文件: 3. 组件介绍\2. BotClient.md
-
----
-title: "BotClient 组件介绍"
-createTime: 2025/09/26 10:30:00
-permalink: /guide/botclient/
----
-
-
-
-## BotClient：事件回调注册与运行方式
-
-
-BotClient 是 NcatBot 的对外门面，==一个进程只允许出现一个 BotClient 实例==，负责：
-- 持有 Adapter 与 BotAPI，并把 Adapter 的底层能力包装成易用的 API（`self.api = BotAPI(self.adapter.send)`）。
-- 为「官方事件」建立回调分发组，并提供两种注册方式（函数式与装饰器）。
-- 自动把官方事件转发到插件系统的 EventBus，让插件按需订阅处理。
-
-本文重点介绍回调的注册方法与使用建议。
-
-### 回调函数机制
-
-NcatBot 采用==回调函数==机制来上报事件. 当对应事件发生时， 由 BotClient 调用事件绑定的回调函数， 并将事件相关信息作为参数传递。
-
-NcatBot 的**回调函数只有一个参数**, 用于传递所发生事件的信息。
-
-[上报格式](../4.%20数据结构介绍/2.%20BaseMessageEvent.md)
-
-
-### 官方事件分组
-
-NcatBot 会上报以下事件：
-
-```python
-OFFICIAL_GROUP_MESSAGE_EVENT = "ncatbot.group_message_event"
-OFFICIAL_PRIVATE_MESSAGE_EVENT = "ncatbot.private_message_event"
-OFFICIAL_MESSAGE_SEND_EVENT = "ncatbot.message_sent_event"
-OFFICIAL_REQUEST_EVENT = "ncatbot.request_event"
-OFFICIAL_NOTICE_EVENT = "ncatbot.notice_event"
-OFFICIAL_STARTUP_EVENT = "ncatbot.startup_event"
-OFFICIAL_SHUTDOWN_EVENT = "ncatbot.shutdown_event"
-OFFICIAL_HEARTBEAT_EVENT = "ncatbot.heartbeat_event"
-```
-
-分为四大类：
-
-- 元事件：
-    - Bot 启动事件 (STARTUP_EVENT)
-    - Bot 心跳事件 (HEARTBEAT_EVENT)
-    - Bot 关闭事件 (SHUTDOWN_EVENT)
-- 消息事件：
-    - 群消息事件 (GROUP_MESSAGE_EVENT)
-    - 私聊消息事件 (PRIVATE_MESSAGE_EVENT)
-    - 自身消息 (MESSAGE_SENT_EVENT)
-- 请求事件 (REQUEST_EVENT)
-- 通知事件 (NOTICE_EVENT)
-
-上报事件时传递的[数据结构](../4.%20数据结构介绍/2.%20BaseMessageEvent.md)。
-
-BotClient 初始化时会为每个事件创建一个处理器列表，并把 Adapter 的 `event_callback[event_name]` 指向 `BotClient` 内部的**异步分发函数**。
-
-发生事件后，异步分发函数被调用，以确保消息到达后能分发到你注册的处理器。
-
----
-
-## 注册回调的两种方式
-
-BotClient 同时提供「函数式 API」与「装饰器 API」。两种方式等效，可自由选择。
-
-### 1) 函数式 API
-
-- 群消息：`add_group_message_handler(handler, filter=None)`
-- 私聊：`add_private_message_handler(handler, filter=None)`
-- 自身消息：`add_message_sent_handler(handler, filter=None)`
-- 通知：`add_notice_handler(handler, filter=None)`
-- 请求：`add_request_handler(handler, filter=Literal['group','friend'])`
-- 启动：`add_startup_handler(handler)`
-- 关闭：`add_shutdown_handler(handler)`
-- 心跳：`add_heartbeat_handler(handler)`
-
-要点：
-- handler 可以是同步或异步函数，内部会自动判断并在合适的上下文中执行。
-- 「消息类事件」支持 `filter` 参数，用于对 `event.message` 做类型过滤。`filter` 必须是 `MessageSegment` 的子类；若过滤后没有消息片段，处理器会被跳过。
-- 请求事件的 `filter` 用于筛选「好友请求」或「群请求」。
-- ==NoticeEvent 会接收 Bot 自身触发的 Notice，例如戳一戳，实现这些场景时，务必注意不要反复回调。==
-
-示例（函数式）：
-
-```python
-from ncatbot.core.client import BotClient
-from ncatbot.core.event.message_segment import Image
-from ncatbot.core.event import GroupMessageEvent
+from ncatbot.app import BotClient
 
 bot = BotClient()
 
-def on_group(e: GroupMessageEvent):
-    # 仅当消息中包含图片片段时才会进入
-    print("收到一条含图片的群消息")
-
-# 只处理包含图片的消息
-bot.add_group_message_handler(on_group, filter=Image)
+if __name__ == "__main__":
+    bot.run()
 ```
 
-### 2) 装饰器 API（推荐）
+`bot.run()` 会依次完成：
 
-- 群消息：`@bot.on_group_message(filter=...)`
-- 私聊：`@bot.on_private_message(filter=...)`
-- 自身消息：`@bot.on_message_sent(filter=...)`
-- 通知：`@bot.on_notice()`
-- 请求：`@bot.on_request(filter='group'|'friend')`
-- 启动：`@bot.on_startup()`
-- 关闭：`@bot.on_shutdown()`
-- 心跳：`@bot.on_heartbeat()`
+1. 加载 `config.yaml` 配置
+2. 启动 NapCat（首次运行自动下载安装）
+3. 建立 WebSocket 连接
+4. 扫描 `plugins/` 目录，加载所有插件
+5. 开始监听事件
 
-示例（装饰器）：
+---
+
+## 编写第一个插件
+
+### 1. 创建插件目录
+
+```text
+plugins/
+└── hello_world/
+    ├── manifest.toml
+    └── main.py
+```
+
+### 2. 编写 manifest.toml
+
+每个插件必须有一个 `manifest.toml` 清单文件，声明插件的基本信息：
+
+```toml
+name = "hello_world"
+version = "1.0.0"
+main = "main.py"
+entry_class = "HelloWorldPlugin"
+author = "NcatBot"
+description = "最小可运行插件 — 演示基础生命周期与消息回复"
+```
+
+| 字段 | 必填 | 说明 |
+|------|------|------|
+| `name` | ✅ | 插件唯一标识 |
+| `version` | ✅ | 语义化版本号 |
+| `main` | ✅ | 入口文件名 |
+| `entry_class` | ❌ | 插件类名（省略则自动发现） |
+| `author` | ❌ | 作者 |
+| `description` | ❌ | 插件描述 |
+
+> 完整字段说明参见 [插件结构 — manifest.toml 详解](2.structure.md#manifesttoml-详解)。
+
+### 3. 编写 main.py
 
 ```python
-from ncatbot.core.client import BotClient
+from ncatbot.core import registrar
+from ncatbot.event.qq import GroupMessageEvent, PrivateMessageEvent
+from ncatbot.plugin import NcatBotPlugin
+from ncatbot.utils import get_log
 
-bot = BotClient()
+LOG = get_log("HelloWorld")
 
-@bot.on_request(filter="group")
-def on_group_request(e):
-    # 仅处理加群请求
+
+class HelloWorldPlugin(NcatBotPlugin):
+    name = "hello_world"
+    version = "1.0.0"
+    author = "NcatBot"
+    description = "最小可运行插件 — 回复 hello"
+
+    async def on_load(self):
+        LOG.info("HelloWorld 插件已加载！")
+
+    async def on_close(self):
+        LOG.info("HelloWorld 插件已卸载。")
+
+    @registrar.on_group_command("hello", ignore_case=True)
+    async def on_hello(self, event: GroupMessageEvent):
+        """收到群消息 'hello' 时回复"""
+        await self.api.qq.post_group_msg(event.group_id, text="Hello, World! 👋")
+
+    @registrar.on_group_command("hi", ignore_case=True)
+    async def on_hi(self, event: GroupMessageEvent):
+        """用 event.reply() 快速回复（自动引用 + @发送者 + 文字）"""
+        await event.reply(text="你好呀！这是通过 event.reply() 发送的快速回复 🎉")
+
+    @registrar.on_private_command("hello", ignore_case=True)
+    async def on_private_hello(self, event: PrivateMessageEvent):
+        """收到私聊消息 'hello' 时回复"""
+        await event.reply(text="你好！这是来自 HelloWorld 插件的私聊回复 👋")
+```
+
+> 完整源码：[examples/qq/01_hello_world/](../../../examples/qq/01_hello_world/)
+
+### 关键概念解读
+
+| 元素 | 说明 |
+|------|------|
+| `NcatBotPlugin` | 插件基类，内置了配置、数据、权限、定时任务等 Mixin 能力 |
+| `on_load()` | 插件加载时调用——在这里注册事件处理器、初始化数据 |
+| `on_close()` | 插件卸载时调用——在这里做清理工作 |
+| `@registrar.on_group_command("hello")` | 注册群命令处理器：当群消息内容为 "hello" 时触发 |
+| `@registrar.on_private_command("hello")` | 注册私聊命令处理器 |
+| `event: GroupMessageEvent` | 事件实体，包含消息内容、发送者、群号等信息 |
+| `event.reply(text="...")` | 便捷回复：自动引用原消息 + @发送者 |
+| `self.api.qq.post_group_msg(group_id, text="...")` | 直接调用 API 发送群消息 |
+| `get_log("name")` | 获取日志实例 |
+
+---
+
+## 运行与测试
+
+```bash
+# 启动 Bot
+python main.py
+```
+
+启动后：
+1. 在群里发送 `hello` → 收到 "Hello, World! 👋"
+2. 在群里发送 `hi` → 收到引用回复 + @你 + "你好呀！..."
+3. 私聊 Bot 发送 `hello` → 收到私聊回复
+
+如果看到日志 `HelloWorld 插件已加载！`，说明插件加载成功。
+
+---
+
+## 下一步
+
+恭喜！你已经成功运行了第一个 NcatBot 插件。接下来推荐阅读：
+
+- [插件结构](2.structure.md) — 深入了解 manifest.toml 字段、基类选择、目录布局
+- [生命周期](3.lifecycle.md) — 理解插件的加载/卸载流程
+- [事件处理](4a.event-registration.md) — 掌握三种事件消费模式
+- [消息类型详解](../send_message/) — 学习构造图文、@、转发等复杂消息
+
+
+---
+
+# 文件: 3. 插件开发\2. 插件结构.md
+
+---
+title: 插件结构
+createTime: 2026/03/19 17:26:45
+permalink: /guide/qj975eij/
+---
+
+> manifest.toml 清单文件、目录布局、基类选择和插件属性详解。
+
+---
+
+## 目录
+
+- [标准目录布局](#标准目录布局)
+- [manifest.toml 详解](#manifesttoml-详解)
+- [插件基类](#插件基类)
+- [类属性与注入属性](#类属性与注入属性)
+- [多文件插件组织](#多文件插件组织)
+
+---
+
+## 标准目录布局
+
+一个 NcatBot 插件的最小结构只需两个文件：
+
+```text
+plugins/
+└── my_plugin/
+    ├── manifest.toml    # 插件清单（必须）
+    └── main.py          # 入口文件（必须）
+```
+
+带资源文件的完整布局：
+
+```text
+plugins/
+└── my_plugin/
+    ├── manifest.toml    # 插件清单
+    ├── main.py          # 入口文件
+    ├── resources/       # 静态资源（图片、文件等）
+    │   ├── logo.png
+    │   └── template.txt
+    ├── utils.py         # 辅助模块
+    └── models.py        # 数据模型
+```
+
+> 示例参考：[examples/qq/04_bot_api/](../../../examples/qq/04_bot_api/) 包含 `resources/` 目录。
+
+所有插件放在 `plugins/` 目录下（可通过 `config.yaml` 的 `plugin.plugins_dir` 配置），框架启动时自动扫描加载。
+
+---
+
+## manifest.toml 详解
+
+每个插件**必须**在根目录下有一个 `manifest.toml` 文件，框架通过它识别和管理插件。
+
+### 最小示例
+
+```toml
+name = "hello_world"
+version = "1.0.0"
+main = "main.py"
+```
+
+### 完整示例
+
+```toml
+name = "external_api"
+version = "1.0.0"
+main = "main.py"
+entry_class = "ExternalAPIPlugin"
+author = "NcatBot"
+description = "外部 API 集成 — HTTP 请求、配置管理、错误处理"
+
+[dependencies]
+some_plugin = ">=1.0.0"     # 依赖其他插件
+
+[pip_dependencies]
+aiohttp = ">=3.8.0"         # pip 依赖
+```
+
+> 取自 [examples/common/07_external_api/manifest.toml](../../../examples/common/07_external_api/manifest.toml)。
+
+### 字段说明
+
+| 字段 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `name` | `str` | ✅ | — | 插件唯一标识符，全局不可重复 |
+| `version` | `str` | ✅ | — | 语义化版本号（如 `"1.0.0"`） |
+| `main` | `str` | ✅ | — | 入口文件名（带或不带 `.py` 后缀） |
+| `entry_class` | `str` | ❌ | 自动发现 | 插件类名；省略时框架自动查找第一个 `BasePlugin` 子类 |
+| `author` | `str` | ❌ | `"Unknown"` | 作者 |
+| `description` | `str` | ❌ | `""` | 插件描述 |
+| `dependencies` | `Dict[str, str]` | ❌ | `{}` | 依赖的其他插件，格式：`插件名 = "版本约束"` |
+| `pip_dependencies` | `Dict[str, str]` | ❌ | `{}` | pip 依赖，格式：`包名 = "版本约束"` |
+
+### 依赖声明
+
+**插件依赖**：在 `[dependencies]` 中声明对其他插件的依赖，框架会自动按拓扑排序加载：
+
+```toml
+[dependencies]
+rbac = ">=1.0.0"           # 依赖 rbac 插件 1.0.0 或更高版本
+config_manager = ">=0.5.0"
+```
+
+**pip 依赖**：在 `[pip_dependencies]` 中声明 Python 包依赖，框架在加载时自动检查并提示安装：
+
+```toml
+[pip_dependencies]
+aiohttp = ">=3.8.0"
+beautifulsoup4 = ">=4.12.0"
+```
+
+> 依赖解析的详细机制参见 [高级主题 — 插件依赖管理](7a.patterns.md#插件依赖管理)。
+
+---
+
+## 插件基类
+
+NcatBot 提供两个插件基类：
+
+### BasePlugin vs NcatBotPlugin
+
+| 特性 | `BasePlugin` | `NcatBotPlugin` |
+|------|-------------|-----------------|
+| 生命周期 | ✅ `on_load()` / `on_close()` | ✅ |
+| 事件处理器注册 | ✅ `@registrar.on_*()` | ✅ |
+| Bot API 访问 | ✅ `self.api` | ✅ |
+| 配置持久化 | ❌ | ✅ `ConfigMixin` |
+| 数据持久化 | ❌ | ✅ `DataMixin` |
+| 权限管理 | ❌ | ✅ `RBACMixin` |
+| 定时任务 | ❌ | ✅ `TimeTaskMixin` |
+| 事件流 | ❌ | ✅ `EventMixin` |
+
+**推荐使用 `NcatBotPlugin`**——它继承了所有 Mixin 能力，开箱即用：
+
+```python
+from ncatbot.plugin import NcatBotPlugin
+
+class MyPlugin(NcatBotPlugin):
+    name = "my_plugin"
+    version = "1.0.0"
+```
+
+### NcatBotPlugin 的 MRO（方法解析顺序）
+
+```python
+class NcatBotPlugin(BasePlugin, EventMixin, TimeTaskMixin, RBACMixin, ConfigMixin, DataMixin):
     pass
 ```
 
-兼容别名（3xx 版本）：
-- `group_event/private_event/notice_event/request_event/startup_event/shutdown_event/heartbeat_event`
-- 以及 `add_*_event_handler` 等旧接口均已兼容映射。
+MRO 决定了 Mixin 钩子的执行顺序：
+
+- **加载**：EventMixin → TimeTaskMixin → RBACMixin → ConfigMixin → DataMixin
+- **卸载**：EventMixin → TimeTaskMixin → RBACMixin → ConfigMixin → DataMixin
+
+> 各 Mixin 的详细 API 参见 [Mixin 能力体系](5a.config-data.md)。
 
 ---
 
-## 执行模型与注意事项
+## 类属性与注入属性
 
-- BotClient 会把 Adapter 输入的事件分发到内部线程池（`ThreadPool`），再调用你注册的处理器，避免阻塞收包循环。
-- 处理器内部可以是同步或异步；若为异步函数会被正确 `await`。
-- 请尽量避免在处理器内执行长时间阻塞操作；若有耗时 I/O，请自行创建任务或使用异步 API。
-- 消息过滤：`filter` 需为 `MessageSegment` 子类，否则会抛出 `TypeError`。
+### 插件元数据（子类定义）
 
----
-
-## 运行 Bot 与插件系统对接
-
-- 前台阻塞运行：`bot.run_frontend(**kwargs)`
-- 后台非阻塞：`bot.run_backend(**kwargs)`（返回 `BotAPI` 以便在外部直接调用接口）
-
-`start()` 过程会：
-1) 校验并应用配置；
-2) 创建 `EventBus` 与 `PluginLoader` 并加载插件；
-3) 非 mock 模式下启动 NapCat 与 WebSocket；
-4) 通过 `Adapter` 接收事件，触发上述回调与插件总线。
-
-插件访问：
-- `get_registered_plugins() -> List[BasePlugin]`
-- `get_plugin(Type[T]) -> T`（按类型检索实例）
-
----
-
-## 小贴士
-
-- 想让插件收到官方事件？无需手动桥接。BotClient 已在内部注册了一个内置处理器：把官方事件封装为 `NcatBotEvent` 并发布到 `EventBus`，插件只需订阅相应事件类型即可。
-
-
----
-
-# 文件: 3. 组件介绍\3. PluginLoader.md
-
----
-title: "PluginLoader 组件介绍"
-createTime: 2025/09/26 11:00:00
-permalink: /guide/pluginloader/
----
-
-## PluginLoader：插件发现、依赖与生命周期
-
-PluginLoader 负责插件的全生命周期管理：发现、导入、依赖解析、初始化、卸载与重载，以及与 RBAC、事件总线的集成。
-
-### 总体职责
-
-- 加载内置插件。
-- 目录扫描并导入插件模块（支持包或单文件 `.py`）。
-- 自动安装插件依赖（可选，通过插件旁的 `requirements.txt` 或同名 `.requirements.txt`）。
-- 构建依赖图并拓扑排序，按依赖顺序加载插件；检查版本约束。
-- 为每个插件创建独立的线程池，并在该线程池内执行插件的异步初始化钩子。
-- 提供卸载、重载、查询与枚举接口。
-- 集成 RBAC：在全局状态中设置 `status.global_access_manager`。在加载时载入权限数据，卸载时保存权限数据。
-
----
-
-## 发现与导入
-
-入口：`load_plugins(plugins_path)`
-1) 先加载内置插件：`SystemManager`、`UnifiedRegistryPlugin`。
-2) 若未设置 `skip_plugin_load`，扫描 `plugins_path` 下的包与 `.py` 文件：
-   - 目录插件需包含 `__init__.py`
-   - 单文件插件为 `xxx.py`
-3) 对每个候选，若检测到依赖文件：
-   - 包目录：`<plugin>/requirements.txt`
-   - 单文件：`<plugin>.requirements.txt`
-   则按行调用包管理器安装（由 `PackageHelper.ensure` 实现）。
-4) 导入模块后，读取其 `__all__` 中导出的插件类，并筛选出满足接口的类（具有 `name/version/dependencies`）。
-
----
-
-## 依赖与版本检查
-
-通过内部 `_DependencyResolver`：
-- 抽取各插件的 `dependencies: Dict[str, version_spec]` 构建依赖图；
-- 拓扑排序得到加载顺序；存在环时抛出 `PluginCircularDependencyError`；
-- 加载完成后用 `SpecifierSet` 校验版本约束，不满足时抛出 `PluginVersionError/PluginDependencyError`。
-
----
-
-## 初始化与线程模型
-
-为避免阻塞主事件循环，Loader 会在「插件自己的线程池」中执行异步初始化：
-- 实例化插件时传入 `event_bus/rbac_manager/plugin_loader` 等依赖；
-- 把 `plugin.__onload__()` 包装进一个新事件循环并在该线程池中 `run_until_complete`；
-- 多个插件初始化通过 `asyncio.gather` 并发执行。
-
-卸载时调用 `plugin.__unload__()`；重载时会：
-1) 调用旧实例的 `_reinit_()` 与 `on_reload()`；
-2) 卸载旧实例；
-3) reload 模块，重新定位插件类，加载新实例。
-
----
-
-## 关键 API 一览
-
-- `await load_plugins(path)`：批量加载（含内置插件）。
-- `await load_plugin(PluginClass)`：单个加载。
-- `await unload_plugin(name)` / `await unload_all()`：卸载。
-- `await reload_plugin(name)`：重载。
-- `list_plugins(obj=False)`：列出名称或实例。
-- `get_plugin(name)` / `get_metadata(name)`：查询。
-
----
-
-## 与 EventBus、RBAC 的协作
-
-- 所有插件共享同一个 `EventBus` 实例，插件可在其 `__onload__` 中调用 `event_bus.subscribe(...)` 订阅事件。
-- `RBACManager` 被注入并记录到全局状态，用于统一的权限校验；在 `unload_all` 时会持久化到 `config.rbac_path`。
-
----
-
-## 开发建议
-
-- 在插件中显式声明 `name/version/dependencies`，并在 `__all__` 中导出插件类。
-- 如需第三方依赖，建议使用旁文件 `requirements.txt` 或 `.requirements.txt`，便于自动安装。
-- 初始化中的耗时操作会在插件线程池中执行，但仍建议注意超时与异常处理，避免影响总线。
-
-
----
-
-# 文件: 3. 组件介绍\4. EventBus.md
-
----
-title: EventBus 事件总线
-createTime: 2025/09/26 15:30:00
-permalink: /guide/eventbus/
----
-
-## EventBus：发布订阅与超时隔离
-
-EventBus 为插件系统提供高性能的事件发布/处理机制，支持精确与正则订阅、优先级、超时监控与线程隔离，并可收集每个处理器的返回值与异常。
-
-### 事件对象 NcatBotEvent
-
-事件发布时使用 `NcatBotEvent(type, data)`：
-- `type`: 字符串事件名（例如官方事件名或自定义事件）
-- `data`: 任意数据对象（BotClient 发布**官方事件**时会传入对应的 `BaseEventData` 子类）（[BaseEventData](../4.%20数据结构介绍/2.%20BaseEventData.md)）
-- `event.results`: 聚合各处理器返回值
-- `event.exceptions`: 聚合过程中收集的异常
-- 控制传播：`event.stop_propagation()` 或 `event.intercept()`（拦截并停止传播）
-
----
-
-## 订阅事件 subscribe()
-
-签名：
-`subscribe(event_type, handler, priority=0, timeout=None, plugin=None) -> handler_id`
-
-- `event_type`：
-  - 精确匹配：如 `"ncat.private.message"`
-  - 正则匹配：以 `re:` 前缀，例如 `re:^ncat\.(message|notice)\.`
-- `handler`：同步或异步函数，接收 `NcatBotEvent`。
-- `priority`：数值越大优先级越高，先执行；同优先级按函数名排序。
-- `timeout`：超时秒数；默认使用总线的 `default_timeout`。
-- `plugin`：可选，注入插件元数据；发生异常/超时时用于记录来源。
-- 返回 `UUID` 标识，可用于 `unsubscribe()`。
-
-取消订阅：`unsubscribe(handler_id) -> bool`
-
----
-
-## 发布事件 publish()
-
-签名：`await publish(event) -> List[Any]`
-
-流程：
-1) 收集匹配 `event.type` 的处理器（精确 + 正则），按优先级排序；
-2) 为每个处理器在线程池中提交任务，支持同步/异步函数执行；
-3) 为每个任务单独设置超时并监控，超时会强制终止该工作线程并以 `HandlerTimeoutError` 记录到 `event.exceptions`；
-4) 正常返回值会追加到 `event._results`；
-5) 返回结果列表（`event.results` 的副本）。
-
-注意：
-- 若某处理器调用了 `event.stop_propagation()` 或 `event.intercept()`，后续处理器将不会再被调度。
-- 每个处理器在独立工作线程中执行，避免单个卡死影响全局；被终止的线程会被替补一个新的工作线程。
-
----
-
-## 线程与超时模型
-
-- EventBus 维护一个任务队列和一组工作线程（默认 `max_workers=1`，可在构造时自定义）。
-- 监控线程会定期检查工作线程是否超时，若超时：
-  - 使用 `PyThreadState_SetAsyncExc` 注入 `TimeoutError` 终止该线程；
-  - 立即补充新的工作线程以维持并发度。
-
----
-
-## 典型用法
-
-订阅：
 ```python
-hid = event_bus.subscribe(
-    "ncat.private.message",
-    handler=my_handler,
-    priority=10,
-    timeout=3,
-    plugin=self,  # 在插件内订阅时建议传入，便于异常标注来源
+class MyPlugin(NcatBotPlugin):
+    # -------- 必须定义 --------
+    name = "my_plugin"         # 插件唯一标识
+    version = "1.0.0"          # 版本号
+
+    # -------- 可选 --------
+    author = "Your Name"       # 作者
+    description = "描述"       # 插件描述
+    dependencies = {}          # 插件依赖（同 manifest.toml）
+```
+
+> 类属性中的 `name` / `version` 必须与 `manifest.toml` 一致。
+
+### 运行时注入属性
+
+框架在加载插件时自动注入以下属性，可在 `on_load()` 及之后使用：
+
+| 属性 | 类型 | 说明 |
+|------|------|------|
+| `self.workspace` | `Path` | 插件工作目录（自动创建） |
+| `self.api` | `BotAPIClient` | Bot API 客户端，用于发送消息、群管理等 |
+| `self.services` | `ServiceManager` | 服务管理器，访问系统服务 |
+| `self._dispatcher` | `AsyncEventDispatcher` | 底层事件分发器（通常不直接使用） |
+| `self._plugin_loader` | `PluginLoader` | 插件加载器实例 |
+| `self._manifest` | `PluginManifest` | 插件清单数据 |
+| `self._debug` | `bool` | 是否为调试模式 |
+
+### 便捷方法
+
+```python
+# 获取其他插件实例
+other = self.get_plugin("other_plugin_name")
+
+# 列出所有已加载插件
+names = self.list_plugins()
+
+# 读取调试标志
+if self.debug:
+    LOG.debug("调试模式")
+```
+
+---
+
+## 多文件插件组织
+
+当插件逻辑较复杂时，可以拆分为多个文件：
+
+```text
+plugins/
+└── my_complex_plugin/
+    ├── manifest.toml
+    ├── main.py           # 入口：导入并组合各模块
+    ├── handlers.py       # 事件处理器
+    ├── services.py       # 业务逻辑
+    └── models.py         # 数据模型
+```
+
+**main.py**（入口文件）中导入其他模块：
+
+```python
+from ncatbot.plugin import NcatBotPlugin
+from ncatbot.core import registrar
+from ncatbot.event.qq import GroupMessageEvent
+
+# 相对导入同目录下的模块
+from .services import MyService
+from .models import UserData
+
+
+class MyComplexPlugin(NcatBotPlugin):
+    name = "my_complex_plugin"
+    version = "1.0.0"
+
+    async def on_load(self):
+        self.service = MyService()
+
+    @registrar.on_group_command("查询")
+    async def on_query(self, event: GroupMessageEvent, keyword: str):
+        result = await self.service.search(keyword)
+        await event.reply(result)
+```
+
+> 框架会将插件根目录（`plugins/`）添加到 `sys.path`，因此每个插件文件夹相当于一个 Python 包。详细的跨插件导入机制参见 [高级主题 — 跨插件交互](7a.patterns.md#跨插件交互)。
+
+---
+
+## 下一步
+
+- [生命周期](3.lifecycle.md) — 了解 `on_load()` / `on_close()` 在整个加载流程中的位置
+- [事件处理](4a.event-registration.md) — 学习用装饰器注册事件处理器
+- [Mixin 能力体系](5a.config-data.md) — 使用配置、数据、权限、定时任务等 Mixin
+
+
+---
+
+# 文件: 3. 插件开发\3. 生命周期.md
+
+---
+title: 加载与卸载流程
+createTime: 2026/03/19 17:26:45
+permalink: /guide/8a7lrplq/
+---
+
+> 插件从发现到就绪的完整生命周期——扫描、依赖排序、导入、Mixin 钩子链、卸载与清理。
+
+---
+
+## 目录
+
+- [全流程概览](#全流程概览)
+- [加载阶段](#加载阶段)
+- [Mixin 钩子链](#mixin-钩子链)
+- [卸载阶段](#卸载阶段)
+- [开发者钩子 API](#开发者钩子-api)
+- [常见模式](#常见模式)
+
+---
+
+## 全流程概览
+
+```mermaid
+flowchart TB
+    subgraph 加载阶段
+        SCAN[1. 扫描 manifest.toml]
+        RESOLVE[2. 依赖拓扑排序]
+        IMPORT[3. 导入模块]
+        INST[4. 实例化 + 属性注入]
+        WS[5. 创建 workspace]
+        ML[6. Mixin _mixin_load 链]
+        INIT[7. _init_ 同步钩子]
+        LOAD[8. on_load 异步钩子]
+        FLUSH[9. 刷新 Handler 到 Dispatcher]
+    end
+
+    subgraph 运行阶段
+        RUN[接收事件 → 路由到 Handler]
+    end
+
+    subgraph 卸载阶段
+        CLOSE_[10. _close_ 同步钩子]
+        ONCLOSE[11. on_close 异步钩子]
+        MU[12. Mixin _mixin_unload 链]
+        REVOKE[13. 撤销 Handler]
+        UNMOD[14. 卸载模块]
+    end
+
+    SCAN --> RESOLVE --> IMPORT --> INST --> WS --> ML --> INIT --> LOAD --> FLUSH --> RUN
+    RUN --> CLOSE_ --> ONCLOSE --> MU --> REVOKE --> UNMOD
+
+    style LOAD fill:#e1f5fe
+    style ONCLOSE fill:#fce4ec
+```
+
+---
+
+## 加载阶段
+
+### 1. 扫描
+
+`PluginIndexer` 递归扫描 `plugins/` 目录，查找所有包含 `manifest.toml` 的子目录：
+
+```text
+plugins/
+├── hello_world/manifest.toml  ✅ 发现
+├── my_plugin/manifest.toml    ✅ 发现
+└── no_manifest/               ❌ 跳过
+```
+
+解析 `manifest.toml` 为 `PluginManifest` 对象，验证必填字段和入口文件是否存在。
+
+### 2. 依赖拓扑排序
+
+`DependencyResolver` 使用 **Kahn 算法**（拓扑排序）确定加载顺序：
+
+- 根据 `manifest.toml` 中的 `[dependencies]` 构建有向依赖图
+- 无依赖的插件先加载，被依赖的插件保证在依赖方之前加载
+- **检测循环依赖**：如果存在 A → B → A 的环，会抛出 `PluginCircularDependencyError`
+- **检测缺失依赖**：如果依赖的插件不存在，会抛出 `PluginMissingDependencyError`
+- 使用 `packaging.specifiers` 验证版本约束
+
+### 3. 导入模块
+
+`ModuleImporter` 使用 `importlib` 动态导入插件入口模块：
+
+- 插件根目录被添加到 `sys.path`（低优先级，不影响标准库和第三方包）
+- 导入前自动清理 `__pycache__`，确保代码更新生效
+- 使用 `ContextVar` 隔离当前加载插件的名称（用于装饰器注册 Handler 时标记归属）
+- 如果 `__init__.py` 中含 `from .main import ...`，Python import system 会先于 `load_module()` 导入入口模块。框架会检测到入口模块已在 `sys.modules` 中，**直接复用而不重新执行**，避免装饰器注册出重复的 Handler
+
+### 4. 实例化 + 属性注入
+
+`PluginLoader._instantiate()` 创建插件实例并注入运行时属性：
+
+```python
+plugin.workspace = plugin_workspace_path
+plugin.services = service_manager
+plugin.api = bot_api_client
+plugin._dispatcher = event_dispatcher
+plugin._plugin_loader = self
+plugin._manifest = manifest
+plugin._debug = debug_flag
+```
+
+### 5-8. `__onload__()` 编排
+
+框架调用 `plugin.__onload__()`，该方法按顺序执行：
+
+```python
+async def __onload__(self) -> None:
+    self.workspace.mkdir(exist_ok=True, parents=True)  # 5. 创建工作目录
+    await self._run_mixin_hooks("_mixin_load")          # 6. Mixin 加载钩子
+    self._init_()                                        # 7. 同步预初始化
+    await self.on_load()                                 # 8. 异步主初始化
+```
+
+### 9. 刷新 Handler
+
+`on_load()` 中通过 `@registrar.on_*()` 装饰器注册的 Handler 会被暂存，`__onload__()` 完成后一次性刷新到 `HandlerDispatcher`。
+
+---
+
+## Mixin 钩子链
+
+`NcatBotPlugin` 继承链中的每个 Mixin 都可以定义 `_mixin_load()` 和 `_mixin_unload()` 钩子。框架按 **MRO（方法解析顺序）** 自动发现并依次执行。
+
+### 执行顺序
+
+```text
+NcatBotPlugin(BasePlugin, EventMixin, TimeTaskMixin, RBACMixin, ConfigMixin, DataMixin)
+```
+
+| 顺序 | Mixin | `_mixin_load()` 做什么 | `_mixin_unload()` 做什么 |
+|------|-------|----------------------|------------------------|
+| 1 | `EventMixin` | 初始化事件流列表 | 关闭所有活跃的 `EventStream` |
+| 2 | `TimeTaskMixin` | 初始化任务名列表 | 清理所有定时任务 |
+| 3 | `RBACMixin` | （无特殊操作） | （无特殊操作） |
+| 4 | `ConfigMixin` | 从 `config.yaml` 加载配置 | 保存配置到 `config.yaml` |
+| 5 | `DataMixin` | 从 `data.json` 加载数据 | 保存数据到 `data.json` |
+
+### 独立容错
+
+每个 Mixin 钩子在独立的 `try/except` 中执行——**单个 Mixin 失败不会阻止其他 Mixin 初始化**：
+
+```python
+async def _run_mixin_hooks(self, hook_name: str):
+    for cls in type(self).__mro__:
+        hook = cls.__dict__.get(hook_name)
+        if hook is not None:
+            try:
+                result = hook(self)
+                if asyncio.iscoroutine(result):
+                    await result
+            except Exception:
+                LOG.exception("Mixin hook %s.%s 执行失败", cls.__name__, hook_name)
+```
+
+---
+
+## 卸载阶段
+
+### `__unload__()` 编排
+
+```python
+async def __unload__(self) -> None:
+    self._close_()                                       # 10. 同步后清理
+    await self.on_close()                                # 11. 异步清理
+    await self._run_mixin_hooks("_mixin_unload")          # 12. Mixin 卸载钩子
+```
+
+### Handler 撤销
+
+卸载后，`HandlerDispatcher.revoke_plugin(name)` 移除该插件注册的所有 Handler，确保不会再响应事件。
+
+### 模块清理
+
+`ModuleImporter.unload_module()` 从 `sys.modules` 中移除插件相关的模块条目，释放旧代码引用。
+
+---
+
+## 开发者钩子 API
+
+作为插件开发者，你可以重写以下 4 个生命周期钩子：
+
+| 钩子 | 类型 | 调用时机 | 典型用途 |
+|------|------|---------|---------|
+| `_init_(self)` | 同步 | Mixin 加载后、`on_load()` 之前 | 同步初始化（较少使用） |
+| `on_load(self)` | 异步 | 主初始化 | **注册事件处理器、初始化数据、启动后台任务** |
+| `on_close(self)` | 异步 | 卸载时 | 清理资源、保存状态 |
+| `_close_(self)` | 同步 | `on_close()` 之前 | 同步清理（较少使用） |
+
+**最常用的是 `on_load()` 和 `on_close()`**：
+
+```python
+class MyPlugin(NcatBotPlugin):
+    name = "my_plugin"
+    version = "1.0.0"
+
+    async def on_load(self):
+        if not self.get_config("prefix"):
+            self.set_config("prefix", "/")
+        self.data.setdefault("counter", 0)
+        self.add_scheduled_task("heartbeat", "60s")
+        LOG.info("MyPlugin 已加载")
+
+    async def on_close(self):
+        LOG.info("MyPlugin 已卸载，累计计数: %d", self.data.get("counter", 0))
+```
+
+> 完整示例：[examples/common/02_config_and_data/](../../../examples/common/02_config_and_data/) 展示了在 `on_load()` 中初始化配置和数据。
+
+---
+
+## 常见模式
+
+### 在 on_load() 中注册事件处理器
+
+所有 `@registrar.on_*()` 装饰的方法会在类定义时收集，在 `on_load()` 完成后自动刷新到分发器。通常不需要在 `on_load()` 中手动操作 Handler。
+
+### 在 on_load() 中启动后台任务
+
+如果需要持续运行的后台任务，在 `on_load()` 中使用 `asyncio.create_task()`，并在 `on_close()` 中取消：
+
+```python
+class MyPlugin(NcatBotPlugin):
+    name = "my_plugin"
+    version = "1.0.0"
+
+    async def on_load(self):
+        self._task = asyncio.create_task(self._background_worker())
+
+    async def on_close(self):
+        if hasattr(self, "_task"):
+            self._task.cancel()
+
+    async def _background_worker(self):
+        try:
+            async with self.events("message") as stream:
+                async for event in stream:
+                    LOG.info("收到消息: %s", event.data.raw_message)
+        except asyncio.CancelledError:
+            pass
+```
+
+> 完整示例：[examples/qq/02_event_handling/](../../../examples/qq/02_event_handling/) 的 `_stream_listener()` 方法。
+
+---
+
+## 下一步
+
+- [事件注册与装饰器](4a.event-registration.md) — 深入三种事件消费模式
+- [配置与数据 Mixin](5a.config-data.md) — 了解各 Mixin 钩子在生命周期中的作用
+- [高级模式](7a.patterns.md) — 热重载如何利用完整的加载/卸载周期
+
+
+---
+
+# 文件: 3. 插件开发\4. 事件注册.md
+
+---
+title: 事件注册与装饰器
+createTime: 2026/03/19 17:26:45
+permalink: /guide/5kxxkqvy/
+---
+
+> 事件类型体系、装饰器路由模式、优先级机制与通知/请求事件处理。
+
+---
+
+## 目录
+
+- [事件类型体系](#事件类型体系)
+- [模式 A：装饰器注册（推荐）](#模式-a装饰器注册推荐)
+
+---
+
+## 事件类型体系
+
+NcatBot 基于 OneBot v11 协议，将事件分为四大类：
+
+| 大类 | 事件类型字符串 | 说明 |
+|------|--------------|------|
+| **message** | `message.group` / `message.private` | 群消息 / 私聊消息 |
+| **notice** | `notice.group_increase` / `notice.group_decrease` / `notice.group_recall` / `notice.poke` 等 | 通知事件 |
+| **request** | `request.friend` / `request.group` | 好友请求 / 群请求 |
+| **meta** | `meta_event.lifecycle` / `meta_event.heartbeat` | 元事件 |
+
+事件路由支持**前缀匹配**——注册 `"message"` 可以匹配所有消息类型（`message.group` 和 `message.private`）。
+
+---
+
+## 模式 A：装饰器注册（推荐）
+
+最常用的方式——使用 `@registrar` 装饰器将方法注册为事件处理器，框架自动路由匹配的事件：
+
+### 命令装饰器
+
+```python
+from ncatbot.core import registrar
+from ncatbot.event.qq import GroupMessageEvent, PrivateMessageEvent
+
+class MyPlugin(NcatBotPlugin):
+    name = "my_plugin"
+    version = "1.0.0"
+
+    @registrar.on_group_command("hello", ignore_case=True)
+    async def on_hello(self, event: GroupMessageEvent):
+        """群里发 'hello' 时触发"""
+        await self.api.qq.post_group_msg(event.group_id, text="Hello, World! 👋")
+
+    @registrar.on_group_command("hi", ignore_case=True)
+    async def on_hi(self, event: GroupMessageEvent):
+        """event.reply() 自动引用 + @发送者"""
+        await event.reply(text="你好呀！🎉")
+
+    @registrar.on_private_command("hello", ignore_case=True)
+    async def on_private_hello(self, event: PrivateMessageEvent):
+        """私聊命令"""
+        await event.reply(text="你好！👋")
+```
+
+> 取自 [examples/qq/01_hello_world/main.py](../../../examples/qq/01_hello_world/main.py)
+
+### 参数绑定
+
+`on_group_command` / `on_private_command` 内置了 `CommandHook`，自动从消息中提取参数并绑定到处理器函数的参数：
+
+```python
+from ncatbot.types import At
+
+@registrar.on_group_command("禁言")
+async def on_ban(
+    self, event: GroupMessageEvent, target: At = None, duration: int = 60
+):
+    """'禁言 @xxx 60' → target=At(user_id=xxx), duration=60"""
+    if target is None:
+        await event.reply("请 @一个用户，例如: 禁言 @xxx 60")
+        return
+    await self.api.qq.manage.set_group_ban(event.group_id, target.user_id, duration)
+    await event.reply(f"已禁言 {duration} 秒")
+
+@registrar.on_group_command("设置前缀")
+async def on_set_prefix(self, event: GroupMessageEvent, new_prefix: str):
+    """'设置前缀 !' → new_prefix='!'"""
+    self.set_config("prefix", new_prefix)
+    await event.reply(f"命令前缀已更新为: {new_prefix}")
+```
+
+> 取自 [examples/qq/04_bot_api/main.py](../../../examples/qq/04_bot_api/main.py) 和 [examples/common/02_config_and_data/main.py](../../../examples/common/02_config_and_data/main.py)
+
+支持的参数类型：
+
+| 类型 | 说明 | 示例 |
+|------|------|------|
+| `str` | 命令后的文本 | `"回声 你好"` → `content="你好"` |
+| `int` | 自动转为整数 | `"禁言 @xxx 60"` → `duration=60` |
+| `At` | 消息中的 @段 | `"踢 @xxx"` → `target=At(user_id=xxx)` |
+
+### 便捷装饰器一览
+
+| 装饰器 | 事件类型 | 自动添加的 Hook |
+|--------|---------|----------------|
+| `on_group_command(*names)` | `message` | `MessageTypeFilter("group")` + `CommandHook` |
+| `on_private_command(*names)` | `message` | `MessageTypeFilter("private")` + `CommandHook` |
+| `on_command(*names)` | `message` | `CommandHook`（群/私聊均可） |
+| `on_group_message()` | `message` | `MessageTypeFilter("group")` |
+| `on_private_message()` | `message` | `MessageTypeFilter("private")` |
+| `on_message()` | `message` | （无额外过滤） |
+| `on_message_sent()` | `message_sent` | （无额外过滤） |
+| `on_notice()` | `notice` | （无额外过滤） |
+| `on_request()` | `request` | （无额外过滤） |
+| `on_meta()` | `meta_event` | （无额外过滤） |
+| `on_group_increase()` | `notice` | `NoticeTypeFilter("group_increase")` |
+| `on_group_decrease()` | `notice` | `NoticeTypeFilter("group_decrease")` |
+| `on_poke()` | `notice` | `NoticeTypeFilter("notify")` + `SubTypeFilter("poke")` |
+| `on_friend_request()` | `request` | `RequestTypeFilter("friend")` |
+| `on_group_request()` | `request` | `RequestTypeFilter("group")` |
+| `on(event_type)` | 自定义 | 精确/前缀匹配 |
+
+所有装饰器均支持 `platform` 参数，用于限定只接收特定平台的事件：
+
+```python
+# 仅处理 QQ 平台的群消息
+@registrar.on_group_message(platform="qq")
+async def qq_only(self, event: GroupMessageEvent):
+    await event.reply(text="QQ 平台的消息")
+
+# 处理所有平台的消息（默认）
+@registrar.on_message()
+async def all_platforms(self, event):
+    print(f"来自 {event.platform} 的消息")
+```
+
+> 详见 [多平台开发指南](../multi_platform/)
+
+### Handler 优先级
+
+通过 `priority` 参数控制同事件多个 Handler 的执行优先级——**数值越大，优先级越高**：
+
+```python
+@registrar.on_group_message(priority=100)
+async def count_message(self, event: GroupMessageEvent):
+    """高优先级：每条群消息都计数"""
+    self.data["total_messages"] += 1
+
+@registrar.on_group_command("ping", priority=10)
+async def on_ping(self, event: GroupMessageEvent):
+    """标准优先级"""
+    await event.reply("pong 🏓")
+
+@registrar.on_group_command("状态", priority=0)
+async def on_status(self, event: GroupMessageEvent):
+    """低优先级"""
+    await event.reply("运行中 ✅")
+```
+
+> 取自 [examples/qq/02_event_handling/main.py](../../../examples/qq/02_event_handling/main.py) 和 [examples/common/02_config_and_data/main.py](../../../examples/common/02_config_and_data/main.py)
+
+### 通知与请求事件
+
+```python
+from ncatbot.event.qq import (
+    GroupIncreaseEvent, NoticeEvent,
+    FriendRequestEvent, GroupRequestEvent,
+)
+
+@registrar.qq.on_group_increase()
+async def on_member_join(self, event: GroupIncreaseEvent):
+    """新成员入群 → 发送欢迎消息"""
+    msg = MessageArray()
+    msg.add_at(event.user_id)
+    msg.add_text(" 欢迎加入本群！📜")
+    await self.api.qq.post_group_array_msg(event.group_id, msg)
+
+@registrar.qq.on_poke()
+async def on_poke(self, event: NoticeEvent):
+    """戳一戳 → 回戳"""
+    target_id = getattr(event.data, "target_id", None)
+    if str(target_id) == str(event.self_id):
+        await self.api.qq.send_poke(event.group_id, event.user_id)
+
+@registrar.qq.on_friend_request()
+async def on_friend_request(self, event: FriendRequestEvent):
+    """好友请求 → 自动通过"""
+    await event.approve()
+
+@registrar.qq.on_group_recall()
+async def on_recall(self, event: NoticeEvent):
+    """消息撤回"""
+    operator_id = getattr(event.data, "operator_id", None)
+    await self.api.qq.post_group_msg(
+        event.group_id,
+        text=f"有人撤回了一条消息 👀 (操作者: {operator_id})"
+    )
+```
+
+> 取自 [examples/qq/05_notice_and_request/main.py](../../../examples/qq/05_notice_and_request/main.py)
+
+---
+
+## 下一步
+
+- [事件高级用法](4b.event-advanced.md) — 事件流、wait_event、事件实体
+- [Hook 基础](6.hooks.md) — 深入了解过滤器和中间件
+
+
+---
+
+# 文件: 3. 插件开发\5. 事件高级.md
+
+---
+title: 事件高级用法
+createTime: 2026/03/19 17:26:45
+permalink: /guide/fzk8vub0/
+---
+
+> 事件流消费、一次性等待、三种模式对比、事件实体详解与实战组合。
+
+---
+
+## 目录
+
+- [模式 B：事件流消费](#模式-b事件流消费)
+- [模式 C：一次性等待](#模式-c一次性等待)
+- [三种模式对比](#三种模式对比)
+- [事件实体](#事件实体)
+- [实战组合](#实战组合)
+- [复杂工作流模式](#复杂工作流模式)
+
+---
+
+## 模式 B：事件流消费
+
+使用 `EventMixin` 的 `events()` 方法创建持续的事件流，适合后台监控场景：
+
+```python
+import asyncio
+
+class MyPlugin(NcatBotPlugin):
+    name = "my_plugin"
+    version = "1.0.0"
+
+    async def on_load(self):
+        self._stream_task = asyncio.create_task(self._stream_listener())
+
+    async def on_close(self):
+        if hasattr(self, "_stream_task"):
+            self._stream_task.cancel()
+
+    async def _stream_listener(self):
+        """后台事件流：监听所有私聊消息"""
+        try:
+            async with self.events("message") as stream:
+                async for event in stream:
+                    if (
+                        getattr(event.data, "message_type", None)
+                        and event.data.message_type.value == "private"
+                    ):
+                        LOG.info(
+                            "[事件流] 私聊消息: %s (来自 %s)",
+                            event.data.raw_message,
+                            event.data.user_id,
+                        )
+        except asyncio.CancelledError:
+            pass
+```
+
+> 取自 [examples/qq/02_event_handling/main.py](../../../examples/qq/02_event_handling/main.py) 的模式 B
+
+### 关键点
+
+- `self.events(event_type)` — `event_type` 可选，传入则按前缀过滤
+- 返回 `EventStream`：支持 `async with` + `async for`
+- **必须在后台任务中运行**（`asyncio.create_task`），否则会阻塞 `on_load()`
+- 卸载时自动关闭（`EventMixin._mixin_unload()` 清理所有活跃流）
+
+---
+
+## 模式 C：一次性等待
+
+使用 `EventMixin` 的 `wait_event()` 等待满足条件的下一个事件，适合交互确认和多步对话：
+
+```python
+@registrar.on_group_command("确认测试")
+async def on_confirm_test(self, event: GroupMessageEvent):
+    """等待用户在 15 秒内回复「确认」"""
+    await event.reply("请在 15 秒内回复「确认」来完成操作...")
+
+    try:
+        await self.wait_event(
+            predicate=lambda e: (
+                hasattr(e.data, "user_id")
+                and str(e.data.user_id) == str(event.user_id)
+                and hasattr(e.data, "raw_message")
+                and e.data.raw_message.strip() == "确认"
+            ),
+            timeout=15.0,
+        )
+        await self.api.qq.post_group_msg(event.group_id, text="操作已确认 ✅")
+    except asyncio.TimeoutError:
+        await self.api.qq.post_group_msg(event.group_id, text="操作超时已取消 ⏰")
+```
+
+> 取自 [examples/qq/02_event_handling/main.py](../../../examples/qq/02_event_handling/main.py) 的模式 C
+
+### wait_event() 签名
+
+```python
+async def wait_event(
+    predicate: Optional[Callable[[Event], bool]] = None,
+    timeout: Optional[float] = None,
+) -> Event
+```
+
+| 参数 | 说明 |
+|------|------|
+| `predicate` | 过滤函数，返回 `True` 时匹配 |
+| `timeout` | 超时秒数，超时抛出 `asyncio.TimeoutError` |
+
+### 封装辅助方法
+
+实际开发中建议使用 Predicate 语法糖（见下文）或封装 `_wait_user_reply()` 减少重复代码：
+
+```python
+async def _wait_user_reply(self, group_id, user_id):
+    """等待指定用户在指定群的下一条消息"""
+    event = await self.wait_event(
+        predicate=lambda e: (
+            hasattr(e.data, "user_id")
+            and str(e.data.user_id) == str(user_id)
+            and hasattr(e.data, "group_id")
+            and str(e.data.group_id) == str(group_id)
+            and hasattr(e.data, "raw_message")
+        ),
+        timeout=30,
+    )
+    return event.data.raw_message.strip()
+```
+
+> 取自 [examples/common/06_multi_step_dialog/main.py](../../../examples/common/06_multi_step_dialog/main.py)
+
+### Predicate 语法糖
+
+`ncatbot.core` 模块提供了一套声明式的 Predicate DSL，可以用运算符组合替代冗长的 lambda。
+
+#### 运算符
+
+| 运算符 | 含义 | 示例 |
+|--------|------|------|
+| `*` 或 `&` | AND（全部满足） | `from_event(event) * msg_equals("确认")` |
+| `+` 或 `\|` | OR（任一满足） | `msg_equals("是") + msg_equals("yes")` |
+| `~` | NOT（取反） | `~same_user(bot_id)` |
+
+#### 核心函数：`from_event`
+
+从触发事件 **自动推导同 session 条件**（同用户 + 群消息同群 / 私聊同私聊），是最常用的语法糖：
+
+```python
+from ncatbot.core import from_event, msg_equals
+
+# 等待同 session 用户的下一条消息
+evt = await self.wait_event(predicate=from_event(event), timeout=30)
+
+# 同 session + 精确匹配
+evt = await self.wait_event(
+    predicate=from_event(event) * msg_equals("确认"),
+    timeout=15,
 )
 ```
 
-发布：
+推导规则：
+
+| 触发事件类型 | 生成的 predicate |
+|------------|-----------------|
+| 群消息 | `same_user(uid) * same_group(gid) * is_group()` |
+| 私聊消息 | `same_user(uid) * is_private()` |
+| 其他 | `same_user(uid) * is_message()` |
+
+#### 全部工厂函数
+
+| 函数 | 说明 |
+|------|------|
+| `from_event(event)` | 从触发事件推导同 session 谓词 |
+| `same_user(uid)` | 匹配 user_id |
+| `same_group(gid)` | 匹配 group_id |
+| `is_private()` | 事件为私聊消息 |
+| `is_group()` | 事件为群消息 |
+| `is_message()` | 事件为消息类型 |
+| `has_keyword(*words)` | raw_message 含任一关键词 |
+| `msg_equals(text)` | raw_message.strip() 完全匹配 |
+| `msg_in(*options)` | raw_message.strip() 匹配选项之一 |
+| `msg_matches(pattern)` | raw_message 正则匹配 |
+| `event_type(prefix)` | event.type 前缀匹配 |
+| `P.of(lambda)` | 将普通 callable 升级为可组合的 P |
+
+#### 组合示例
+
 ```python
-from ncatbot.plugin_system.event import NcatBotEvent
-results = await event_bus.publish(NcatBotEvent("ncatbot.myplugin.myevent", data))
+from ncatbot.core import from_event, msg_equals, msg_in, has_keyword, same_user, P
+
+# 等"确认"或"取消"
+pred = from_event(event) * (msg_equals("确认") + msg_equals("取消"))
+
+# 等价简写
+pred = from_event(event) * msg_in("确认", "取消")
+
+# 含关键词
+pred = from_event(event) * has_keyword("帮助", "help")
+
+# 排除某用户
+pred = from_event(event) * ~same_user(bot_id)
+
+# 混用 lambda
+pred = from_event(event) * P.of(lambda e: int(e.data.raw_message) > 0)
 ```
 
-取消订阅：
+---
+
+## 三种模式对比
+
+| 维度 | 模式 A：装饰器 | 模式 B：事件流 | 模式 C：wait_event |
+|------|--------------|--------------|-------------------|
+| **适用场景** | 命令响应、通知处理 | 后台监控、日志记录 | 交互确认、多步对话 |
+| **代码风格** | 声明式（装饰器） | 响应式（async for） | 命令式（await） |
+| **并发模型** | 框架自动路由 | 需手动 create_task | Handler 内顺序执行 |
+| **生命周期** | 随插件自动管理 | 需手动启动/取消 | 单次调用 |
+| **优先级** | ✅ 支持 priority | ❌ 无优先级概念 | ❌ 无优先级概念 |
+| **参数绑定** | ✅ CommandHook 自动 | ❌ 需手动解析 | ❌ 需手动解析 |
+| **代表示例** | 01_hello_world | 02_event_handling | 10_multi_step_dialog |
+
+**建议**：优先使用模式 A（装饰器），需要多步交互时用模式 C（wait_event），后台监控用模式 B（事件流）。
+
+---
+
+## 事件实体
+
+事件实体是对原始事件数据的包装，提供便捷的属性访问和操作方法。
+
+### BaseEvent
+
+所有事件实体的基类，通过 `__getattr__` 代理底层数据字段——你可以直接访问 `event.user_id`、`event.group_id` 等字段。
+
+### MessageEvent
+
+消息事件基类，新增便捷方法：
+
+| 方法/属性 | 说明 |
+|----------|------|
+| `event.message` | `MessageArray` 实例——消息段数组 |
+| `event.raw_message` | 原始消息文本 |
+| `event.user_id` | 发送者 QQ 号 |
+| `event.message_id` | 消息 ID |
+| `event.sender` | 发送者信息 |
+| `await event.reply(text=, image=, ...)` | 便捷回复（自动引用 + @发送者） |
+| `await event.delete()` | 撤回该消息 |
+
+### GroupMessageEvent
+
+继承 `MessageEvent`，增加群相关操作：
+
+| 方法/属性 | 说明 |
+|----------|------|
+| `event.group_id` | 群号 |
+| `await event.kick()` | 踢出发送者 |
+| `await event.ban(duration=60)` | 禁言发送者 |
+
+### 其他事件实体
+
+| 类 | 用于 |
+|----|------|
+| `PrivateMessageEvent` | 私聊消息 |
+| `GroupIncreaseEvent` | 群成员增加 |
+| `NoticeEvent` | 通用通知事件 |
+| `FriendRequestEvent` | 好友请求（有 `approve()` 方法） |
+| `GroupRequestEvent` | 群请求 |
+
+### 消息内容处理
+
+消息内容通过 `event.message`（`MessageArray` 实例）访问，可用于提取特定类型的消息段：
+
 ```python
-event_bus.unsubscribe(hid)
+from ncatbot.types import Reply, Image
+
+# 提取回复段
+replies = event.message.filter(Reply)
+if replies:
+    quoted_msg_id = replies[0].id
+
+# 提取图片段
+images = event.message.filter(Image)
+
+# 获取纯文本内容
+text = event.message.text
+```
+
+> 消息段的完整 API 参见 [消息类型详解](../send_message/)。
+
+---
+
+## 实战组合
+
+### 装饰器 + wait_event：问答机器人
+
+结合模式 A（命令触发）和模式 C（多步输入），实现一个问答添加流程：
+
+```python
+@registrar.on_group_command("注册")
+async def on_register(self, event: GroupMessageEvent):
+    """多步注册流程"""
+    gid, uid = event.group_id, event.user_id
+
+    await event.reply("📝 请输入你的名字（30秒内回复，输入「取消」退出）：")
+
+    try:
+        name = await self._wait_user_reply(gid, uid)
+    except asyncio.TimeoutError:
+        await self.api.qq.post_group_msg(gid, text="⏰ 注册超时，已取消")
+        return
+
+    if name == "取消":
+        await self.api.qq.post_group_msg(gid, text="❌ 注册已取消")
+        return
+
+    await self.api.qq.post_group_msg(gid, text=f"好的，{name}！请输入你的年龄：")
+
+    try:
+        age_str = await self._wait_user_reply(gid, uid)
+    except asyncio.TimeoutError:
+        await self.api.qq.post_group_msg(gid, text="⏰ 注册超时，已取消")
+        return
+
+    if not age_str.isdigit():
+        await self.api.qq.post_group_msg(gid, text="❌ 年龄必须是数字，注册已取消")
+        return
+
+    # 保存数据
+    self.data.setdefault("users", {})[str(uid)] = {
+        "name": name, "age": int(age_str)
+    }
+    await self.api.qq.post_group_msg(gid, text=f"✅ 注册成功！欢迎你，{name}")
+```
+
+> 取自 [examples/common/06_multi_step_dialog/main.py](../../../examples/common/06_multi_step_dialog/main.py)
+
+### 装饰器 + 高优先级：消息统计
+
+用高优先级的通用 Handler 统计消息，不影响命令匹配：
+
+```python
+@registrar.on_group_message(priority=200)
+async def on_count(self, event: GroupMessageEvent):
+    """高优先级：每条群消息都统计"""
+    gid = str(event.group_id)
+    if gid not in self.data.get("enabled_groups", []):
+        return
+    self.data["daily_stats"]["total"] += 1
+```
+
+> 取自 [examples/qq/08_scheduled_reporter/main.py](../../../examples/qq/08_scheduled_reporter/main.py)
+
+---
+
+## 复杂工作流模式
+
+当需求超越线性多步对话——需要并发等待、分支路由、或脱离插件体系直接编排事件流——可以组合 `wait_event()`、`events()` 和 `run_async()` 构建更复杂的工作流。
+
+### 非阻塞启动 + 事件驱动主循环
+
+在非插件模式下，使用 `run_async()` 启动 Bot 后，直接通过 `bot.dispatcher` 消费事件：
+
+```python
+import asyncio
+from ncatbot.app import BotClient
+from ncatbot.core import same_group, has_keyword
+
+bot = BotClient()
+
+async def keyword_monitor():
+    """后台监控：检测到关键词时自动提醒"""
+    async with bot.dispatcher.events("message.group") as stream:
+        async for event in stream:
+            if "紧急" in event.data.raw_message:
+                await bot.api.qq.post_group_msg(
+                    event.data.group_id,
+                    text=f"⚠️ 检测到紧急消息 (来自 {event.data.user_id})",
+                )
+
+async def main():
+    await bot.run_async()  # Bot 就绪，后台监听
+
+    # 启动后台监控任务
+    monitor_task = asyncio.create_task(keyword_monitor())
+
+    try:
+        await asyncio.Event().wait()
+    except asyncio.CancelledError:
+        pass
+    finally:
+        monitor_task.cancel()
+        await bot.shutdown()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+### 并发 wait_event
+
+使用 `asyncio.gather` 同时等待多个条件，**先到先得**：
+
+```python
+@registrar.on_group_command("投票")
+async def on_vote(self, event: GroupMessageEvent):
+    gid = event.group_id
+    await event.reply("投票开始！请回复「赞成」或「反对」（30秒）")
+
+    votes = {"赞成": 0, "反对": 0}
+
+    async def collect_one():
+        """收集一票"""
+        return await self.wait_event(
+            predicate=same_group(gid) * msg_in("赞成", "反对"),
+            timeout=30.0,
+        )
+
+    # 并发收集最多 5 票
+    tasks = [asyncio.create_task(collect_one()) for _ in range(5)]
+    done, pending = await asyncio.wait(tasks, timeout=30.0)
+
+    for task in pending:
+        task.cancel()
+    for task in done:
+        try:
+            evt = task.result()
+            text = evt.data.raw_message.strip()
+            if text in votes:
+                votes[text] += 1
+        except (asyncio.TimeoutError, asyncio.CancelledError):
+            pass
+
+    await self.api.qq.post_group_msg(
+        gid, text=f"投票结果：赞成 {votes['赞成']}，反对 {votes['反对']}"
+    )
+```
+
+### 分支工作流
+
+使用 `wait_event` + `msg_in` 做路由分支，实现菜单式交互：
+
+```python
+from ncatbot.core import from_event, msg_in
+
+@registrar.on_group_command("服务")
+async def on_service(self, event: GroupMessageEvent):
+    await event.reply("请选择服务：\n1. 查询余额\n2. 充值\n3. 帮助")
+
+    try:
+        choice_evt = await self.wait_event(
+            predicate=from_event(event) * msg_in("1", "2", "3"),
+            timeout=30.0,
+        )
+    except asyncio.TimeoutError:
+        await event.reply("超时，已退出")
+        return
+
+    choice = choice_evt.data.raw_message.strip()
+    if choice == "1":
+        await self._handle_balance(event)
+    elif choice == "2":
+        await self._handle_recharge(event)  # 可继续嵌套 wait_event
+    else:
+        await event.reply("帮助文档：...")
+```
+
+### 要点总结
+
+| 模式 | 适用场景 | 关键 API |
+|------|---------|---------|
+| 非阻塞主循环 | 脱离插件、自定义编排 | `run_async()` + `bot.dispatcher` |
+| 并发等待 | 收集多人输入、竞争条件 | `asyncio.wait()` + 多个 `wait_event` |
+| 分支路由 | 菜单式交互、状态机 | `msg_in()` + 条件分支 |
+
+> 更完整的编排模式（生命周期事件等待、并发任务协调、清理策略）参见 [事件驱动工作流编排](7a.patterns.md#事件驱动工作流编排)。
+
+---
+
+## 下一步
+
+- [Predicate DSL](4c.predicate-dsl.md) — 所有工厂函数和组合运算符的完整参考
+- [配置与数据 Mixin](5a.config-data.md) — 配置、数据持久化
+- [Hook 基础](6.hooks.md) — 深入了解过滤器和中间件的工作原理
+- [消息类型详解](../send_message/) — 消息段构造、MessageArray、合并转发
+- [高级模式](7a.patterns.md) — 多步对话设计模式深入讲解
+
+
+---
+
+# 文件: 3. 插件开发\6. 谓词 DSL.md
+
+---
+title: Predicate DSL
+createTime: 2026/03/19 17:26:45
+permalink: /guide/0io6ypv8/
+---
+
+> 声明式事件过滤——用运算符组合替代冗长的 lambda，让 `wait_event()` 和事件流过滤更简洁。
+
+---
+
+## 目录
+
+- [快速示例](#快速示例)
+- [P 基类](#p-基类)
+- [组合运算符](#组合运算符)
+- [工厂函数](#工厂函数)
+- [from_event 自动推导](#from_event-自动推导)
+- [实战模式](#实战模式)
+
+---
+
+## 快速示例
+
+```python
+from ncatbot.core import from_event, msg_equals, msg_in
+
+# 传统写法——冗长的 lambda
+await self.wait_event(
+    predicate=lambda e: (
+        hasattr(e.data, "user_id")
+        and str(e.data.user_id) == str(event.user_id)
+        and hasattr(e.data, "group_id")
+        and str(e.data.group_id) == str(event.group_id)
+        and hasattr(e.data, "raw_message")
+        and e.data.raw_message.strip() == "确认"
+    ),
+    timeout=15,
+)
+
+# Predicate DSL——一行搞定
+await self.wait_event(predicate=from_event(event) * msg_equals("确认"), timeout=15)
 ```
 
 ---
 
-## 与 BotClient/Adapter 的协作
+## P 基类
 
-- Adapter 将 NapCat 的 WS 事件转换为 `BaseEventData` 并通过 BotClient 的内部处理器分发；
-- BotClient 内置处理器会把这些官方事件包装为 `NcatBotEvent` 发布到 EventBus；
-- 插件只需订阅相应事件类型即可参与处理，无需直接对接底层适配器。
+所有 Predicate 都继承自抽象基类 `P`。`P` 实例是一个可调用对象，接收 `Event` 返回 `bool`：
+
+```python
+from ncatbot.core.dispatcher.predicate import P
+
+class MyPredicate(P):
+    def __call__(self, event) -> bool:
+        return event.data.raw_message == "hello"
+```
+
+### P.of — 将 callable 升级
+
+如果你已经有一个普通函数或 lambda，可以用 `P.of()` 将它升级为支持运算符组合的 `P` 实例：
+
+```python
+from ncatbot.core import P, from_event
+
+# lambda 不支持 * + ~ 运算符，但 P.of() 可以
+is_positive = P.of(lambda e: int(e.data.raw_message) > 0)
+
+# 现在可以组合了
+pred = from_event(event) * is_positive
+await self.wait_event(predicate=pred, timeout=30)
+```
+
+---
+
+## 组合运算符
+
+`P` 支持三种运算符，返回新的 `P` 实例：
+
+| 运算符 | 含义 | 返回类型 | 示例 |
+|--------|------|---------|------|
+| `*` 或 `&` | AND（全部满足） | `AndP` | `p1 * p2` |
+| `+` 或 `\|` | OR（任一满足） | `OrP` | `p1 + p2` |
+| `~` | NOT（取反） | `NotP` | `~p` |
+
+### 组合示例
+
+```python
+from ncatbot.core import same_user, same_group, is_group, msg_equals, msg_in
+
+# AND：所有条件都要满足
+pred = same_user(uid) * same_group(gid) * is_group() * msg_equals("确认")
+
+# OR：满足任一即可
+pred = msg_equals("是") + msg_equals("yes") + msg_equals("y")
+
+# 简写等价
+pred = msg_in("是", "yes", "y")
+
+# NOT：排除特定条件
+pred = same_group(gid) * ~same_user(bot_id)
+
+# 混合组合
+pred = from_event(event) * (msg_equals("确认") + msg_equals("取消"))
+```
+
+---
+
+## 工厂函数
+
+`ncatbot.core` 导出以下工厂函数，每个返回一个 `P` 实例：
+
+| 函数 | 签名 | 说明 |
+|------|------|------|
+| `from_event(event)` | `(event: object) -> P` | 从触发事件自动推导同 session 谓词 |
+| `same_user(uid)` | `(user_id: Union[str, int]) -> P` | 匹配 `event.data.user_id` |
+| `same_group(gid)` | `(group_id: Union[str, int]) -> P` | 匹配 `event.data.group_id` |
+| `is_private()` | `() -> P` | 事件为私聊消息 |
+| `is_group()` | `() -> P` | 事件为群消息 |
+| `is_message()` | `() -> P` | 事件为消息类型（群/私聊均可） |
+| `event_type(prefix)` | `(prefix: str) -> P` | `event.type` 前缀匹配 |
+| `has_keyword(*words)` | `(*words: str) -> P` | `raw_message` 包含任一关键词 |
+| `msg_equals(text)` | `(text: str) -> P` | `raw_message.strip()` 完全等于 `text` |
+| `msg_in(*options)` | `(*options: str) -> P` | `raw_message.strip()` 等于选项之一 |
+| `msg_matches(pattern)` | `(pattern: str) -> P` | `raw_message` 正则匹配（`re.search`） |
+| `P.of(fn)` | `(fn: Callable[[Event], bool]) -> P` | 将普通 callable 升级为可组合的 `P` |
+
+### 导入
+
+```python
+# 推荐：从 ncatbot.core 导入
+from ncatbot.core import (
+    P, from_event, same_user, same_group,
+    is_private, is_group, is_message,
+    has_keyword, msg_equals, msg_in, msg_matches, event_type,
+)
+```
+
+---
+
+## from_event 自动推导
+
+`from_event()` 是最常用的工厂函数。它从触发事件中提取 `user_id`、`group_id`、`message_type`，自动组合出 "同 session" 谓词：
+
+| 触发事件类型 | 生成的 predicate |
+|------------|-----------------|
+| 群消息 | `same_user(uid) * same_group(gid) * is_group()` |
+| 私聊消息 | `same_user(uid) * is_private()` |
+| 其他（带 user_id） | `same_user(uid) * is_message()` |
+
+```python
+# 不需要手动写同 session 判断
+pred = from_event(event)                           # 同用户 + 同场景
+pred = from_event(event) * msg_equals("确认")       # + 精确匹配
+pred = from_event(event) * msg_in("是", "否")       # + 选择匹配
+pred = from_event(event) * has_keyword("帮助")      # + 关键词匹配
+```
+
+---
+
+## 实战模式
+
+### 多步对话确认
+
+```python
+@registrar.on_group_command("删除")
+async def on_delete(self, event: GroupMessageEvent):
+    await event.reply("确定要删除吗？请回复「确认」或「取消」")
+    try:
+        reply = await self.wait_event(
+            predicate=from_event(event) * msg_in("确认", "取消"),
+            timeout=15,
+        )
+        if reply.data.raw_message.strip() == "确认":
+            await event.reply("已删除 ✅")
+        else:
+            await event.reply("已取消 ❌")
+    except asyncio.TimeoutError:
+        await event.reply("操作超时 ⏰")
+```
+
+### 自由文本收集
+
+```python
+@registrar.on_group_command("反馈")
+async def on_feedback(self, event: GroupMessageEvent):
+    await event.reply("请输入你的反馈内容：")
+    try:
+        reply = await self.wait_event(
+            predicate=from_event(event),
+            timeout=60,
+        )
+        feedback = reply.data.raw_message.strip()
+        self.data.setdefault("feedbacks", []).append(feedback)
+        await event.reply(f"收到反馈：{feedback}")
+    except asyncio.TimeoutError:
+        await event.reply("反馈超时 ⏰")
+```
+
+### 数值输入校验
+
+```python
+@registrar.on_group_command("设置数量")
+async def on_set_count(self, event: GroupMessageEvent):
+    await event.reply("请输入一个正整数：")
+    try:
+        reply = await self.wait_event(
+            predicate=from_event(event) * P.of(
+                lambda e: e.data.raw_message.strip().isdigit()
+                and int(e.data.raw_message.strip()) > 0
+            ),
+            timeout=30,
+        )
+        count = int(reply.data.raw_message.strip())
+        self.set_config("count", count)
+        await event.reply(f"已设置为 {count}")
+    except asyncio.TimeoutError:
+        await event.reply("输入超时 ⏰")
+```
+
+### 排除 Bot 自身消息
+
+```python
+# 在事件流中排除 Bot 自身的消息
+async def _monitor(self):
+    async with self.events("message") as stream:
+        async for event in stream:
+            pred = is_group() * ~same_user(event.self_id)
+            if pred(event):
+                LOG.info("群消息: %s", event.data.raw_message)
+```
+
+---
+
+## 下一步
+
+- [事件注册与装饰器](4a.event-registration.md) — 装饰器注册模式
+- [事件高级用法](4b.event-advanced.md) — 事件流、三种模式对比
+- [Hook 基础](6.hooks.md) — 中间件式过滤
 
 
 ---
 
-# 文件: 3. 组件介绍\5. Adapter.md
+# 文件: 3. 插件开发\7. 配置与数据.md
 
 ---
-title: Adapter 适配器
-createTime: 2025/09/26 16:00:00
-permalink: /guide/adapter/
+title: 配置与数据 Mixin
+createTime: 2026/03/19 17:26:45
+permalink: /guide/admk508g/
 ---
 
-## Adapter：与 NapCat/WS 的桥接与 BotAPI 协作
-
-Adapter 是 NcatBot 与底层 NapCat WebSocket 的桥梁：
-- 管理 WS 连接与收发循环；
-- 将 NapCat 的上行事件解析为内部事件对象（`BaseEventData` 及其子类）；
-- 提供线程安全的 API 调用通道，供 `BotAPI` 统一封装上行接口；
-- 把收到的事件分发给由 `BotClient` 注册的事件回调。
+> ConfigMixin 提供 YAML 配置持久化，DataMixin 提供 JSON 数据持久化——让插件零配置拥有持久化能力。
 
 ---
 
-## 与 BotAPI 的协作方式
+## 目录
 
-`BotAPI` 在构造时被注入了一个异步回调：`async_callback = adapter.send`。
-
-- 当你调用例如 `await bot.api.send_group_msg(...)` 时，底层会统一路由到 `Adapter.send(path, params)`；
-- Adapter 会：
-  1) 生成 `echo` 并登记一个 `Queue` 等待响应；
-  2) 通过 WS 发送形如 `{ action, params, echo }` 的 JSON；
-  3) 在收到带 `echo` 的响应后，唤醒对应的等待者并返回结果；
-  4) 全程使用线程锁与线程到异步的桥接，保证在任意线程/事件循环下都可安全调用。
-
-因此：所有对外暴露的 API 都集中在 `BotAPI` 层，Adapter 仅作为「可靠传输层」。这使得 API 的扩展与适配器的替换相互解耦。
+- [设计理念](#设计理念)
+- [ConfigMixin — 配置持久化](#configmixin--配置持久化)
+- [DataMixin — 数据持久化](#datamixin--数据持久化)
+- [ConfigMixin vs DataMixin](#configmixin-vs-datamixin)
 
 ---
 
-## 连接与事件处理
+## 设计理念
 
-`await connect_websocket()` 会：
-1) 使用配置中的 `ws_uri` 与 `ws_token` 建立连接；
-2) 进入读取循环 `recv()`；对于每条消息：
-   - 若包含 `echo`：作为 API 响应交给 `_handle_response()`，唤醒等待队列；
-   - 否则：交给 `_handle_event()` 解析为 `PrivateMessageEvent/GroupMessageEvent/NoticeEvent/RequestEvent/MetaEvent`。
-3) 根据 `post_type` 与子类型从 `event_callback[event_name]` 查找并调用回调（由 BotClient 在启动时注册）。
+`NcatBotPlugin` 通过多继承组合 5 个 Mixin，每个 Mixin 提供一类独立能力：
 
-内置的元事件处理：
-- `meta_event.lifecycle.connect` 会触发 `OFFICIAL_STARTUP_EVENT`；
-- `meta_event.heartbeat` 会触发 `OFFICIAL_HEARTBEAT_EVENT`。
+```python
+class NcatBotPlugin(BasePlugin, EventMixin, TimeTaskMixin, RBACMixin, ConfigMixin, DataMixin):
+    pass
+```
 
-异常管理：
-- 主动关闭：抛出 `NcatBotConnectionError` 提示 NapCat 关闭了连接；
-- 其他异常：清理连接并抛出 `NcatBotError`；支持 `CancelledError` 的优雅收尾。
+- 每个 Mixin 通过 `_mixin_load()` / `_mixin_unload()` 参与 [加载流程](3.lifecycle.md#mixin-钩子链)
+- 各 Mixin 之间互不依赖，可独立使用
+- 你不需要手动初始化任何 Mixin——继承 `NcatBotPlugin` 即可自动获得全部能力
 
 ---
 
-## 关键 API
+## ConfigMixin — 配置持久化
 
-- `await connect_websocket() -> bool`：建立并维护 WS 收包循环。
-- `await send(path: str, params: dict = None, timeout: float = 300.0) -> dict`：上行请求/响应模式，线程安全。
-- `is_websocket_online() -> bool`：状态检查。
-- `event_callback: Dict[str, Callable[[BaseEventData], None]]`：回调注册表，由 BotClient 在启动时填充。
+`ConfigMixin` 提供 YAML 格式的配置持久化，配置文件保存在 `workspace/config.yaml`。
 
----
+### 基本用法
 
-## 使用建议
+```python
+class MyPlugin(NcatBotPlugin):
+    name = "my_plugin"
+    version = "1.0.0"
 
-- 不要绕过 `BotAPI` 直接调用 `Adapter.send`，以免破坏抽象层次与未来迁移；
-- 回调中避免阻塞（Adapter 的回调在事件循环里），BotClient 内部会将你的处理器分发到线程池执行；
-- 若需自定义适配器（对接其他平台），建议保持与 `Adapter` 同样的回调与 `send` 协议，以便与 `BotAPI` 无缝集成。
+    async def on_load(self):
+        # 设置默认配置（已有的不会覆盖）
+        if not self.get_config("prefix"):
+            self.set_config("prefix", "/")
+        if not self.get_config("welcome_msg"):
+            self.set_config("welcome_msg", "欢迎使用！")
+        if not self.get_config("enabled"):
+            self.set_config("enabled", True)
 
+    @registrar.on_group_command("设置前缀")
+    async def on_set_prefix(self, event: GroupMessageEvent, new_prefix: str):
+        """修改配置 — CommandHook 自动提取参数"""
+        self.set_config("prefix", new_prefix)
+        await event.reply(f"命令前缀已更新为: {new_prefix}")
 
----
+    @registrar.on_group_command("查看配置")
+    async def on_view_config(self, event: GroupMessageEvent):
+        """遍历当前配置"""
+        lines = ["📋 当前配置:"]
+        for key, value in self.config.items():
+            lines.append(f"  {key}: {value}")
+        await event.reply("\n".join(lines))
+```
 
-# 文件: 3. 组件介绍\6. BotAPI.md
+> 取自 [examples/common/02_config_and_data/main.py](../../../examples/common/02_config_and_data/main.py)
 
----
-title: BotAPI 统一接口层
-createTime: 2025/09/26 16:30:00
-permalink: /guide/botapi/
----
+### API
 
-## BotAPI：统一的上行接口门面
+| 方法 | 说明 |
+|------|------|
+| `get_config(key, default=None)` | 读取配置值 |
+| `set_config(key, value)` | 设置配置值（立即保存到文件） |
+| `update_config(updates: dict)` | 批量更新配置 |
+| `remove_config(key) -> bool` | 删除配置项 |
+| `self.config` | 配置字典（`Dict[str, Any]`） |
 
-BotAPI 通过多重继承聚合五大接口域：
-- 账号域：`AccountAPI`
-- 群域：`GroupAPI`
-- 消息域：`MessageAPI`
-- 私聊/文件域：`PrivateAPI`
-- 支持域：`SupportAPI`
+### 配置文件位置
 
-所有接口最终都通过一个统一的异步回调 `async_callback(path, params)` 下发到底层适配器（Adapter）。这种设计让上层 API 的形态与底层传输解耦，既便于对外暴露一致的易用接口，也方便未来替换适配器或扩展新平台。
+```text
+workspace/
+└── my_plugin/
+    └── config.yaml    ← ConfigMixin 管理的文件
+```
 
----
+### 全局配置覆盖
 
-## 接口设计理念
+在项目的 `config.yaml` 中，可以通过 `plugin.plugin_configs` 为插件预设配置：
 
-- 部分接口使用互斥参数校验（`check_exclusive_argument`），确保 `group_id` 与 `user_id` 等不会同时/同时缺失；
-- 底层返回统一包装为 `APIReturnStatus`/`MessageAPIReturnStatus`，非 0 retcode 会抛出 `NapCatAPIError`；
-- 消息体通常使用 `MessageArray`/`MessageSegment`/`Forward` 等结构描述，API 内部负责序列化为 NapCat 需要的 JSON。
-- 提供诸如 `post_group_msg/post_private_msg` 等组合接口，减少上层手动拼装消息片段的成本。
-- 全局只持有一个 `BotAPI` 实例，位于 `status.global_api`，但其他组件会创建对它的引用。
+```yaml
+plugin:
+  plugin_configs:
+    my_plugin:
+      prefix: "!"
+      enabled: false
+```
 
-:::tip
-BotAPI 接口很多，这里不逐一罗列。[详细列表](../5.%20API%20参考/1.%20概览.md)。 
-:::
-
----
-
-## 与其他组件的协作机理
-
-### 与 Adapter
-
-- 构造注入：`BotAPI.__init__(async_callback=Adapter.send)`；
-- 调用路径：上层调用 `await bot.api.some_method(...)` → 进入对应 API 方法 → 统一 `await self.async_callback('/some_action', params)` → Adapter 生成 echo 并通过 WebSocket 下发 → 收到带 echo 的响应后唤醒并返回结果 → BotAPI 用 `APIReturnStatus` 解析并抛错或返回数据；
-- 线程/循环安全：Adapter.send 内部使用线程安全结构与 to_thread 桥接，保障在插件线程、BotClient 线程、主事件循环等任意上下文调用都可工作。
-
-### 与 BotClient
-
-- BotClient 在初始化时创建 `BotAPI(self.adapter.send)` 并赋值到 `status.global_api` 作为全局易取入口；
-- 事件处理器（无论在 BotClient 还是插件里）都可以直接使用 `bot.api` 发消息、管群、取状态等；
-- `run_backend()` 会返回 `BotAPI`，便于在外部业务中直接操作 API 而不必持有 BotClient 引用。
-
-### 与 EventBus
-
-- EventBus 负责事件的分发处理（下行事件），BotAPI 负责上行调用；
-
-### 与 PluginLoader
-
-- PluginLoader 将 `event_bus/rbac_manager/plugin_loader` 注入到插件实例；
-- 插件通常在 `on_load` 中订阅事件，并在处理器内通过 `self.api` 调用上行接口；
-
-### 与事件数据结构
-
-- GroupMessageEvent/PrivateMessageEvent 等事件数据结构中有 `reply/reply_sync` 便捷方法。可以调用它们快速回复。其实现中使用了 `status.global_api`。
----
-
-## 实践建议
-
-- 优先使用组合/便捷接口（如 `post_group_msg`、`post_private_msg`、`post_*_array_msg`）组织消息体，提高可读性；
-- 捕获 `NapCatAPIError` 做业务兜底，必要时开启 debug 以获得更详细的堆栈定位；
-- 在插件处理器中调用 API 时注意耗时操作，必要时拆分任务或使用并发控制，避免阻塞自己的工作线程或总线；
-- 同步接口仅适合少量简单调用，复杂或频繁调用请使用异步接口以获得更好性能。
-
+`ConfigMixin` 在 `_mixin_load()` 时会自动合并全局覆盖配置。
 
 ---
 
-# 文件: 4. 数据结构介绍\1. 核心数据结构概览.md
+## DataMixin — 数据持久化
+
+`DataMixin` 提供 JSON 格式的通用数据持久化，数据保存在 `workspace/data.json`。
+
+### 基本用法
+
+```python
+class MyPlugin(NcatBotPlugin):
+    name = "my_plugin"
+    version = "1.0.0"
+
+    async def on_load(self):
+        # self.data 在 _mixin_load 时已从 data.json 恢复
+        self.data.setdefault("total_messages", 0)
+        self.data.setdefault("user_counts", {})
+        LOG.info("累计消息: %d", self.data["total_messages"])
+
+    @registrar.on_group_message(priority=100)
+    async def count_message(self, event: GroupMessageEvent):
+        """每条群消息都计数"""
+        self.data["total_messages"] += 1
+        uid = str(event.user_id)
+        counts = self.data.setdefault("user_counts", {})
+        counts[uid] = counts.get(uid, 0) + 1
+
+    @registrar.on_group_command("统计")
+    async def on_stats(self, event: GroupMessageEvent):
+        total = self.data.get("total_messages", 0)
+        user_counts = self.data.get("user_counts", {})
+        top_users = sorted(user_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+
+        lines = ["📊 消息统计:", f"  总消息数: {total}"]
+        if top_users:
+            lines.append("  活跃用户 Top 5:")
+            for uid, count in top_users:
+                lines.append(f"    {uid}: {count} 条")
+        await event.reply("\n".join(lines))
+
+    @registrar.on_group_command("重置统计")
+    async def on_reset_stats(self, event: GroupMessageEvent):
+        self.data["total_messages"] = 0
+        self.data["user_counts"] = {}
+        await event.reply("统计数据已重置 🗑️")
+```
+
+> 取自 [examples/common/02_config_and_data/main.py](../../../examples/common/02_config_and_data/main.py)
+
+### API
+
+| 方法/属性 | 说明 |
+|----------|------|
+| `self.data` | 数据字典（`Dict[str, Any]`），直接读写 |
+
+### 自动持久化
+
+- **加载**：`_mixin_load()` 自动从 `data.json` 加载
+- **卸载**：`_mixin_unload()` 自动保存到 `data.json`
+- **手动保存**：修改 `self.data` 后，数据会在插件卸载时自动保存；如果需要立即保存可调用 `self._save_data()`
 
 ---
-title:  核心数据结构概览
-createTime: 2025/09/26 15:34:27
-permalink: /guide/dhw2k4vr/
+
+## ConfigMixin vs DataMixin
+
+| 维度 | ConfigMixin | DataMixin |
+|------|------------|-----------|
+| 文件格式 | YAML | JSON |
+| 典型用途 | 用户可配置的选项 | 运行时数据、统计、状态 |
+| 保存时机 | `set_config()` 立即保存 | 卸载时自动保存 |
+| 外部可编辑 | ✅ 是（YAML 可读性好） | ⚠️ 可以但不推荐 |
+
 ---
 
+## 下一步
+
+- [权限、定时任务与事件 Mixin](5b.rbac-schedule-event.md) — RBACMixin、TimeTaskMixin、EventMixin
+- [Hook 基础](6.hooks.md) — 了解过滤器和中间件原理
+
 
 ---
 
-# 文件: 4. 数据结构介绍\2. BaseEventData.md
+# 文件: 3. 插件开发\8. RBAC 定时任务与事件.md
 
 ---
-title: 官方事件对象 BaseEventData
-createTime: 2025/09/26 17:00:00
-permalink: /guide/events/
+title: 权限、定时任务与事件 Mixin
+createTime: 2026/03/19 17:26:45
+permalink: /guide/sbal250z/
+---
+
+> RBACMixin 提供基于角色的权限管理，TimeTaskMixin 提供定时任务调度，EventMixin 提供直接事件流操作。
+
+---
+
+## 目录
+
+- [RBACMixin — 权限管理](#rbacmixin--权限管理)
+- [TimeTaskMixin — 定时任务](#timetaskmixin--定时任务)
+- [EventMixin — 事件流](#eventmixin--事件流)
+- [API 速查表](#api-速查表)
+
+---
+
+## RBACMixin — 权限管理
+
+`RBACMixin` 提供基于角色的访问控制（RBAC），底层使用 `RBACService` 管理权限数据。
+
+### 基本用法
+
+```python
+class MyPlugin(NcatBotPlugin):
+    name = "rbac_demo"
+    version = "1.0.0"
+
+    async def on_load(self):
+        # 注册权限路径
+        self.add_permission("rbac.admin")
+        self.add_permission("rbac.user")
+
+        # 创建角色
+        self.add_role("rbac_admin", exist_ok=True)
+        self.add_role("rbac_user", exist_ok=True)
+
+        # 给角色分配权限（通过底层 RBAC 服务）
+        if self.rbac:
+            self.rbac.grant("role", "rbac_admin", "rbac.admin")
+            self.rbac.grant("role", "rbac_admin", "rbac.user")
+            self.rbac.grant("role", "rbac_user", "rbac.user")
+
+    @registrar.on_group_command("授权")
+    async def on_grant(self, event: GroupMessageEvent, target: At = None):
+        """授予用户 admin 角色"""
+        if target is None:
+            await event.reply("请 @一个用户")
+            return
+        target_uid = str(target.user_id)
+        if self.rbac:
+            self.rbac.assign_role("user", target_uid, "rbac_admin")
+            await event.reply(f"已授予 {target_uid} 管理员权限 ✅")
+
+    @registrar.on_group_command("管理命令")
+    async def on_admin_cmd(self, event: GroupMessageEvent):
+        """受权限保护的命令"""
+        uid = str(event.user_id)
+        if self.check_permission(uid, "rbac.admin"):
+            await event.reply("🔑 管理命令执行成功！")
+        else:
+            await event.reply("🚫 你没有执行此命令的权限")
+
+    @registrar.on_group_command("查权限")
+    async def on_check_perm(self, event: GroupMessageEvent):
+        """查看自己的权限"""
+        uid = str(event.user_id)
+        has_admin = self.check_permission(uid, "rbac.admin")
+        is_admin_role = self.user_has_role(uid, "rbac_admin")
+
+        await event.reply(
+            f"👤 权限状态:\n"
+            f"  角色 rbac_admin: {'✅' if is_admin_role else '❌'}\n"
+            f"  权限 rbac.admin: {'✅' if has_admin else '❌'}"
+        )
+```
+
+> 取自 [examples/common/04_rbac/main.py](../../../examples/common/04_rbac/main.py)
+
+### API
+
+| 方法 | 说明 |
+|------|------|
+| `check_permission(user, permission) -> bool` | 检查用户是否拥有权限 |
+| `add_permission(path)` | 注册权限路径 |
+| `remove_permission(path)` | 移除权限路径 |
+| `add_role(role, exist_ok=True)` | 创建角色 |
+| `user_has_role(user, role) -> bool` | 检查用户是否拥有角色 |
+| `self.rbac` | 底层 `RBACService` 实例（可为 `None`） |
+
+### 底层 RBAC 服务
+
+通过 `self.rbac` 访问更细粒度的操作：
+
+| 方法 | 说明 |
+|------|------|
+| `rbac.grant("role", role_name, permission_path)` | 给角色授予权限 |
+| `rbac.assign_role("user", user_id, role_name)` | 给用户分配角色 |
+| `rbac.unassign_role("user", user_id, role_name)` | 移除用户的角色 |
+| `rbac.revoke("role", role_name, permission_path)` | 撤销角色权限 |
+
+### 权限路径规范
+
+权限路径使用点分格式，支持层级结构：
+
+```text
+plugin_name.feature           # 如 "group_manager.admin"
+plugin_name.feature.sub       # 如 "group_manager.admin.kick"
+```
+
+框架内部使用 Trie 树进行高效的路径匹配。
+
+### 实战：群管理权限控制
+
+```python
+class GroupManagerPlugin(NcatBotPlugin):
+    name = "group_manager"
+    version = "1.0.0"
+
+    async def on_load(self):
+        self.add_permission("group_manager.admin")
+        self.add_role("gm_admin", exist_ok=True)
+        if self.rbac:
+            self.rbac.grant("role", "gm_admin", "group_manager.admin")
+
+    def _is_admin(self, user_id) -> bool:
+        return self.check_permission(str(user_id), "group_manager.admin")
+
+    @registrar.on_group_command("踢")
+    async def on_kick(self, event: GroupMessageEvent, target: At = None):
+        if not self._is_admin(event.user_id):
+            await event.reply("🚫 你没有管理权限")
+            return
+        if target is None:
+            await event.reply("请 @一个用户")
+            return
+        await self.api.qq.manage.set_group_kick(event.group_id, target.user_id)
+        await event.reply(f"已踢出用户 {target.user_id}")
+```
+
+> 取自 [examples/qq/06_group_manager/main.py](../../../examples/qq/06_group_manager/main.py)
+
+---
+
+## TimeTaskMixin — 定时任务
+
+`TimeTaskMixin` 提供定时任务管理，支持多种时间格式。
+
+### 基本用法
+
+```python
+class MyPlugin(NcatBotPlugin):
+    name = "scheduled_tasks"
+    version = "1.0.0"
+
+    async def on_load(self):
+        self._enabled = True
+        self._notify_group = None
+
+        # 带条件的定时任务：每 60 秒执行，仅在 enabled 时
+        self.add_scheduled_task(
+            "conditional_tick",
+            "60s",
+            conditions=[lambda: self._enabled],
+        )
+
+    @registrar.on_group_command("启动心跳")
+    async def on_start_heartbeat(self, event: GroupMessageEvent):
+        self._notify_group = str(event.group_id)
+        success = self.add_scheduled_task("heartbeat", "30s")
+        if success:
+            await event.reply("💓 心跳任务已启动（每 30 秒）")
+
+    @registrar.on_group_command("停止心跳")
+    async def on_stop_heartbeat(self, event: GroupMessageEvent):
+        self.remove_scheduled_task("heartbeat")
+        await event.reply("💔 心跳任务已停止")
+
+    @registrar.on_group_command("添加提醒")
+    async def on_add_reminder(self, event: GroupMessageEvent, seconds: int = 0):
+        """一次性任务：'添加提醒 10' → 10 秒后执行"""
+        if seconds <= 0:
+            await event.reply("请输入秒数")
+            return
+        self._notify_group = str(event.group_id)
+        task_name = f"reminder_{seconds}s"
+        self.add_scheduled_task(task_name, seconds, max_runs=1)
+        await event.reply(f"⏰ 将在 {seconds} 秒后提醒你")
+
+    @registrar.on_group_command("任务列表")
+    async def on_list_tasks(self, event: GroupMessageEvent):
+        tasks = self.list_scheduled_tasks()
+        if not tasks:
+            await event.reply("当前没有活跃的定时任务")
+            return
+        lines = ["📋 定时任务列表:"]
+        for name in tasks:
+            status = self.get_task_status(name)
+            if status:
+                lines.append(f"  {name}: 运行 {status.get('run_count', 0)} 次")
+        await event.reply("\n".join(lines))
+
+    # ---- 任务回调（框架自动调用同名方法） ----
+
+    async def heartbeat(self):
+        """心跳回调"""
+        LOG.info("💓 心跳")
+        if self._notify_group:
+            await self.api.qq.post_group_msg(
+                self._notify_group, text="💓 心跳 - 我还活着！"
+            )
+
+    async def conditional_tick(self):
+        """条件任务回调"""
+        LOG.info("⏱️ 条件定时任务执行了")
+```
+
+> 取自 [examples/common/05_scheduled_tasks/main.py](../../../examples/common/05_scheduled_tasks/main.py)
+
+### 时间格式
+
+| 格式 | 示例 | 说明 |
+|------|------|------|
+| 秒数字符串 | `"30s"` / `"2h30m"` / `"0.5d"` | 周期执行 |
+| 每日时间 | `"22:00"` / `"07:30"` | 每天定时执行 |
+| 秒数（数字） | `120` / `0.5` | 周期执行 |
+| 一次性时间 | `"2024-12-31 23:59:59"` | 一次性执行 |
+
+### API
+
+| 方法 | 说明 |
+|------|------|
+| `add_scheduled_task(name, interval, conditions=None, max_runs=None) -> bool` | 添加定时任务 |
+| `remove_scheduled_task(name) -> bool` | 移除定时任务 |
+| `list_scheduled_tasks() -> List[str]` | 列出本插件的所有任务 |
+| `get_task_status(name) -> Optional[Dict]` | 获取任务状态 |
+| `cleanup_scheduled_tasks()` | 清理所有任务（卸载时自动调用） |
+
+### 回调约定
+
+任务的回调方法**必须与任务名同名**——框架自动查找插件实例上的同名异步方法：
+
+```python
+# 添加名为 "daily_report" 的任务
+self.add_scheduled_task("daily_report", "22:00")
+
+# 框架自动调用 self.daily_report()
+async def daily_report(self):
+    for gid in self.data.get("enabled_groups", []):
+        await self._send_report(gid)
+```
+
+> 取自 [examples/qq/08_scheduled_reporter/main.py](../../../examples/qq/08_scheduled_reporter/main.py)
+
+### 条件执行
+
+通过 `conditions` 参数传入条件函数列表，只有所有条件都返回 `True` 时才执行：
+
+```python
+self.add_scheduled_task(
+    "conditional_tick",
+    "60s",
+    conditions=[lambda: self._enabled],
+)
+```
+
+### 一次性任务
+
+设置 `max_runs=1` 创建一次性任务，执行后自动移除：
+
+```python
+self.add_scheduled_task(f"reminder_{seconds}s", seconds, max_runs=1)
+```
+
+---
+
+## EventMixin — 事件流
+
+`EventMixin` 提供直接操作底层事件流的能力，详细使用方式已在 [事件高级用法](4b.event-advanced.md#模式-b事件流消费) 和 [事件高级用法](4b.event-advanced.md#模式-c一次性等待) 中介绍。
+
+### API
+
+| 方法 | 说明 |
+|------|------|
+| `events(event_type=None) -> EventStream` | 创建事件流（支持 `async with` + `async for`） |
+| `wait_event(predicate=None, timeout=None) -> Event` | 等待满足条件的下一个事件 |
+
+---
+
+## API 速查表
+
+### ConfigMixin
+
+| 方法 | 签名 | 说明 |
+|------|------|------|
+| `get_config` | `(key: str, default=None) -> Any` | 读取配置 |
+| `set_config` | `(key: str, value: Any) -> None` | 设置配置（立即保存） |
+| `update_config` | `(updates: Dict[str, Any]) -> None` | 批量更新 |
+| `remove_config` | `(key: str) -> bool` | 删除配置项 |
+
+### DataMixin
+
+| 属性 | 类型 | 说明 |
+|------|------|------|
+| `self.data` | `Dict[str, Any]` | 数据字典（自动持久化） |
+
+### RBACMixin
+
+| 方法 | 签名 | 说明 |
+|------|------|------|
+| `check_permission` | `(user: str, permission: str) -> bool` | 检查权限 |
+| `add_permission` | `(path: str) -> None` | 注册权限路径 |
+| `remove_permission` | `(path: str) -> None` | 移除权限路径 |
+| `add_role` | `(role: str, exist_ok=True) -> None` | 创建角色 |
+| `user_has_role` | `(user: str, role: str) -> bool` | 检查角色 |
+
+### TimeTaskMixin
+
+| 方法 | 签名 | 说明 |
+|------|------|------|
+| `add_scheduled_task` | `(name, interval, conditions=None, max_runs=None) -> bool` | 添加任务 |
+| `remove_scheduled_task` | `(name: str) -> bool` | 移除任务 |
+| `list_scheduled_tasks` | `() -> List[str]` | 列出任务 |
+| `get_task_status` | `(name: str) -> Optional[Dict]` | 获取状态 |
+
+### EventMixin
+
+| 方法 | 签名 | 说明 |
+|------|------|------|
+| `events` | `(event_type=None) -> EventStream` | 创建事件流 |
+| `wait_event` | `(predicate=None, timeout=None) -> Event` | 等待事件 |
+
+---
+
+## 下一步
+
+- [Hook 基础](6.hooks.md) — 了解过滤器和中间件原理
+- [实战案例与调试](7b.case-studies.md) — 综合运用多个 Mixin 的实战案例
+- [消息类型详解](../send_message/) — 消息段构造、合并转发
+
+
+---
+
+# 文件: 3. 插件开发\9. Hooks.md
+
+---
+title: Hook 基础与内置 Hook
+createTime: 2026/03/19 17:26:45
+permalink: /guide/m4hujs25/
+---
+
+> NcatBot 的请求处理中间件——在事件处理器执行前后拦截、过滤、增强行为，以及开箱即用的内置 Hook 和参数绑定。
+
+---
+
+## 目录
+
+- [概述](#概述)
+- [Hook 三阶段模型](#hook-三阶段模型)
+- [HookContext 上下文](#hookcontext-上下文)
+- [编写自定义 Hook](#编写自定义-hook)
+- [内置 Hook 一览](#内置-hook-一览)
+- [CommandHook 与参数绑定](#commandhook-与参数绑定)
+- [Hook 优先级与执行顺序](#hook-优先级与执行顺序)
+
+---
+
+## 概述
+
+Hook 是 NcatBot 的中间件机制，可以在事件处理器（Handler）执行的不同阶段插入逻辑：
+
+```mermaid
+flowchart LR
+    EVENT[事件到达] --> BEFORE[BEFORE_CALL Hooks]
+    BEFORE -->|CONTINUE| HANDLER[执行 Handler]
+    BEFORE -->|SKIP| DONE[跳过 Handler]
+    HANDLER --> AFTER[AFTER_CALL Hooks]
+    HANDLER -->|异常| ERROR[ON_ERROR Hooks]
+    AFTER --> DONE
+    ERROR --> DONE
+
+    style BEFORE fill:#fff3e0
+    style HANDLER fill:#e1f5fe
+    style AFTER fill:#e8f5e9
+    style ERROR fill:#fce4ec
+```
+
+常见用途：过滤（按关键词、权限拦截）、日志、错误处理、参数注入。
+
+---
+
+## Hook 三阶段模型
+
+| 阶段 | `HookStage` | 触发时机 | 可返回的 Action |
+|------|------------|---------|----------------|
+| **前置** | `BEFORE_CALL` | Handler 执行**之前** | `CONTINUE`（继续）/ `SKIP`（跳过 Handler） |
+| **后置** | `AFTER_CALL` | Handler 执行**之后** | `CONTINUE` |
+| **错误** | `ON_ERROR` | Handler 执行**异常**时 | `CONTINUE` |
+
+---
+
+## HookContext 上下文
+
+每个 Hook 的 `execute()` 方法接收一个 `HookContext`：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `ctx.event` | `Event` | 当前事件 |
+| `ctx.event_type` | `str` | 事件类型字符串 |
+| `ctx.handler_entry` | `HandlerEntry` | 处理器注册信息（含 `func` 属性） |
+| `ctx.api` | `BotAPIClient` | Bot API 客户端 |
+| `ctx.services` | `ServiceManager` | 服务管理器（可选） |
+| `ctx.kwargs` | `Dict[str, Any]` | Hook 间共享的参数字典 |
+| `ctx.result` | `Any` | Handler 返回值（仅 AFTER_CALL） |
+| `ctx.error` | `Exception` | 异常信息（仅 ON_ERROR） |
+
+---
+
+## 编写自定义 Hook
+
+### 基本结构
+
+```python
+from ncatbot.core.registry.hook import Hook, HookAction, HookContext, HookStage
+
+class MyHook(Hook):
+    stage = HookStage.BEFORE_CALL
+    priority = 50
+
+    async def execute(self, ctx: HookContext) -> HookAction:
+        return HookAction.CONTINUE  # 或 HookAction.SKIP
+```
+
+### 附加 Hook 到 Handler
+
+**方式一：`@add_hooks()` 批量绑定**
+
+```python
+@add_hooks(keyword_filter, logging_hook, error_notify)
+@registrar.on_group_command("回声")
+async def on_echo(self, event: GroupMessageEvent, content: str):
+    await event.reply(f"🔊 {content}")
+```
+
+**方式二：`@hook` 装饰器语法**
+
+```python
+@error_notify
+@registrar.on_group_command("除零")
+async def on_divide_by_zero(self, event: GroupMessageEvent):
+    _ = 1 / 0
+```
+
+> 完整三阶段 Hook 示例：[examples/common/03_hook_and_filter/main.py](../../../examples/common/03_hook_and_filter/main.py)
+
+---
+
+## 内置 Hook 一览
+
+### 过滤类 Hook（BEFORE_CALL）
+
+| Hook | 构造参数 | 说明 |
+|------|---------|------|
+| `MessageTypeFilter(message_type)` | `"group"` / `"private"` | 按消息类型过滤 |
+| `PostTypeFilter(post_type)` | `"message"` / `"notice"` 等 | 按 post_type 过滤 |
+| `SubTypeFilter(sub_type)` | `"poke"` / `"invite"` 等 | 按 sub_type 过滤 |
+| `NoticeTypeFilter(notice_type)` | `"group_increase"` 等 | 按通知类型过滤 |
+| `RequestTypeFilter(request_type)` | `"friend"` / `"group"` | 按请求类型过滤 |
+| `SelfFilter()` | — | 过滤 Bot 自身发送的消息 |
+| `PlatformFilter(platform)` | `"qq"` / `"telegram"` 等 | 按平台过滤 |
+
+### 文本匹配类 Hook（BEFORE_CALL）
+
+| Hook | 构造参数 | 说明 |
+|------|---------|------|
+| `StartsWithHook(prefix)` | 前缀字符串 | 消息以指定前缀开头 |
+| `KeywordHook(*words)` | 关键词列表 | 消息包含任一关键词 |
+| `RegexHook(pattern, flags=0)` | 正则表达式 | 正则匹配，匹配结果存入 `ctx.kwargs['match']` |
+
+### 便捷工厂函数
+
+```python
+from ncatbot.core.registry.builtin_hooks import (
+    startswith, keyword, regex, group_only, private_only, non_self,
+)
+```
+
+### 装饰器自动附加
+
+| 装饰器 | 自动附加的 Hook |
+|--------|----------------|
+| `on_group_command("x")` | `MessageTypeFilter("group")` + `CommandHook("x")` |
+| `on_private_command("x")` | `MessageTypeFilter("private")` + `CommandHook("x")` |
+| `on_group_message()` | `MessageTypeFilter("group")` |
+| `on_poke()` | `NoticeTypeFilter("notify")` + `SubTypeFilter("poke")` |
+
+---
+
+## CommandHook 与参数绑定
+
+`CommandHook` 是 `on_command()` / `on_group_command()` / `on_private_command()` 内部使用的核心 Hook，负责命令匹配和参数提取。
+
+### 绑定规则
+
+| 参数类型 | 提取方式 | 示例 |
+|---------|---------|------|
+| `str` | 命令名后的剩余文本 | `"回声 你好"` → `content="你好"` |
+| `int` | 从文本中提取数字 | `"禁言 @xxx 60"` → `duration=60` |
+| `At` | 从消息段中提取 @段 | `"踢 @xxx"` → `target=At(user_id=xxx)` |
+
+```python
+@registrar.on_group_command("禁言")
+async def on_ban(
+    self, event: GroupMessageEvent,
+    target: At = None,        # 从 @ 段提取
+    duration: int = 60        # 从文本中提取数字
+):
+    ...
+```
+
+> 参数绑定的实际示例：[examples/qq/04_bot_api/](../../../examples/qq/04_bot_api/) 和 [examples/qq/09_full_featured_bot/](../../../examples/qq/09_full_featured_bot/)。
+
+---
+
+## Hook 优先级与执行顺序
+
+同一阶段的 Hook 按 `priority` **降序**执行（数值越大越先执行）。
+
+| Hook 类别 | 默认 priority |
+|----------|--------------|
+| `SelfFilter` | 200（最先执行） |
+| `MessageTypeFilter` / `PostTypeFilter` / `SubTypeFilter` | 100 |
+| `StartsWithHook` / `KeywordHook` / `RegexHook` | 90 |
+| 自定义 Hook | 0（默认） |
+
+当 `BEFORE_CALL` 阶段的任何 Hook 返回 `HookAction.SKIP` 时，**立即跳过**当前 Handler，后续 Hook 和 AFTER_CALL/ON_ERROR 均不触发。
+
+---
+
+## 下一步
+
+- [常用模式](7a.patterns.md) — 多步对话、状态机、插件通信
+- [事件注册与装饰器](4a.event-registration.md) — Hook 如何与装饰器注册配合工作
+
+
+---
+
+# 文件: 3. 插件开发\10. 模式.md
+
+---
+title: 高级模式
+createTime: 2026/03/19 17:26:45
+permalink: /guide/uwanjc8v/
+---
+
+> 热重载、依赖管理、跨插件交互、多步对话设计、事件驱动工作流编排。
+
+---
+
+## 目录
+
+- [热重载机制](#热重载机制)
+- [插件依赖管理](#插件依赖管理)
+- [跨插件交互](#跨插件交互)
+- [多步对话设计](#多步对话设计)
+- [事件驱动工作流编排](#事件驱动工作流编排)
+
+---
+
+## 热重载机制
+
+NcatBot 支持开发时修改插件代码后自动重载，无需重启整个 Bot。
+
+### 工作原理
+
+```mermaid
+sequenceDiagram
+    participant FW as FileWatcher
+    participant Q as Reload Queue
+    participant PL as PluginLoader
+    participant P as Plugin
+
+    FW->>FW: 检测到文件变更
+    FW->>Q: put(folder_name) [线程安全]
+    Q->>PL: _reload_consumer() 取出
+    PL->>P: unload_plugin(name)
+    Note over P: __unload__: _close_ → on_close → mixin_unload
+    PL->>PL: revoke_plugin (移除 Handler)
+    PL->>PL: unload_module (清理 sys.modules)
+    PL->>PL: rescan_manifest (重新解析)
+    PL->>P: load_plugin(name)
+    Note over P: __onload__: mixin_load → _init_ → on_load
+    PL->>PL: flush handlers
+```
+
+### 流程
+
+1. **FileWatcherService** 监控 `plugins/` 目录的文件变更
+2. 检测到变化后，将变更的文件夹名放入 `_reload_queue`（线程安全）
+3. **`_reload_consumer`** 异步任务从队列中取出，映射到插件名
+4. 执行完整的 **卸载 → 重新扫描 → 加载** 周期
+
+### 开发体验
+
+在开发模式下（`debug: true`），修改插件代码后保存文件，Bot 自动完成重载——无需手动重启。
+
+### 注意事项
+
+- 热重载会执行完整的卸载/加载周期：**`on_close()` → Mixin 保存 → 清理 → 重新加载 → `on_load()`**
+- 全局变量会被重置——状态应保存在 `self.data` 中（DataMixin 自动持久化）
+- Handler 会被撤销并重新注册——确保所有 Handler 都在类定义或 `on_load()` 中注册
+- `__pycache__` 会被自动清除，确保新代码生效
+
+---
+
+## 插件依赖管理
+
+### 插件间依赖
+
+在 `manifest.toml` 中通过 `[dependencies]` 声明对其他插件的依赖：
+
+```toml
+[dependencies]
+rbac = ">=1.0.0"
+config_manager = ">=0.5.0"
+```
+
+### 拓扑排序
+
+框架使用 **Kahn 算法**对所有插件进行拓扑排序，确保被依赖的插件先加载：
+
+```yaml
+如果 A 依赖 B，B 依赖 C：
+加载顺序: C → B → A
+```
+
+### 错误检测
+
+| 错误类型 | 说明 |
+|---------|------|
+| `PluginMissingDependencyError` | 依赖的插件不存在 |
+| `PluginCircularDependencyError` | 检测到循环依赖（A → B → A） |
+| `PluginVersionError` | 版本约束不满足 |
+
+### pip 依赖
+
+在 `manifest.toml` 的 `[pip_dependencies]` 中声明 Python 包依赖：
+
+```toml
+[pip_dependencies]
+aiohttp = ">=3.8.0"
+beautifulsoup4 = ">=4.12.0"
+```
+
+框架在加载时会自动检查这些包是否已安装，未安装时提示用户确认安装。
+
+> 示例：[examples/common/07_external_api/manifest.toml](../../../examples/common/07_external_api/manifest.toml) 声明了 `aiohttp` 依赖。
+
+### 版本约束语法
+
+使用 Python `packaging.specifiers` 标准语法：
+
+| 语法 | 含义 |
+|------|------|
+| `>=1.0.0` | 大于等于 1.0.0 |
+| `>=1.0.0,<2.0.0` | 大于等于 1.0.0 且小于 2.0.0 |
+| `==1.2.3` | 精确匹配 |
+| `~=1.4` | 兼容版本（≥1.4, <2.0） |
+
+---
+
+## 跨插件交互
+
+### 获取其他插件实例
+
+```python
+class MyPlugin(NcatBotPlugin):
+    name = "my_plugin"
+    version = "1.0.0"
+
+    async def on_load(self):
+        # 获取其他插件实例
+        rbac_plugin = self.get_plugin("rbac")
+        if rbac_plugin:
+            LOG.info("RBAC 插件已加载: %s", rbac_plugin.version)
+
+        # 列出所有已加载插件
+        all_plugins = self.list_plugins()
+        LOG.info("已加载插件: %s", all_plugins)
+```
+
+### 跨插件 Python 导入
+
+框架将 `plugins/` 目录添加到 `sys.path`，每个插件文件夹相当于一个 Python 包。因此可以直接导入其他插件的模块：
+
+```python
+# 在 plugin_a/main.py 中导入 plugin_b 的模块
+from plugin_b.utils import some_helper
+```
+
+**注意**：
+- 使用跨插件导入时，务必在 `manifest.toml` 中声明依赖关系，确保加载顺序正确
+- 插件根目录在 `sys.path` 中的优先级低于标准库和第三方包
+
+---
+
+## 多步对话设计
+
+多步对话是 Bot 开发中的常见需求——通过 `wait_event()` 串联多轮交互。
+
+### 设计模式
+
+```mermaid
+flowchart TB
+    CMD[用户发送命令] --> STEP1[步骤 1: 询问]
+    STEP1 --> WAIT1[wait_event: 等待回复]
+    WAIT1 -->|超时| CANCEL[取消]
+    WAIT1 -->|"取消"| CANCEL
+    WAIT1 -->|有效回复| STEP2[步骤 2: 继续询问]
+    STEP2 --> WAIT2[wait_event: 等待回复]
+    WAIT2 -->|超时| CANCEL
+    WAIT2 -->|有效回复| CONFIRM[确认步骤]
+    CONFIRM --> SAVE[保存数据]
+```
+
+### 封装辅助方法
+
+推荐将 `wait_event` 的通用逻辑封装为辅助方法：
+
+```python
+TIMEOUT = 30  # 每步超时秒数
+
+async def _wait_user_reply(self, group_id, user_id):
+    """等待指定用户在指定群的下一条消息"""
+    event = await self.wait_event(
+        predicate=lambda e: (
+            hasattr(e.data, "user_id")
+            and str(e.data.user_id) == str(user_id)
+            and hasattr(e.data, "group_id")
+            and str(e.data.group_id) == str(group_id)
+            and hasattr(e.data, "raw_message")
+        ),
+        timeout=TIMEOUT,
+    )
+    return event.data.raw_message.strip()
+```
+
+### 完整多步对话示例
+
+```python
+@registrar.on_group_command("注册")
+async def on_register(self, event: GroupMessageEvent):
+    gid, uid = event.group_id, event.user_id
+
+    # 步骤 1: 询问名字
+    await event.reply(f"📝 请输入你的名字（{TIMEOUT}秒内回复，输入「取消」退出）：")
+
+    try:
+        name = await self._wait_user_reply(gid, uid)
+    except asyncio.TimeoutError:
+        await self.api.qq.post_group_msg(gid, text="⏰ 注册超时，已取消")
+        return
+
+    if name == "取消":
+        await self.api.qq.post_group_msg(gid, text="❌ 注册已取消")
+        return
+
+    # 步骤 2: 询问年龄
+    await self.api.qq.post_group_msg(gid, text=f"好的，{name}！请输入你的年龄：")
+
+    try:
+        age_str = await self._wait_user_reply(gid, uid)
+    except asyncio.TimeoutError:
+        await self.api.qq.post_group_msg(gid, text="⏰ 注册超时，已取消")
+        return
+
+    if age_str == "取消":
+        await self.api.qq.post_group_msg(gid, text="❌ 注册已取消")
+        return
+
+    if not age_str.isdigit():
+        await self.api.qq.post_group_msg(gid, text="❌ 年龄必须是数字，注册已取消")
+        return
+
+    age = int(age_str)
+
+    # 步骤 3: 确认
+    await self.api.qq.post_group_msg(
+        gid,
+        text=f"请确认你的信息:\n  名字: {name}\n  年龄: {age}\n回复「确认」完成注册：",
+    )
+
+    try:
+        confirm = await self._wait_user_reply(gid, uid)
+    except asyncio.TimeoutError:
+        await self.api.qq.post_group_msg(gid, text="⏰ 确认超时，已取消")
+        return
+
+    if confirm != "确认":
+        await self.api.qq.post_group_msg(gid, text="❌ 注册已取消")
+        return
+
+    # 保存数据
+    self.data.setdefault("users", {})[str(uid)] = {"name": name, "age": age}
+    await self.api.qq.post_group_msg(gid, text=f"✅ 注册成功！欢迎你，{name}（{age}岁）")
+```
+
+> 完整代码：[examples/common/06_multi_step_dialog/main.py](../../../examples/common/06_multi_step_dialog/main.py)
+
+### 设计要点
+
+| 要点 | 说明 |
+|------|------|
+| **超时处理** | 每步都应设置超时（`asyncio.TimeoutError`） |
+| **取消机制** | 检测用户输入"取消"以退出流程 |
+| **输入验证** | 在每步验证输入合法性 |
+| **状态持久化** | 结果保存到 `self.data`（DataMixin） |
+| **用户隔离** | `predicate` 中限定 `user_id` + `group_id` |
+
+---
+
+## 事件驱动工作流编排
+
+当需求超越线性多步对话——需要等待生命周期事件、并发协调多个任务、或在非插件模式下用 `run_async()` 自行编排——本节提供常见模式。
+
+### 何时用装饰器 vs wait_event 编排
+
+| 场景 | 推荐方式 | 原因 |
+|------|---------|------|
+| 单命令 → 单响应 | 装饰器（模式 A） | 声明式，框架自动路由 |
+| 命令 → 等用户回复 → 完成 | 装饰器触发 + `wait_event` | 线性流程，handler 内顺序执行 |
+| 启动后自定义编排逻辑 | `run_async()` + dispatcher | 脱离插件体系，完全掌控执行流 |
+| 后台持续监控 + 按条件触发 | `events()` 流 + `create_task` | 响应式，长期运行 |
+| 多人并发输入收集 | 多个 `wait_event` + `asyncio.wait` | 并发等待，先到先得 |
+
+---
+
+## 下一步
+
+- [实战案例与调试](7b.case-studies.md) — 综合实战案例分析、调试与排查
+
+
+---
+
+# 文件: 3. 插件开发\11. 案例研究.md
+
+---
+title: 实战案例与调试
+createTime: 2026/03/19 17:26:45
+permalink: /guide/uykkmlov/
+---
+
+> 四大实战案例概览与调试排查技巧。完整源码请访问 `examples/` 目录。
+
+---
+
+## 实战案例
+
+### 案例 1：群管理机器人
+
+> 完整代码：[examples/qq/06_group_manager/main.py](../../../examples/qq/06_group_manager/main.py)
+
+**整合**：RBAC 权限 + 通知事件 + 群管理 API + 配置管理
+
+**关键模式**：
+- 封装 `_is_admin()` 权限检查，所有管理命令共用
+- 欢迎语模板通过 ConfigMixin 持久化，支持运行时修改
+- `on_group_increase()` 自动处理新成员入群
+
+### 案例 2：定时报告与统计
+
+> 完整代码：[examples/qq/08_scheduled_reporter/main.py](../../../examples/qq/08_scheduled_reporter/main.py)
+
+**整合**：定时任务 + 数据持久化 + 高优先级消息统计 + 合并转发
+
+**关键模式**：
+- 高优先级 Handler（`priority=200`）统计所有消息，不影响其他命令
+- 任务回调方法与任务同名（`daily_report`）
+- `ForwardConstructor` 将长报告打包为合并转发消息
+
+### 案例 3：外部 API 集成
+
+> 完整代码：[examples/common/07_external_api/main.py](../../../examples/common/07_external_api/main.py)
+
+**整合**：异步 HTTP 请求 + 配置管理 + 错误处理 + 优雅降级
+
+**关键模式**：
+- API 地址通过 ConfigMixin 管理，运行时可修改
+- 多层异常捕获：HTTP 状态码 → 网络异常 → 未知异常
+- pip 依赖声明在 `manifest.toml` 的 `[pip_dependencies]`
+
+### 案例 4：全功能群助手
+
+> 完整代码：[examples/qq/09_full_featured_bot/main.py](../../../examples/qq/09_full_featured_bot/main.py)
+
+覆盖**所有框架特性**的综合案例：
+
+| 子系统 | 使用的 Mixin / 特性 |
+|--------|-------------------|
+| 签到与积分 | DataMixin + MessageArray |
+| 关键词自动回复 | DataMixin + 高优先级 Handler |
+| 管理命令 | RBACMixin + api.manage |
+| 定时早安 | TimeTaskMixin |
+| 新成员欢迎 | `on_group_increase()` + ConfigMixin |
+
+---
+
+## 调试与排查
+
+### 日志系统
+
+```python
+from ncatbot.utils import get_log
+LOG = get_log("MyPlugin")
+LOG.info("消息: %s", text)
+LOG.debug("调试信息")  # 仅在 debug=True 时输出
+```
+
+### 常见问题
+
+| 问题 | 原因 | 解决方案 |
+|------|------|---------|
+| 插件没有加载 | manifest.toml 缺必填字段 | 检查 `name` / `version` / `main` |
+| 命令不响应 | Handler 未注册 | 确认 `@registrar.on_*()` 在类方法上 |
+| 配置/数据丢失 | 异常退出 | 手动调用 `_save_data()` |
+| 热重载不生效 | `__pycache__` 缓存 | 手动删除 `__pycache__` |
+| 循环依赖 | A ↔ B 互相依赖 | 提取公共逻辑到第三个插件 |
+| 权限检查总是 False | RBAC 服务未加载 | 检查 `self.rbac is not None` |
+| 定时任务不执行 | 回调方法名不匹配 | 任务名须与方法名完全一致 |
+
+---
+
+## 下一步
+
+- [消息类型详解](../send_message/) — 深入消息段构造和合并转发
+- [架构总览](../../architecture.md) — 理解框架整体分层设计
+- [示例插件集合](../../../examples/README.md) — 15 个渐进式示例
+
+
+---
+
+# 文件: 3. 插件开发\README.md
+
+---
+title: 插件开发指南
+createTime: 2026/03/19 17:26:45
+permalink: /guide/r3952n4t/
+---
+
+> 插件开发从入门到实战 — 覆盖插件结构、生命周期、事件处理、Mixin 能力、Hook 机制和高级主题。
+
+---
+
+## Quick Reference
+
+### 最小可运行插件
+
+```python
+from ncatbot.plugin import NcatBotPlugin
+from ncatbot.core import registrar
+from ncatbot.event.qq import GroupMessageEvent
+
+class HelloPlugin(NcatBotPlugin):
+    name = "hello"
+    version = "1.0.0"
+
+    @registrar.on_group_command("hello")
+    async def on_hello(self, event: GroupMessageEvent):
+        await event.reply(text="Hello!")
+```
+
+### 生命周期钩子
+
+| 钩子 | 说明 |
+|------|------|
+| `_init_()` | 同步初始化（on_load 之前） |
+| `on_load()` | 异步初始化（注册权限、定时任务等） |
+| `on_close()` | 异步清理 |
+| `_close_()` | 同步清理 |
+
+### 运行时属性
+
+| 属性 | 类型 | 说明 |
+|------|------|------|
+| `self.api` | `BotAPIClient` | Bot API 客户端 |
+| `self.services` | `ServiceManager` | 服务管理器 |
+| `self.workspace` | `Path` | 插件工作目录 |
+| `self.debug` | `bool` | 调试模式 |
+
+### Registrar 装饰器
+
+| 装饰器 | 监听事件 |
+|--------|---------|
+| `@registrar.on_group_command("cmd")` | 群命令 |
+| `@registrar.on_private_command("cmd")` | 私聊命令 |
+| `@registrar.on_command("cmd")` | 群+私聊命令 |
+| `@registrar.on_group_message()` | 群消息 |
+| `@registrar.on_private_message()` | 私聊消息 |
+| `@registrar.on_message()` | 所有消息 |
+| `@registrar.on_notice()` | 通知事件 |
+| `@registrar.on_request()` | 请求事件 |
+| `@registrar.qq.on_poke()` | QQ 戳一戳 |
+| `@registrar.qq.on_group_increase()` | QQ 群成员增加 |
+| `@registrar.qq.on_group_decrease()` | QQ 群成员减少 |
+| `@registrar.qq.on_friend_request()` | QQ 好友请求 |
+| `@registrar.qq.on_group_request()` | QQ 群请求 |
+| `@registrar.bilibili.on_danmu()` | B站弹幕 |
+| `@registrar.bilibili.on_gift()` | B站礼物 |
+| `@registrar.github.on_push()` | GitHub Push |
+| `@registrar.github.on_issue()` | GitHub Issue |
+| `@registrar.on(event_type, ...)` | 通用注册 |
+
+> 所有装饰器支持 `priority=`（优先级）和 `platform=`（平台过滤）参数。命令装饰器额外支持 `ignore_case=`。
+
+### Mixin 能力（继承 NcatBotPlugin 自动获得）
+
+| Mixin | 方法 | 说明 |
+|-------|------|------|
+| **ConfigMixin** | `get_config(key, default=None)` | 读取 YAML 配置 |
+| | `set_config(key, value)` | 写入并持久化 |
+| | `remove_config(key)` | 移除配置项 |
+| | `update_config(updates)` | 批量更新 |
+| **DataMixin** | `self.data[key]` | 读写 JSON 持久化数据（字典） |
+| **RBACMixin** | `check_permission(user, permission)` | 检查权限 |
+| | `add_permission(path)` | 注册权限路径 |
+| | `add_role(role, exist_ok=True)` | 创建角色 |
+| | `self.rbac` | 访问 RBACService 实例 |
+| **TimeTaskMixin** | `add_scheduled_task(name, interval, ...)` | 添加定时任务 |
+| | `remove_scheduled_task(name)` | 移除定时任务 |
+| | `list_scheduled_tasks()` | 列出任务 |
+| **EventMixin** | `wait_event(predicate=, timeout=)` | 等待匹配事件 |
+| | `self.events(type)` | 创建事件流（async for） |
+
+### 阅读路线
+
+- **新手**：1 → 2 → 4a（快速入门 → 插件结构 → 事件注册）
+- **进阶**：5a / 5b → 6（Mixin 能力 → Hook 机制）
+- **高级**：4c → 7a → 7b（Predicate DSL → 模式 → 实战）
+
+---
+
+## 本目录索引
+
+| 章节 | 说明 | 难度 |
+|------|------|------|
+| [1. 快速入门](1.quick-start.md) | 环境准备、安装、5 分钟跑通第一个插件 | ⭐ |
+| [2. 插件结构](2.structure.md) | manifest.toml 详解、基类选择、多文件组织 | ⭐ |
+| [3. 生命周期](3.lifecycle.md) | 加载流程、卸载流程、生命周期钩子 | ⭐ |
+| [4a. 事件注册](4a.event-registration.md) | 事件类型体系、装饰器路由、优先级 | ⭐⭐ |
+| [4b. 事件高级用法](4b.event-advanced.md) | 事件流、wait_event、实战组合 | ⭐⭐ |
+| [4c. Predicate DSL](4c.predicate-dsl.md) | 谓词组合、P 基类、工厂函数 | ⭐⭐ |
+| [5a. 配置与数据](5a.config-data.md) | ConfigMixin + DataMixin | ⭐⭐ |
+| [5b. 权限/定时/事件](5b.rbac-schedule-event.md) | RBACMixin + TimeTaskMixin + EventMixin | ⭐⭐ |
+| [6. Hook 机制](6.hooks.md) | 三阶段模型、内置 Hook、自定义编写 | ⭐⭐ |
+| [7a. 高级模式](7a.patterns.md) | 热重载、依赖管理、跨插件交互 | ⭐⭐⭐ |
+| [7b. 实战案例](7b.case-studies.md) | 群管理/定时报告/外部 API 案例 | ⭐⭐⭐ |
+
+
+---
+
+# 文件: 4. 消息发送\1. 通用\1. 消息段.md
+
+---
+title: 消息段参考
+createTime: 2026/03/19 17:26:45
+permalink: /guide/5kurthuk/
+---
+
+> 消息段的分类、构造方式和常用示例。完整字段表见 [通用消息段](../../../reference/types/1_common_segments.md) 和 [QQ 消息段](../../../reference/types/3_qq_segments.md)。
+
+---
+
+## 基类 MessageSegment
+
+所有消息段继承自 `MessageSegment`（Pydantic `BaseModel`），提供 `to_dict()` / `from_dict()` 序列化。
+
+```python
+from ncatbot.types import PlainText, parse_segment
+
+seg = PlainText(text="Hello")
+seg.to_dict()  # {"type": "text", "data": {"text": "Hello"}}
+
+seg = parse_segment({"type": "at", "data": {"qq": "123456"}})  # → At(user_id='123456')
+```
+
+---
+
+## 基础消息段
+
+| 类型 | 构造示例 | 关键字段 |
+|------|---------|---------|
+| `PlainText` | `PlainText(text="你好")` | `text: str` |
+| `At` | `At(user_id="123456")` / `At(user_id="all")` | `user_id: str`（数字或 `"all"`，别名 `qq` 兼容 OB11） |
+| `Face` | `Face(id=178)` | `id: str`（自动转换） |
+| `Reply` | `Reply(id=12345)` | `id: str`（自动转换） |
+
+---
+
+## 多媒体消息段
+
+都继承 `DownloadableSegment`，共享 `file` / `url` / `file_id` / `file_size` / `file_name` 字段。
+
+`file` 支持三种格式：URL / 本地路径 / `base64://...`
+
+| 类型 | 构造示例 | 额外字段 |
+|------|---------|---------|
+| `Image` | `Image(file="https://...")` | `sub_type`（1=动画表情）, `type`（1=闪照） |
+| `Record` | `Record(file="audio.silk")` | `magic`（1=变声） |
+| `Video` | `Video(file="video.mp4")` | — |
+| `File` | `File(file="doc.pdf", file_name="手册.pdf")` | — |
+
+---
+
+## 富文本消息段
+
+| 类型 | 关键字段 | 说明 |
+|------|---------|------|
+| `Share` | `url`, `title`, `content?`, `image?` | 链接分享卡片 |
+| `Location` | `lat`, `lon`, `title?`, `content?` | 定位消息 |
+| `Music` | `type`("qq"/"163"/"custom"), `id?`, `url?`, `audio?` | 音乐卡片 |
+| `Json` | `data: str` | JSON 消息 |
+| `Markdown` | `content: str` | Markdown 消息 |
+
+---
+
+## 延伸阅读
+
+- [MessageArray 消息数组](2_array.md) — 消息段的容器与链式构造
+- [通用消息段](../../../reference/types/1_common_segments.md) — 通用段完整字段表
+- [QQ 消息段](../../../reference/types/3_qq_segments.md) — QQ 专属段完整字段表
+
+```python
+seg = Music(type="qq", id="12345")        # QQ 音乐
+seg = Music(type="163", id="67890")       # 网易云
+seg = Music(                              # 自定义
+    type="custom",
+    url="https://music.example.com",
+    audio="https://music.example.com/song.mp3",
+    title="自定义歌曲",
+)
+```
+
+### Json — JSON 消息
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `data` | `str` | ✅ | JSON 字符串内容 |
+
+```python
+from ncatbot.types import Json
+
+seg = Json(data='{"app":"com.example","desc":"卡片消息"}')
+```
+
+### Markdown — Markdown 消息
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `content` | `str` | ✅ | Markdown 内容 |
+
+```python
+from ncatbot.types import Markdown
+
+seg = Markdown(content="# 标题\n**粗体**\n- 列表项")
+```
+
+---
+
+[← 上一篇：快速上手](README.md) | [返回目录](README.md) | [下一篇：MessageArray →](2_array.md)
+
+
+---
+
+# 文件: 4. 消息发送\1. 通用\2. 消息数组.md
+
+---
+title: MessageArray 消息数组
+createTime: 2026/03/19 17:26:45
+permalink: /guide/1lh3ze21/
+---
+
+> 消息段的容器，链式构造、查询过滤。完整方法列表见 [reference/types/2_message_array.md](../../../reference/types/2_message_array.md)。
+
+---
+
+## 创建 MessageArray
+
+```python
+from ncatbot.types import MessageArray, PlainText, At
+
+msg = MessageArray()                                   # 空数组
+msg = MessageArray([PlainText(text="Hello"), At(user_id="123456")])  # 传入列表
+msg = MessageArray.from_list([...])                    # 从 OB11 字典列表
+msg = MessageArray.from_any("[CQ:at,qq=123456]Hello")  # 自动解析
+```
+
+---
+
+## 链式构造
+
+所有 `add_*` 方法返回 `self`，支持链式调用：
+
+```python
+msg = (
+    MessageArray()
+    .add_reply(12345)                              # 回复引用
+    .add_at(123456)                                # @某人
+    .add_text(" 你好！看看这张图 ")                   # 文本
+    .add_image("https://example.com/img.png")       # 图片
+    .add_video("https://example.com/video.mp4")     # 视频
+)
+```
+
+常用方法：`add_text` / `add_image` / `add_video` / `add_at` / `add_at_all` / `add_reply` / `add_segment`
+
+---
+
+## 查询与过滤
+
+```python
+msg.text                     # 拼接所有纯文本段
+msg.filter_text()            # [PlainText, ...]
+msg.filter_image()           # [Image, ...]
+msg.filter(Record)           # 按类型泛型过滤
+msg.is_at(123456)            # 是否 @了指定用户
+```
+
+---
+
+## 序列化
+
+```python
+data = msg.to_list()         # → OB11 字典列表
+msg2 = MessageArray.from_list(data)
+```
+
+`MessageArray` 支持迭代、`len()`、`+` 拼接。
+
+---
+
+[← 上一篇：消息段参考](1_segments.md) | [返回目录](README.md) | [下一篇：QQ 合并转发 →](../qq/2_forward.md)
+
+
+---
+
+# 文件: 4. 消息发送\1. 通用\README.md
+
+---
+title: 通用消息概念
+createTime: 2026/03/19 17:26:45
+permalink: /guide/lk6274gr/
+---
+
+> 跨平台通用的消息构造基础 — 消息段（MessageSegment）和消息数组（MessageArray）。
+
+---
+
+## Quick Start
+
+### 构造一条消息
+
+```python
+from ncatbot.types import MessageArray
+
+# 链式构造 — 文本 + 图片 + @某人
+msg = MessageArray().add_text("Hello\n").add_image("photo.jpg").add_at(user_id)
+
+# 发送
+await self.api.qq.post_group_array_msg(group_id, msg)
+```
+
+### 使用消息段
+
+```python
+from ncatbot.types import MessageSegment, MessageArray
+from ncatbot.types.common.segment import PlainText, Image, At, Reply
+
+# 手动构造消息段
+text = PlainText(text="你好")
+img = Image(file="https://example.com/pic.jpg")
+at = At(user_id="123456")
+
+# 组合成数组
+msg = MessageArray([text, img, at])
+```
+
+### 从事件中提取消息内容
+
+```python
+@registrar.on_group_command("echo")
+async def on_echo(self, event: GroupMessageEvent):
+    # 获取纯文本内容
+    text = event.message.text
+
+    # 提取所有图片段
+    images = event.message.filter_image()
+
+    # 检查是否 @了某人
+    if event.message.is_at("123456"):
+        await event.reply(text="你 @了 TA")
+```
+
 ---
 
 ## 概览
 
-NcatBot 将 OneBot/NapCat 的原始事件（称为官方事件）结构封装为更易用的事件对象。本文介绍全部事件对象及其附属数据结构：
-- GroupMessageEvent（群消息）
-- PrivateMessageEvent（私聊消息）
-- MessageSendEvent（自身消息）
-- RequestEvent（请求：加好友/加群）
-- NoticeEvent（通知：群上传/变更/撤回等）
+NcatBot 的消息构造体系分为两层：
 
-这些事件对象都会出现在 BotClient 的回调或插件的 EventBus 订阅中。它们不仅承载数据，也内置了常用的便捷操作方法（如 reply/approve 等），直接走 BotAPI 完成上行操作。
+| 概念 | 说明 | 适用平台 |
+|------|------|---------|
+| `MessageSegment` | 消息的最小单元（文本、图片、@等） | 主要用于 QQ，Bilibili 使用纯文本 |
+| `MessageArray` | 消息段的有序容器，支持链式构造 | 主要用于 QQ |
+
+### 消息段类型速查
+
+| 类型 | 构造 | 说明 |
+|------|------|------|
+| `PlainText` | `PlainText(text="...")` | 纯文本 |
+| `Image` | `Image(file="url或路径")` | 图片（URL / 文件路径 / base64） |
+| `At` | `At(user_id="123456")` | @提及（`"all"` 为 @全体） |
+| `Reply` | `Reply(id="msg_id")` | 回复引用 |
+| `Video` | `Video(file="...")` | 视频 |
+| `Record` | `Record(file="...")` | 语音 |
+| `File` | `File(file="...")` | 文件附件 |
+
+### MessageArray 常用方法
+
+| 方法 | 返回 | 说明 |
+|------|------|------|
+| `add_text(text)` | `self` | 追加文本段 |
+| `add_image(image)` | `self` | 追加图片段 |
+| `add_at(user_id)` | `self` | 追加 @段 |
+| `add_at_all()` | `self` | 追加 @全体 |
+| `add_reply(message_id)` | `self` | 追加回复引用 |
+| `add_video(video)` | `self` | 追加视频段 |
+| `add_segment(seg)` | `self` | 追加任意消息段 |
+| `.text` | `str` | 拼接所有纯文本内容 |
+| `filter(cls)` | `list` | 按类型筛选消息段 |
+| `filter_image()` | `list` | 筛选所有图片段 |
+| `to_list()` | `list[dict]` | 序列化为 API 格式 |
+| `from_list(data)` | `MessageArray` | 从 API 格式反序列化 |
+
+对于 Bilibili 平台，消息以纯文本为主（弹幕、私信、评论），不需要复杂的消息段构造。
 
 ---
 
-## 事件类继承关系
+## 本目录索引
 
-```mermaid
-classDiagram
-    BaseEventData <|-- MessageEventData
-    MessageEventData <|-- BaseMessageEvent
-    BaseMessageEvent <|-- GroupMessageEvent
-    BaseMessageEvent <|-- PrivateMessageEvent
-    BaseMessageEvent <|-- MessageSendEvent
-    BaseEventData <|-- NoticeEvent
-    BaseEventData <|-- RequestEvent
-    BaseEventData <|-- MetaEvent
-    BaseMessageEvent <|-- AnonymousMessage
+| 文档 | 内容 |
+|------|------|
+| [消息段参考](1_segments.md) | 所有消息段类型的字段、构造方式和序列化格式 |
+| [MessageArray 消息数组](2_array.md) | 容器：创建、链式构造、查询过滤、序列化 |
+
+
+---
+
+# 文件: 4. 消息发送\2. QQ\1. 语法糖.md
+
+---
+title: 便捷接口参考
+createTime: 2026/03/19 17:26:45
+permalink: /guide/sqs446wn/
+---
+
+> `event.reply()`、`MessageSugarMixin` 全部方法、`send_poke` 的完整清单。
+
+---
+
+## 目录
+
+- [event.reply() — 快速回复](#eventreply--快速回复)
+- [便捷发送 — 关键字组装](#便捷发送--关键字组装)
+- [直接发送 MessageArray](#直接发送-messagearray)
+- [类型专用发送 — 群消息](#类型专用发送--群消息)
+- [类型专用发送 — 私聊消息](#类型专用发送--私聊消息)
+- [合并转发发送](#合并转发发送)
+- [其他 — 戳一戳](#其他--戳一戳)
+
+---
+
+## event.reply() — 快速回复
+
+在事件处理器中最便捷的回复方式，自动引用原消息。
+
+```python
+async def reply(
+    self,
+    text: str | None = None,
+    *,
+    at: str | int | None = None,
+    image: str | Image | None = None,
+    video: str | Video | None = None,
+    rtf: MessageArray | None = None,
+    at_sender: bool = True,
+) -> Any
 ```
 
-## BaseEventData（基础事件）
+**行为：**
+- 自动添加 `Reply`（引用原消息 ID）
+- 群聊时默认 `@发送者`（`at_sender=True`）
+- 私聊时只引用不 @
+- 组装顺序：`reply → @sender → text → at → image → video → rtf`
 
-关键字段：
-- `self_id`: `str`，当前 Bot QQ 号
-- `time`: `int`，事件时间戳（秒）
-- `post_type`: `str`，事件类型，如 `message`、`notice`、`request`、`meta_event`
-
-
-## BaseMessageEvent（消息事件基类）
-
-关键字段：
-- [BaseEventData](#BaseEventData) 的所有字段。
-- `message_type`: `str`，消息类型，如 `private`、`group`
-- `sub_type`: `str`，消息子类型，这里太多，下级再介绍。
-- `message_id`: `str`，消息 ID
-- `user_id`: `str`，消息发送者 QQ 号
-- `message`: `MessageArray`，结构化消息片段集合，参见[MessageArray 使用指南](./3.%20MessageArray.md)
-- `raw_message`: `str`，原始文本消息
-- `sender`: `BaseSender`，发送者信息，参见下文。
-
-## GroupMessageEvent（群消息）
-
-关键字段：
-- 包括 [BaseMessageEvent](#BaseMessageEvent) 的所有字段。
-- `group_id`: `str`，群号
-- `sub_type`: `str`，消息子类型，`normal` | `anonymous` | `notice`。
-- `sender`: `GroupSender`，发送者信息，参见下文。
-
-便捷方法：
-- `await reply(text=None, image=None, at=True, space=True, rtf=None) -> str`：在群内回复，默认 at 发送者并引用原消息，返回消息 ID；
-- `await delete()`：撤回该消息；
-- `await kick()`：踢出发送者；
-- `await ban(ban_duration=30)`：禁言发送者（秒）。
-- 方法名后缀加 `_sync` 即同步调用。
-
-典型使用（BotClient 装饰器）：
 ```python
-@bot.on_group_message()
-async def on_group(e: GroupMessageEvent):
-    if "ping" in e.raw_message:
-        e.reply_sync("pong 1")
-        await e.reply("pong 2")
-```
-
----
-
-## PrivateMessageEvent（私聊消息）
-
-关键字段（只列核心）：
-- 包括 [BaseMessageEvent](#BaseMessageEvent) 的所有字段。
-- `sub_type`: `str`，消息子类型，`friend` | `group` | `other`。
-- `sender`: `PrivateSender`，发送者信息，参见下文。
-
-便捷方法：
-- `await reply(text=None, image=None, rtf=None) -> str`：私聊回复，会自动引用原消息，返回消息 ID；
-
----
-
-## MessageSendEvent（自身消息）
-
-关键字段（只列核心）：
-- 包括[BaseEventData](#BaseEventData) 的所有字段。
-- `message_sent_type`: `str`，消息发送者类型，上报为自身消息时为`self`。
-
-便携方法：
-- `await reply(text=None, image=None, rtf=None) -> str`:便携回复自身消息，可自动判断回复群消息还是私聊消息；
-- `is_group_msg()`: 判断是否为群消息；
-- `is_private_msg()`: 判断是否为私聊消息；
-- `delete()`: 撤回本条消息。
-
-## Sender（消息发送者信息）
-
-### BaseSender（基础发送者信息）
-
-关键字段：
-- `user_id`: `str`，发送者 QQ 号
-- `nickname`: `str`，发送者昵称
-
-### GroupSender（群消息发送者）
-
-关键字段：
-- 包括 [BaseSender](#BaseSender) 的所有字段。
-- `card`: `str`，群名片/备注
-- `level`: `int`，成员等级
-- `role`: `str`，成员角色，`owner` | `admin` | `member`
-- `title`: `str`，成员专属头衔，如果无，则为 `None`。
-
-### PrivateSender（私聊消息发送者）
-
-关键字段：
-- 包括 [BaseSender](#BaseSender) 的所有字段。
-
-## RequestEvent（请求）
-
-[实战案例](../9.%20实际项目参考/教程项目/4.%20处理好友请求和加群请求.md)
-
-用于处理「加好友」或「加群」请求。
-
-关键字段：
-- 包括 [BaseEventData](#BaseEventData) 的所有字段。
-- `request_type`：`friend` | `group`
-- `flag`：请求标识（用于执行通过/拒绝操作）
-- `comment`：验证信息。
-- `user_id`： 申请要加群的用户 QQ 号
-- `group_id`：申请加入的群号（仅 `request_type` 为 `group` 时存在）
-
-便捷方法：
-- `is_group_request()`：判断是否为加群请求
-- `is_friend_request()`：判断是否为加好友请求
-- `await approve(approve=True, remark=None, reason=None)`：
-  - `request_type` 为 `friend`：可传 `remark` 作为通过后的好友备注；
-  - `request_type` 为 `group`：可传 `reason` 作为拒绝理由；
-  - 内部会调用 `set_friend_add_request` 或 `set_group_add_request`。
-
-示例：
-```python
-@bot.on_request(filter="group")
-async def on_group_request(e: RequestEvent):
-    await e.approve(approve=True)  # 通过加群
+await event.reply(text="收到！")
+await event.reply(text="看图", image="https://example.com/img.png")
+await event.reply(text="不 @你", at_sender=False)
 ```
 
 ---
 
-## NoticeEvent（通知）
+## 便捷发送 — 关键字组装
 
-承载群文件上传、成员变更、撤回、禁言、戳一戳等通知。
+`post_group_msg` / `post_private_msg` 接受关键字参数，自动组装 `MessageArray`。
 
-关键字段：
-- 包括 [BaseEventData](#BaseEventData) 的所有字段。
-- `notice_type`：通知类型
-  
-`notice_type` 字段选项：
-
-- `group_upload`
-- `group_admin`
-- `group_decrease`
-- `group_increase`
-- `friend_add`
-- `group_recall`
-- `group_ban`
-- `notify`
-- `group_msg_emoji_like`
-...
-
-
-更多详细信息参考[OneBot 事件文档](https://github.com/botuniverse/onebot-11/blob/master/event/notice.md)。
-
-### group_increase（群成员增加）
-
-关键字段：
-- `group_id`：群号
-- `user_id`：新成员 QQ 号
-- `operator_id`：操作者 QQ 号（邀请者）
-- `sub_type`：事件子类型，`approve` | `invite`，分别表示管理员已同意入群、管理员邀请入群。
-
-### group_decrease（群成员减少）
-
-关键字段：
-- `group_id`：群号
-- `user_id`：离开者 QQ 号
-- `operator_id`：操作者 QQ 号（如果是主动退群，则和 user_id 相同）
-- `sub_type`：事件子类型，`leave` | `kick` | `kick_me`，分别表示主动退群、成员被踢、登录号被踢。
-
-### group_recall（群消息撤回）
-
-关键字段：
-- `group_id`：群号
-- `user_id`：消息发送者 QQ 号
-- `operator_id`：操作者 QQ 号（如果是自己撤回，则和 user_id 相同）
-- `message_id`：被撤回的消息 ID
-
-### group_msg_emoji_like（群消息表情回应）
-
-关键字段：
-- `group_id`：群号
-- `user_id`：点赞者 QQ 号
-- `message_id`：被点赞的消息 ID
-- `emoji_like_id`：表情 ID
-- `is_add`：是否为新增回应 (bool)
-
----
-
-## 与 BotAPI 的协作
-
-这些事件对象的方法（如 `reply/approve/delete/ban`）本质上都是对 `` 的便捷封装：
-- GroupMessageEvent → 调用 `post_group_msg/set_group_ban/delete_msg/...`
-- PrivateMessageEvent → 调用 `post_private_msg` 等
-- RequestEvent → 调用 `set_friend_add_request/set_group_add_request`
-
-因此你既可以用事件自带的方法快速完成处理，也可以直接使用 `BotAPI` 获得更细粒度的控制（如发送转发消息、贴表情、OCR 等）。
-
-
----
-
-# 文件: 4. 数据结构介绍\3. MessageArray.md
-
----
-title: MessageArray 消息容器
-createTime: 2025/9/26 14:00:00
-permalink: /guide/messagearray/
----
-
-本页介绍消息容器 `MessageArray` 的核心概念、构造方式、解析/序列化流程、常用 API 与示例，以及合并转发消息的特殊规则与常见问题。
-
-阅读后，你应能将上游事件中的消息解析为段列表，并以编程方式构造要发送的复合消息。
-
-## 术语与关系
-
-- **MessageSegment**: 单个消息段的抽象基类，子类包含 `Text`、`Image`、`At`、`Face`、`Reply`、`Node`、`Forward` 等。
-- **MessageArray**: 消息段列表的容器，支持从字符串（CQ 码）、`dict`、`MessageSegment`（或它们的迭代器）构造，支持追加、过滤与序列化。收发消息时，均使用 `MessageArray` 作为消息容器。
-- **PlainText 与 Text**: 均表示 `type=text`。过滤时 `filter(Text)` 会同时匹配 `PlainText` 与 `Text`。
-- **Node / Forward**: 合并转发相关的消息段，具备特殊的格式限制与获取内容方式。
-
-## 构造方式
-
-### 1) 从消息段直接构造
+### post_group_msg
 
 ```python
-from ncatbot.core.event.message_segment import MessageArray, Text, At, Image
+async def post_group_msg(
+    self,
+    group_id: str | int,
+    text: str | None = None,
+    at: str | int | None = None,
+    reply: str | int | None = None,
+    image: str | Image | None = None,
+    video: str | Video | None = None,
+    rtf: MessageArray | None = None,
+) -> dict
+```
 
-# 多参数直接传入（推荐）
-msg = MessageArray(Text("你好 "), At("123456"), Image(file="local.png"))
+### post_private_msg
 
-# 或传入单个列表
-msg = MessageArray([Text("你好 "), At("123456"), Image(file="local.png")])
+```python
+async def post_private_msg(
+    self,
+    user_id: str | int,
+    text: str | None = None,
+    reply: str | int | None = None,
+    image: str | Image | None = None,
+    video: str | Video | None = None,
+    rtf: MessageArray | None = None,
+) -> dict
+```
 
-# 或使用 from_list（列表可混合 dict 与 MessageSegment）
-msg = MessageArray.from_list([
-    {"type": "text", "data": {"text": "你好 "}},
-    At("123456"),
+**组装顺序：** `reply → at → text → image → video → rtf`
+
+```python
+await self.api.qq.post_group_msg(gid, text="你好！", at=uid, reply=mid)
+await self.api.qq.post_private_msg(uid, text="Hi", image="a.png")
+```
+
+> 如果需要更复杂的组合，使用 `rtf` 参数传入完整的 `MessageArray`。
+
+---
+
+## 直接发送 MessageArray
+
+| 方法 | 说明 |
+|---|---|
+| `post_group_array_msg(group_id, msg)` | 发送群 MessageArray |
+| `post_private_array_msg(user_id, msg)` | 发送私聊 MessageArray |
+
+```python
+msg = MessageArray().add_text("Hello").add_image("a.png")
+await self.api.qq.post_group_array_msg(group_id, msg)
+await self.api.qq.post_private_array_msg(user_id, msg)
+```
+
+---
+
+## 类型专用发送 — 群消息
+
+| 方法 | 参数 | 说明 |
+|---|---|---|
+| `send_group_text(group_id, text)` | `text: str` | 发送文本（CQ 码会被解析） |
+| `send_group_plain_text(group_id, text)` | `text: str` | 发送纯文本（原样发送，不解析 CQ 码） |
+| `send_group_image(group_id, image)` | `image: str \| Image` | 发送图片 |
+| `send_group_record(group_id, file)` | `file: str` | 发送语音 |
+| `send_group_video(group_id, video)` | `video: str \| Video` | 发送视频 |
+| `send_group_file(group_id, file, name?)` | `file: str`, `name: str?` | 发送文件 |
+| `send_group_sticker(group_id, image)` | `image: str \| Image` | 发送动画表情（sub_type=1） |
+
+```python
+await self.api.qq.send_group_text(gid, "Hello!")
+await self.api.qq.send_group_plain_text(gid, "[CQ:at,qq=all] 这不会被解析")
+await self.api.qq.send_group_image(gid, "https://example.com/img.png")
+await self.api.qq.send_group_record(gid, "https://example.com/voice.silk")
+await self.api.qq.send_group_video(gid, str(video_path))
+await self.api.qq.send_group_file(gid, "https://example.com/doc.pdf", name="文档.pdf")
+await self.api.qq.send_group_sticker(gid, str(image_path))
+```
+
+---
+
+## 类型专用发送 — 私聊消息
+
+| 方法 | 参数 | 说明 |
+|---|---|---|
+| `send_private_text(user_id, text)` | `text: str` | 发送文本 |
+| `send_private_plain_text(user_id, text)` | `text: str` | 发送纯文本 |
+| `send_private_image(user_id, image)` | `image: str \| Image` | 发送图片 |
+| `send_private_record(user_id, file)` | `file: str` | 发送语音 |
+| `send_private_video(user_id, video)` | `video: str \| Video` | 发送视频 |
+| `send_private_file(user_id, file, name?)` | `file: str`, `name: str?` | 发送文件 |
+| `send_private_sticker(user_id, image)` | `image: str \| Image` | 发送动画表情 |
+| `send_private_dice(user_id, value?)` | `value: int = 1` | 发送骰子 |
+| `send_private_rps(user_id, value?)` | `value: int = 1` | 发送猜拳 |
+
+```python
+await self.api.qq.send_private_text(uid, "你好")
+await self.api.qq.send_private_image(uid, "a.png")
+await self.api.qq.send_private_video(uid, "video.mp4")
+await self.api.qq.send_private_file(uid, "doc.pdf", name="文档.pdf")
+await self.api.qq.send_private_sticker(uid, "sticker.gif")
+await self.api.qq.send_private_dice(uid, value=3)
+await self.api.qq.send_private_rps(uid, value=2)
+```
+
+---
+
+## 合并转发发送
+
+| 方法 | 参数 | 说明 |
+|---|---|---|
+| `post_group_forward_msg(group_id, forward)` | `forward: Forward` | 发送群合并转发 |
+| `post_private_forward_msg(user_id, forward)` | `forward: Forward` | 发送私聊合并转发 |
+| `send_group_forward_msg_by_id(group_id, message_ids)` | `message_ids: List[str \| int]` | 通过消息 ID 逐条转发到群 |
+| `send_private_forward_msg_by_id(user_id, message_ids)` | `message_ids: List[str \| int]` | 通过消息 ID 逐条转发到私聊 |
+
+> 详见 [2_forward.md](2_forward.md)
+
+---
+
+## 其他 — 戳一戳
+
+```python
+async def send_poke(self, group_id: str | int, user_id: str | int) -> None
+```
+
+在群内戳指定用户：
+
+```python
+await self.api.qq.send_poke(event.group_id, event.user_id)
+```
+
+---
+
+[← 上一篇：合并转发](2_forward.md) | [返回目录](../README.md) | [下一篇：实战示例 →](3_examples.md)
+
+
+---
+
+# 文件: 4. 消息发送\2. QQ\2. 合并转发.md
+
+---
+title: 合并转发
+createTime: 2026/03/19 17:26:45
+permalink: /guide/hilk8da2/
+---
+
+> `ForwardNode` 转发节点、`Forward` 合并转发消息段，以及 `ForwardConstructor` 便捷构造器。
+
+---
+
+## 目录
+
+- [ForwardNode — 转发节点](#forwardnode--转发节点)
+- [Forward — 合并转发](#forward--合并转发)
+- [ForwardConstructor — 便捷构造器](#forwardconstructor--便捷构造器)
+- [嵌套合并转发](#嵌套合并转发)
+- [发送合并转发](#发送合并转发)
+
+---
+
+## ForwardNode — 转发节点
+
+`ForwardNode` 代表合并转发中的单条消息。它不是 `MessageSegment` 的子类，而是独立的 Pydantic `BaseModel`。
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `user_id` | `str` | ✅ | 发送者 QQ（自动转为字符串） |
+| `nickname` | `str` | ✅ | 发送者昵称（合并转发中的显示名） |
+| `content` | `List[MessageSegment]` | ✅ | 消息内容（可包含多个消息段） |
+
+`content` 字段支持传入 OB11 字典列表，会自动解析为 `MessageSegment` 对象。
+
+```python
+from ncatbot.types import ForwardNode, PlainText, Image
+
+node = ForwardNode(
+    user_id="123456",
+    nickname="小明",
+    content=[PlainText(text="这是转发的第一条消息")],
+)
+
+# 也可以传入字典列表
+node = ForwardNode(
+    user_id=123456,
+    nickname="小明",
+    content=[
+        {"type": "text", "data": {"text": "Hello"}},
+        {"type": "image", "data": {"file": "https://example.com/img.png"}},
+    ],
+)
+```
+
+---
+
+## Forward — 合并转发
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `id` | `str?` | ❌ | 转发消息 ID（引用已有的合并转发） |
+| `content` | `List[ForwardNode]?` | ❌ | 转发节点列表（构造新的合并转发） |
+
+### 方式一：引用已有的合并转发（通过 `id`）
+
+```python
+from ncatbot.types import Forward
+
+fwd = Forward(id="abc123")
+```
+
+### 方式二：构造新的合并转发（通过 `content`）
+
+```python
+from ncatbot.types import Forward, ForwardNode, PlainText, Image
+
+fwd = Forward(content=[
+    ForwardNode(
+        user_id="123456",
+        nickname="小明",
+        content=[PlainText(text="第一条消息")],
+    ),
+    ForwardNode(
+        user_id="654321",
+        nickname="小红",
+        content=[
+            PlainText(text="带图片的消息"),
+            Image(file="https://example.com/img.png"),
+        ],
+    ),
 ])
 ```
 
-- Text 会自动解析 CQ 码，PlainText 不会。
-- 参考[消息段](./4.%20MessageSegment.md)。
+---
 
-### 2) 从字符串（CQ 码）构造
+## ForwardConstructor — 便捷构造器
 
-`MessageArray` 传入字符串时，会将字符串当作 CQ 码进行解析（支持转义）：
+手动创建 `ForwardNode` 列表比较繁琐，`ForwardConstructor` 提供快捷方式：
 
 ```python
-from ncatbot.core.event.message_segment import MessageArray
-from ncatbot.core.event.message_segment import Text, At, Image
-msg = MessageArray("[CQ:image,file=img001.jpg]这是一段文本[CQ:face,id=123]")
-msg = MessageArray(Image(file="img001.jpg"), Text("这是一段文本"), Face(123))
-# 上下两个 msg 等价
+from ncatbot.types import ForwardConstructor
 ```
 
-解析规则要点：
-- 匹配模式：`[CQ:<type>(,<k=v>...)]`；CQ 前后的普通文本会转成 `text` 段。
-- HTML 实体反转义：`&amp;`→`&`，`&#91;`→`[`，`&#93;`→`]`，`&#44;`→`,`。
+### 构造方法
 
-### 3) 追加构造
+| 方法 | 参数 | 说明 |
+|---|---|---|
+| `__init__(user_id, nickname)` | 默认 `"123456"`, `"QQ用户"` | 初始化，设置默认作者信息 |
+| `set_author(user_id, nickname)` | — | 修改后续消息的默认作者 |
+| `attach(content, user_id?, nickname?)` | `content: MessageArray` | 添加一条消息节点 |
+| `attach_message(message, ...)` | `message: MessageArray` | 同 `attach` |
+| `attach_text(text, ...)` | `text: str` | 添加一条纯文本消息 |
+| `attach_image(image, ...)` | `image: str` | 添加一条图片消息 |
+| `attach_file(file, ...)` | `file: str` | 添加一条文件消息 |
+| `attach_video(video, ...)` | `video: str` | 添加一条视频消息 |
+| `attach_forward(forward, ...)` | `forward: Forward` | 添加一条嵌套转发 |
+| `build()` | — | 构建并返回 `Forward` 对象 |
+
+> 所有 `attach_*` 方法都接受可选的 `user_id` 和 `nickname` 参数覆盖默认作者。
+
+### 基本用法
 
 ```python
+from ncatbot.types import ForwardConstructor, MessageArray
+
+fc = ForwardConstructor(user_id=str(event.self_id), nickname="Bot")
+
+fc.attach_text("这是转发消息的第一条 📝")
+fc.attach_text("这是转发消息的第二条 📝")
+
+# 图文混合节点
 msg = MessageArray()
-msg.add_text("Hello ") \
-   .add_at("123456") \
-   .add_image("img001.jpg") \
-   .add_reply("987654321")
+msg.add_text("这条包含图片: ")
+msg.add_image(str(EXAMPLE_IMAGE))
+fc.attach_message(msg)
+
+forward = fc.build()
+await self.api.qq.post_group_forward_msg(event.group_id, forward)
 ```
 
-可用追加方法：
-- `add_by_list(list)`：添加一个由 `list` 描述的消息段（支持混合 `dict` 与 `MessageSegment`）
-- `add_by_segment(MessageSegment)`：添加一个 `MessageSegment` 段
-- `add_by_dict(dict)`：添加一个由 `dict` 描述的消息段
-- `add_text(str)`：添加一个 `Text` 段
-- `add_image(file: str)`：添加一个 `Image` 段
-- `add_at(Union[int, str])`：添加一个 `At` 段
-- `add_at_all()`：添加一个 `AtAll` 段
-- `add_reply(int)`：添加一个 `Reply` 段
-
-### 4) 操作符拼接
+### 切换作者
 
 ```python
-msg = MessageArray(Text("前缀 ")) + [Image(file="a.png"), At("123")] + " 后缀"
-```
+fc = ForwardConstructor(user_id="111", nickname="Alice")
+fc.attach_text("Alice 说的话")
 
-支持的追加类型：
-- `MessageSegment`：单个消息段
-- `list[MessageSegment | dict]`：消息段列表
-- `str`：文本，会被转为 `Text` 段
-- `MessageArray`：另一个消息容器
+fc.set_author("222", "Bob")
+fc.attach_text("Bob 说的话")
 
-## 解析与序列化
-
-### 1) 过滤与查询
-
-```python
-from ncatbot.core.event.message_segment import Text, At, Image, Face
-
-# msg: MessageArray
-texts: list[Text]  = msg.filter(Text)  # 同时包含 Text 与 PlainText
-ats: list[At]      = msg.filter(At)
-images: list[Image] = msg.filter(Image)
-faces: list[Face]  = msg.filter(Face)
-
-# 便捷方法
-msg.filter_text()
-msg.filter_at()
-msg.filter_image()
-msg.filter_video()
-msg.filter_face()
-
-# 是否 @ 了某人（或 @全体）
-mentioned = msg.is_user_at("123456")
-only_direct = msg.is_user_at("123456", all_except=True)
-```
-
-### 2) 逐个解析
-
-`MessageArray` 实现了迭代器协议，可逐个访问其中的消息段：
-
-```python
-for segment in msg:  # segment: MessageSegment; msg: MessageArray
-    if isinstance(segment, Text):
-        print("文本:", segment.text)
-    elif isinstance(segment, At):
-        print("提及:", segment.qq)
-    elif isinstance(segment, Image):
-        print("图片:", segment.file)
-    ...
+# 或在 attach 时临时指定
+fc.attach_text("Charlie 客串", user_id="333", nickname="Charlie")
 ```
 
 ---
 
-# 文件: 4. 数据结构介绍\4. MessageSegment.md
+## 嵌套合并转发
 
----
-title: MessageSegment 消息段
-createTime: 2025/9/26 14:00:00
-permalink: /guide/message_segment/
----
-
-
-本页汇总 `MessageSegment` 及其子类的构造方式与序列化结构（`to_dict` 结果）。所有消息段在发送前都会被序列化为如下统一格式：
-
-- 统一结构：`{"type": <msg_seg_type>, "data": { ...字段... }}`
-- 可上传对象（图片/文件/视频等）的路径会被规范化（http(s)、base64、dataURI、本地路径等）。
-
-:::warning
-自行构造的 `MessageSegment` 和从事件中获取的 `MessageSegment` 可能存在差异，尤其是媒体类（图片/文件/视频等）的字段。自行构造的用于发送的消息段无需提供某些参数，而接收到的消息段可能存在那些参数。
-:::
-
----
-
-## 常用属性访问
-
-- 点语法（推荐）：直接访问字段，更安全直观。
-- 字典式访问（兼容层）：`seg["type"]` / `seg["data"]...`，基于 `to_dict()` 的快照；修改仅作用于内部缓存，==不会同步到对象字段，谨慎使用==。
-- 摘要：`seg.get_summary()` 返回该段的简短预览字符串。
-- 下载（媒体类）：`await image.download_to(dir, name=None)` 将远程/本地资源保存到指定目录，目录不存在会报错。
+通过 `attach_forward` 可以实现转发套转发：
 
 ```python
-from ncatbot.core.event.message_segment import Text, At, AtAll, Image, Reply, Node
+bot_id = str(event.self_id)
 
-# Text / PlainText
-seg = Text("你好")
-print(seg.text) # "你好"
-print(seg["data"]["text"])  # "你好"
-print(seg.get_summary()) # "你好"
+# 构造内层转发
+inner_fc = ForwardConstructor(user_id=bot_id, nickname="Bot 内层")
+inner_fc.attach_text("🔹 内层第一条消息")
+inner_fc.attach_text("🔹 内层第二条消息")
+inner_forward = inner_fc.build()
 
-# At / AtAll
-at = At("123456")
-print(at.qq) # "123456"
-print(at.get_summary()) # "@QQ用户"
-print(AtAll().qq) # "all"
-print(AtAll().get_summary()) # "@全体成员"
+# 构造外层转发，嵌套内层
+outer_fc = ForwardConstructor(user_id=bot_id, nickname="Bot")
+outer_fc.attach_text("🔸 外层第一条消息")
+outer_fc.attach_forward(inner_forward)  # 嵌套内层转发
+outer_fc.attach_text("🔸 外层第三条消息（在嵌套转发之后）")
 
-# Image / File / Video / Record
-img = Image("./pic.png")
-print(img.file) # 源输入，序列化时会规范化
-path = img.download_sync("/home/user/pics", "1.png")
-print(path) # "/home/user/pics/1.png"
-# path = await img.download("/home/user/pics", "1.png")  # 异步下载
-
-# Reply (id 会被标准化为字符串)
-rep = Reply(987654321)
-print(rep.id) # "987654321"
+forward = outer_fc.build()
+await self.api.qq.post_group_forward_msg(event.group_id, forward)
 ```
-
----
-
-## 文本类
-
-### Text（默认文本，支持 CQ 转义）
-
-```python
-from ncatbot.core.event.message_segment import Text
-seg = Text("你好")
-seg.to_dict() == {"type": "text", "data": {"text": "你好"}}
-```
-
-- `Text.text`: 文本内容
-
-### PlainText（纯文本，不做 CQ 转义）
-
-```python
-from ncatbot.core.event.message_segment import PlainText
-seg = PlainText("[CQ:face,id=14]")  # 保留原样
-seg.to_dict() == {"type": "text", "data": {"text": "[CQ:face,id=14]"}}
-```
-
-- `PlainText.text`: 文本内容
-
----
-
-## 提及类
-
-### At（@指定用户）与 AtAll（@全体）
-
-```python
-from ncatbot.core.event.message_segment import At, AtAll
-seg1 = At("123456")
-seg1.to_dict() == {"type": "at", "data": {"qq": "123456"}}
-
-seg2 = AtAll()
-seg2.to_dict() == {"type": "at", "data": {"qq": "all"}}
-```
-
-- `At.qq`: 提及的用户 ID，如果为 `"all"`，则为一条 @全体成员。
-- `AtAll.qq`: `all`
-
----
-
-## 表情类
-
-### Face（QQ 表情）
-
-```python
-from ncatbot.core.event.message_segment import Face
-seg = Face(14)
-seg.to_dict() == {"type": "face", "data": {"id": "14", "faceText": "[表情]"}}
-```
-
-- `Face.id` 参考[QQ表情消息](https://github.com/kyubotics/coolq-http-api/wiki/%E8%A1%A8%E6%83%85-CQ-%E7%A0%81-ID-%E8%A1%A8)。
-- `Face.faceText` 可从上游附带，用于摘要展示，构造时无需传入。
-
----
-
-## 媒体类（可下载/上传）
-
-均继承 `DownloadableMessageSegment`，字段 `file` 会被标准化（http(s)、base64、dataURI、本地路径）。
-
-支持本地路径、http(s) 链接、base64、dataURI。
-
-提供下载方法：
-
-- `await seg.download(dir, name=None)`。
-- `seg.download_sync(dir, name=None)`。
-
-### Image（图片）
-
-```python
-from ncatbot.core.event.message_segment import Image
-seg = Image("./pic.png")
-seg.to_dict() == {"type": "image", "data": {"file": "<标准化路径>"}}
-# 可选：data.type == "flash" 表示闪照
-```
-
-- `Image.file`: 图片路径
-- `Image.file_name`: 图片文件名（上游尽力提供，**构造时无需传入**）
-- `Image.url`: 图片链接（**构造时无需传入**）
-
-### Record（语音）
-
-```python
-from ncatbot.core.event.message_segment import Record
-seg = Record("./voice.silk")
-seg.to_dict() == {"type": "record", "data": {"file": "<标准化路径>"}}
-```
-
-- `Record.file`: 语音路径
-- `Record.file_name`: 语音文件名（尽力提供，**构造时无需传入**）
-- `Record.url`: 语音链接（**构造时无需传入**）
-
-### Video（视频）
-
-```python
-from ncatbot.core.event.message_segment import Video
-seg = Video("./demo.mp4")
-seg.to_dict() == {"type": "video", "data": {"file": "<标准化路径>"}}
-```
-
-- `Video.file`: 视频路径
-- `Video.file_name`: 视频文件名（尽力提供，**构造时无需传入**）
-- `Video.url`: 视频链接（**构造时无需传入**）
-
-### File（通用文件）
-
-```python
-from ncatbot.core.event.message_segment import File
-seg = File("./report.pdf")
-# to_dict 会补充文件名（name）
-seg.to_dict() == {"type": "file", "data": {"file": "<标准化路径>", "name": "report.pdf"}}
-```
-
-- `File.file`: 文件路径
-- `File.file_name`: 文件文件名（尽力提供，**构造时无需传入**）
-- `File.url`: 文件链接（**构造时无需传入**）
-
----
-
----
-
-## 回复类
-
-### Reply（引用回复）
-
-```python
-from ncatbot.core.event.message_segment import Reply
-seg = Reply(987654321)
-seg.to_dict() == {"type": "reply", "data": {"id": "987654321"}}
-```
-
-- `Reply.id`: 回复的消息 ID
-
-## 合并类
-
-[更多信息](./5.%20ForwardConstructor.md)。
-
-### Node（转发节点）
-
-```python
-from ncatbot.core.event.message_segment import Node, MessageArray, Text
-seg = Node(user_id="10086", nickname="小助手", content=MessageArray(Text("你好")))
-# content 会被序列化为内部段列表
-seg.to_dict() == {
-  "type": "node",
-  "data": {"user_id": "10086", "nickname": "小助手", "content": [{"type": "text", "data": {"text": "你好"}}]}
-}
-```
-
-- `Node.user_id`: 用户 ID
-- `Node.nickname`: 用户昵称
-- `Node.content`: 消息内容（MessageArray）
-
-### Forward（合并转发）
-
-```python
-from ncatbot.core.event.message_segment import Forward, Node, MessageArray, Text
-node = Node("10086", "小助手", MessageArray(Text("Hi")))
-seg = Forward(content=[node])
-# 或仅携带 id（需要 get_forward_msg 展平获取内容）
-# seg = Forward(id="<msg_id>")
-
-# 序列化（简化示例）：
-seg.to_dict() == {
-  "type": "forward",
-  "data": {"content": [ {"type": "node", "data": {"user_id": "10086", "nickname": "小助手", "content": [ ... ]}} ]}
-}
-```
-
-- `Forward.id`: 转发消息 ID
-- `Forward.content`: 消息内容（list[Node]）
-- `Forward.message_type`: 消息类型（group/friend）
-
----
-
-## 其它类
-
-### Share（链接分享）
-
-```python
-from ncatbot.core.event.message_segment import Share
-seg = Share(url="https://example.com", title="分享", content="示例", image="./cover.png")
-seg.to_dict() == {
-  "type": "share",
-  "data": {"url": "https://example.com", "title": "分享", "content": "示例", "image": "<标准化路径>"}
-}
-```
-
-### Contact（名片）
-
-```python
-# 结构示例（目前实现为简单数据承载）
-from ncatbot.core.event.message_segment import Contact
-
-seg = Contact("qq", "123456")
-seg.to_dict() == {"type": "contact", "data": {"type": "qq", "id": "123456"}}
-```
-
-- `Contact.type`: 名片类型（qq/group）
-- `Contact.id`: 名片 ID
-
-### Location（位置）
-
-:::warning
-未测试过
-:::
-
-```python
-from ncatbot.core.event.message_segment import Location
-seg = Location(lat=39.9, lon=116.4, title="天安门", content="北京")
-seg.to_dict() == {
-  "type": "location",
-  "data": {"lat": 39.9, "lon": 116.4, "title": "天安门", "content": "北京"}
-}
-```
-
-### Music（音乐卡片）
-
-```python
-from ncatbot.core.event.message_segment import Music
-# 平台曲库（qq/163）：仅需要 id
-seg1 = Music("qq", id=12345, url=None, title=None)
-# 自定义卡片（custom）：需提供 url/title，可选 content/image
-seg2 = Music("custom", id=0, url="https://song/1", title="歌名", content="简介", image="./cover.jpg")
-# 序列化示例（custom）：
-seg2.to_dict() == {
-  "type": "music",
-  "data": {"type": "custom", "url": "https://song/1", "title": "歌名", "content": "简介", "image": "<标准化路径>"}
-}
-```
-
-### XML、Json、Markdown
-
-:::warning
-只支持接收
-:::
-
-```python
-from ncatbot.core.event.message_segment import XML, Json, Markdown
-XML("<xml/>").to_dict() == {"type": "xml", "data": {"data": "<xml/>"}}
-Json("{\"k\":1}").to_dict() == {"type": "json", "data": {"data": "{\"k\":1}"}}
-Markdown("**bold**").to_dict() == {"type": "markdown", "data": {"content": "**bold**"}}
-```
-
----
-
-## 互动类
-
-### Rps（猜拳）、Dice（骰子）、Shake（窗口抖动）、Anonymous（匿名）
-
-::: warning
-Poke 已经不再支持，请使用 [send_poke](../5.%20API%20参考/2.%20Message%20有关%20API.md#group_poke) 有关 API。
-:::
-
-```python
-from ncatbot.core.event.message_segment import Rps, Dice, Shake, Poke, Anonymous
-Rps().to_dict() == {"type": "rps", "data": {}}
-Dice().to_dict() == {"type": "dice", "data": {}}
-Shake().to_dict() == {"type": "shake", "data": {}}
-Anonymous().to_dict() == {"type": "anonymous", "data": {}}
-```
-
----
-
-## 小贴士
-
-- 仅当 `MessageArray` 全部由 `Forward`/`Node` 组成时才算合并转发；与其他段混用会报错。
-- 传入本地路径时，若 NapCat 与机器人在同一机器上，路径会被转换为绝对路径；否则会转为 `base64://...` 或 `file:` URL。
-- `Text` 与 `PlainText` 均为 `type=text`，`filter(Text)` 会同时匹配两者。
-
-
----
-
-# 文件: 4. 数据结构介绍\5. ForwardConstructor.md
-
----
-title: 合并转发消息（Forward/Node）使用指南
-createTime: 2025/09/26 14:00:00
-permalink: /guide/forward_constructor/
----
-
-## 合并转发消息（Forward/Node）使用指南
-
-本文介绍合并转发消息在 NcatBot 中的解析与构造方式，覆盖核心类型 `Forward`、`Node`、`MessageArray`，以及帮助类 `ForwardConstructor` 的用法，并展示如何通过全局 API 发送合并转发消息。
-
-### 核心概念与关系
-
-- **MessageArray**: 消息段容器。若其中包含 `Forward` 或 `Node`，则整条消息被视为“合并转发消息”。
-- **Node**: 合并转发中的“节点”，代表一条历史消息（或构造出的消息），包含 `user_id`、`nickname` 与 `content`（一个 `MessageArray`）。
-- **Forward**: 合并转发主体，包含若干 `Node`，或仅有 `id`（需通过接口拉取其内容）。
-- 设计约束：合并转发消息不得与其他消息段混用，否则会在 `MessageArray` 构造时抛出 `MessageFormatError`。
-
----
-
-## 解析流程
-
-### 1) 识别是否为合并转发
-
-```python
-from ncatbot.core.event.message_segment import MessageArray
-
-msg: MessageArray = event.message
-if msg.is_forward_msg():
-    # 该消息为合并转发
-    ...
-```
-
-### 2) 展平含有 id 的合并转发
-
-如果[配置项](../2.%20基本开发/4.%20配置项.md)中没有设置 `report_forward_message_detail`，那么拿到的合并转发消息都**只包含 `id`**，需要手动展平后才能解析。
-
-调用 `MessageArray.plain_forward_msg()` 异步方法，返回一个完整的 `Forward` 对象：
-
-```python
-forward = await msg.plain_forward_msg()   # msg: MessageArray
-nodes = await forward.get_content()       # list[Node]
-for node in nodes:
-    uid = node.user_id
-    nick = node.nickname
-    content = node.content                # MessageArray（普通段或继续包含转发）
-```
-
-说明：
-
-- `plain_forward_msg()` 内部通过 `status.global_api.get_forward_msg(message_id)` 拉取并返回 `Forward` 对象。
-- `Forward.get_content()` 进一步填充 `Forward.content` 并返回 `list[Node]`。
-- `Node.content` 是一个 `MessageArray`，它可能继续包含嵌套的 `Forward`，需要嵌套解析处理（但不需要手动展平）。
-
-### 3) 读取节点消息内容
-
-每个 `Node.content` 是一个 `MessageArray`，参考[MessageArray 使用指南](./3.%20MessageArray.md) 进行解析：
-
-```python
-from ncatbot.core.event.message_segment import Text, Image
-
-texts = node.content.filter(Text)
-images = node.content.filter(Image)
-```
-
----
-
-## 构造流程
-
-### 方式一：使用 ForwardConstructor（推荐）
-
-`ForwardConstructor` 提供便捷 API 以构造 `Forward`：
-```python
-from ncatbot.core.helper.forward_constructor import ForwardConstructor
-from ncatbot.core.event.message_segment import Text, Image, File, Video
-from ncatbot.core.event.message_segment import MessageArray
-
-fcr = ForwardConstructor(user_id="123456", nickname="QQ用户")
-fcr.attach_text("第一条文本")
-fcr.attach_image("./pic.png")
-fcr.attach_file("./report.pdf")
-fcr.attach_video("./demo.mp4")
-fcr.attach(MessageArray(Text("第二条文本"), Image("./a.png")))
-
-forward = fcr.to_forward()  # type: Forward
-```
-
-说明：
-- 所有的 `attach` 类方法都有可选的 `user_id`、`nickname` 参数，用于覆盖 `ForwardConstructor` 初始化时的默认值。
-- `attach(...)` 会内部创建 `Node(user_id, nickname, content=MessageArray(...))` 并加入列表。
-- 也支持 `attach_message_id(message_id)` 从历史消息生成节点、`attach_forward(forward)` 嵌套已有转发。
-
-### 方式二：手动构造 Node 与 Forward
-
-```python
-from ncatbot.core.event.message_segment import MessageArray, Node, Forward, Text, Image
-
-node1 = Node(user_id="123", nickname="A", content=MessageArray(Text("你好")))
-node2 = Node(user_id="456", nickname="B", content=MessageArray([Text("看图"), Image("./a.png")]))
-forward = Forward(content=[node1, node2])
-```
-也可从消息事件字典构造 `Node`（例如历史消息记录）：
-
-```python
-node = Node.from_message_event(message_event_dict)
-```
-或从若干消息事件/节点聚合：
-
-```python
-# messages: list[Node | MessageEventData]
-forward = Forward.from_messages(messages, message_type="group")
-```
-
-> 注：`Forward.from_message_id(...)` 为异步构造历史消息的便捷方法，当前实现依赖全局 API 拉取消息；建议优先使用 `ForwardConstructor.attach_message_id(...)` 或 `api_message.send_*_forward_msg_by_id(...)` 封装。
 
 ---
 
 ## 发送合并转发
 
-### 直接发送 `Forward`
+| 方法 | 说明 |
+|---|---|
+| `post_group_forward_msg(group_id, forward)` | 发送群合并转发 |
+| `post_private_forward_msg(user_id, forward)` | 发送私聊合并转发 |
+| `send_group_forward_msg_by_id(group_id, message_ids)` | 通过消息 ID 列表逐条转发到群 |
+| `send_private_forward_msg_by_id(user_id, message_ids)` | 通过消息 ID 列表逐条转发到私聊 |
 
 ```python
-from ncatbot.utils import status
+# 发送构造的合并转发
+await self.api.qq.post_group_forward_msg(group_id, forward)
 
-# 群聊
-msg_id = await status.global_api.post_group_forward_msg(group_id, forward)
-
-# 私聊
-msg_id = await status.global_api.post_private_forward_msg(user_id, forward)
+# 通过消息 ID 转发已有消息
+await self.api.qq.send_group_forward_msg_by_id(group_id, [msg_id_1, msg_id_2])
 ```
 
-### 通用接口（自动判定）
+---
+
+[← 上一篇：MessageArray](../common/2_array.md) | [返回目录](../README.md) | [下一篇：便捷接口 →](1_sugar.md)
+
+
+---
+
+# 文件: 4. 消息发送\2. QQ\3. 示例.md
+
+---
+title: 实战示例
+createTime: 2026/03/19 17:26:45
+permalink: /guide/i1dakoic/
+---
+
+> 核心消息发送场景速查，完整代码请参考 `examples/` 目录。
+
+---
+
+## 核心示例
+
+### 发送纯文本 / event.reply()
 
 ```python
-msg_id = await status.global_api.post_forward_msg(group_id=gid, msg=forward)
-# 或 msg_id = await status.global_api.post_forward_msg(user_id=uid, msg=forward)
+# 1. post_group_msg 直接发送
+await self.api.qq.post_group_msg(event.group_id, text="Hello, World! 👋")
+
+# 2. event.reply() 自动引用 + @发送者
+await event.reply(text="你好呀！🎉")
 ```
 
-### 发送“由 id 组成”的聊天记录
-
-若你手头只有历史消息 id 列表，可使用封装方法：
+### 图文混排（MessageArray）
 
 ```python
-# 群聊：由若干消息 id 组成
-msg_id = await status.global_api.send_group_forward_msg_by_id(group_id, [mid1, mid2])
+from ncatbot.types import MessageArray
 
-# 私聊：由若干消息 id 组成
-msg_id = await status.global_api.send_private_forward_msg_by_id(user_id, [mid1, mid2])
+msg = MessageArray()
+msg.add_text("📸 这是一条图文混排消息:\n")
+msg.add_image(str(EXAMPLE_IMAGE))  # 本地路径或 URL
+msg.add_text("\n以上是示例图片！")
+await self.api.qq.post_group_array_msg(event.group_id, msg)
 ```
 
-此外还提供底层 `send_*_forward_msg`，直接传入 `Forward.to_forward_dict()` 的结构（`messages/news/prompt/summary/source`）。
-
----
-
-## 序列化与嵌套
-
-- `Forward.to_forward_dict()` 会将结构转换为发送端可接受的格式，并将内部 `type` 统一为 `node`，同时处理 `content/messages` 字段的兼容。
-- 若 `Node.content` 内仍包含合并转发，则会被递归处理为节点结构，以满足上游适配。
-- 从上游事件解析出的“带 id 的转发”，可先用 `MessageArray.plain_forward_msg()` 展平为 `Forward`，再进行二次处理或转发。
-
----
-
-## 注意事项
-
-- `MessageArray` 中不允许包含任何 `Node` 端；包含 `Forward` 段时，该 `MessageArray` 只有**一个段**。这个要求必须在构造 `MessageArray` 时就满足，否则会抛出 `MessageFormatError`。
-- `Node.content` 必须是 `MessageArray`；其摘要 `get_summary()` 通过拼接内部消息段摘要生成。
-- 若需要只读浏览历史转发，优先使用 `plain_forward_msg()` + `get_content()`；
-
----
-
-## 迷你示例
-
-### 解析收到的合并转发
+### 合并转发
 
 ```python
-from ncatbot.core.event.message_segment import Text
+from ncatbot.types import ForwardConstructor, MessageArray
 
-msg = event.message  # MessageArray
-if msg.is_forward_msg():
-    forward = await msg.plain_forward_msg()
-    nodes = await forward.get_content()
-    for n in nodes:
-        print(n.nickname, n.user_id)
-        text = "".join(seg.text for seg in n.content.filter(Text))
-        print(text)
+fc = ForwardConstructor(user_id=str(event.self_id), nickname="Bot")
+fc.attach_text("第一条消息 📝")
+fc.attach_text("第二条消息 📝")
+
+msg = MessageArray().add_text("图片: ").add_image(str(EXAMPLE_IMAGE))
+fc.attach_message(msg)
+
+forward = fc.build()
+await self.api.qq.post_group_forward_msg(event.group_id, forward)
 ```
 
-### 构造并发送合并转发
+### 回复消息（引用）
 
 ```python
-from ncatbot.core.helper.forward_constructor import ForwardConstructor
-from ncatbot.utils import status
+# 方式一：event.reply()（推荐）
+await event.reply(text="收到！")
 
-fcr = ForwardConstructor(user_id="10086", nickname="小助手")
-fcr.attach_text("你好，这是合并转发示例")
-fcr.attach_image("./demo.png")
-forward = fcr.to_forward()
+# 方式二：reply 参数
+await self.api.qq.post_group_msg(event.group_id, text="收到！", reply=event.message_id)
 
-# 发送到群
-msg_id = await status.global_api.post_group_forward_msg(123456, forward)
+# 方式三：MessageArray
+msg = MessageArray().add_reply(event.message_id).add_text("收到！")
+await self.api.qq.post_group_array_msg(event.group_id, msg)
 ```
 
-
 ---
 
-# 文件: 5. API 参考\1. 概览.md
+## 更多场景
 
----
-title: API 调用
-createTime: 2025/01/23 20:00:05
-permalink: /guide/p8aun9nh/
----
-
-
-
-NcatBot API 是你主动向 QQ 发送请求的方式，可以用于各种场景：
-- [发送各种消息](../9.%20实际项目参考/教程项目/1.%20发送复杂消息.md)
-- [审核加群请求](../9.%20实际项目参考/教程项目/4.%20处理好友请求和加群请求.md)
-- 获取群成员列表
-- 授予头衔、禁言、踢人
-- 等等
-
-NcatBot 提供异步和同步两种 API 调用方式。
-
-::: tip
-如果你此前未了解**异步**, 可以先使用同步方法, 过程中逐渐学习异步.
-:::
-
-提供 API 的类是 `BotAPI`，详细信息参考 [BotAPI 统一接口层](../3.%20组件介绍/6.%20BotAPI.md).
-
-
-## 调用 API 接口
-
-
-### 异步调用
-
-异步调用需要在 `async` 函数中使用 `await` 关键字调用 API 方法。
+### 发送 URL 图片
 
 ```python
-from ncatbot.core import BotClient
+msg = MessageArray()
+msg.add_image("https://example.com/photo.jpg")
+await self.api.qq.post_group_array_msg(event.group_id, msg)
+```
 
-bot = BotClient()
+### 发送视频
 
-@bot.on_private_msg
-async def handle_private_msg(event):
-    # 发送私聊消息
-    await bot.send_private_msg(
-        user_id=event.user_id,
-        message="Hello, this is an async message!"
+```python
+await self.api.qq.post_group_msg(event.group_id, video="/path/to/video.mp4")
+```
+
+### 发送文件
+
+```python
+await self.api.qq.send_group_file(event.group_id, "/path/to/file.pdf", name="文件名.pdf")
+```
+
+### 动画表情
+
+```python
+await self.api.qq.send_group_sticker(event.group_id, "/path/to/image.jpg")
+```
+
+### 嵌套合并转发
+
+```python
+from ncatbot.types import ForwardConstructor
+
+bot_id = str(event.self_id)
+
+# 构造内层转发
+inner_fc = ForwardConstructor(user_id=bot_id, nickname="Bot 内层")
+inner_fc.attach_text("🔹 内层第一条消息")
+inner_fc.attach_text("🔹 内层第二条消息")
+inner_forward = inner_fc.build()
+
+# 构造外层转发，嵌套进去
+outer_fc = ForwardConstructor(user_id=bot_id, nickname="Bot")
+outer_fc.attach_text("🔸 外层第一条消息")
+outer_fc.attach_forward(inner_forward)  # 关键：嵌套内层
+outer_fc.attach_text("🔸 外层第三条消息")
+
+await self.api.qq.post_group_forward_msg(event.group_id, outer_fc.build())
+```
+
+### 提取消息中图片
+
+```python
+from ncatbot.types import Image
+
+images = event.message.filter(Image)
+for img in images:
+    url = getattr(img, "url", None) or getattr(img, "file", "未知")
+    print(url)
+```
+
+### @全体成员
+
+```python
+msg = MessageArray()
+msg.add_at_all()
+msg.add_text(" 全体注意！")
+await self.api.qq.post_group_array_msg(event.group_id, msg)
+```
+
+### 戳一戳
+
+```python
+await self.api.qq.send_poke(event.group_id, target_user_id)
+```
+
+---
+
+[← 上一篇：便捷接口](1_sugar.md) | [返回目录](../README.md)
+
+
+---
+
+# 文件: 4. 消息发送\2. QQ\README.md
+
+---
+title: QQ 消息发送
+createTime: 2026/03/19 17:26:45
+permalink: /guide/z4wqms8x/
+---
+
+> QQ 平台的消息发送方式 — sugar 便捷方法、合并转发与实战示例。
+
+---
+
+## Quick Start
+
+### 最便捷：event.reply()
+
+处理器内直接回复，自动引用原消息并 @发送者：
+
+```python
+from ncatbot.plugin import NcatBotPlugin
+from ncatbot.core import registrar
+from ncatbot.event.qq import GroupMessageEvent
+
+
+class MyPlugin(NcatBotPlugin):
+    name = "my_plugin"
+    version = "1.0.0"
+
+    @registrar.on_group_command("hello")
+    async def on_hello(self, event: GroupMessageEvent):
+        await event.reply(text="你好！", image="welcome.jpg")
+```
+
+### 语法糖：post_group_msg / post_private_msg
+
+关键字自动组装 `MessageArray`，适合不在事件上下文中发送消息：
+
+```python
+# 群消息 — 文本 + 图片
+await self.api.qq.post_group_msg(group_id, text="看图", image="/path/to/img.jpg")
+
+# 群消息 — @某人 + 回复引用
+await self.api.qq.post_group_msg(group_id, text="收到", at=user_id, reply=message_id)
+
+# 私聊消息
+await self.api.qq.post_private_msg(user_id, text="私聊消息")
+```
+
+### MessageArray：复杂消息构造
+
+链式构造多类型混合消息：
+
+```python
+from ncatbot.types import MessageArray
+
+msg = MessageArray().add_text("这是图文消息\n").add_image("photo.jpg").add_at(user_id)
+await self.api.qq.post_group_array_msg(group_id, msg)
+```
+
+---
+
+## Quick Reference
+
+| 方式 | 调用 | 适用场景 |
+|------|------|---------|
+| `event.reply()` | `await event.reply(text=, at=, image=, video=, rtf=)` | 处理器内回复 |
+| `post_group_msg()` | `await self.api.qq.post_group_msg(group_id, text=, at=, reply=, image=)` | 关键字快捷 |
+| `MessageArray` | `MessageArray().add_text(...).add_image(...)` | 复杂消息 |
+
+### 单类型快捷方法
+
+| 方法 | 参数 | 说明 |
+|------|------|------|
+| `send_group_text(group_id, text)` | | 纯文本 |
+| `send_group_image(group_id, image)` | | 图片 |
+| `send_group_record(group_id, file)` | | 语音 |
+| `send_group_video(group_id, video)` | | 视频 |
+| `send_group_file(group_id, file, name=)` | | 文件 |
+| `send_group_sticker(group_id, image)` | | 动画表情 |
+| `send_private_text(user_id, text)` | | 私聊纯文本 |
+| `send_private_image(user_id, image)` | | 私聊图片 |
+
+### 合并转发
+
+```python
+from ncatbot.types.qq import ForwardConstructor
+
+fc = ForwardConstructor(user_id="123456", nickname="Bot")
+fc.attach_text("第一条消息")
+fc.attach_text("第二条消息")
+fc.attach_image("photo.jpg")
+
+await self.api.qq.post_group_forward_msg(group_id, fc.build())
+```
+
+---
+
+## 本目录索引
+
+| 文档 | 内容 |
+|------|------|
+| [便捷接口参考](1_sugar.md) | event.reply()、所有 sugar 方法完整清单 |
+| [合并转发](2_forward.md) | ForwardNode / Forward / ForwardConstructor 构造器 |
+| [实战示例](3_examples.md) | 常见场景速查：纯文本、图文、回复、转发等 |
+
+---
+
+> **相关**：[通用消息概念](../common/README.md) · [QQ API 使用指南](../../api_usage/qq/README.md)
+
+
+---
+
+# 文件: 4. 消息发送\3. Bilibili\1. 消息发送.md
+
+---
+title: Bilibili 消息发送详解
+createTime: 2026/03/19 17:26:45
+permalink: /guide/q1cnfxn1/
+---
+
+> Bilibili 平台三种消息形式的发送方式与实战示例。
+
+---
+
+## 弹幕发送
+
+直播间弹幕是 Bilibili 最常用的消息形式。
+
+```python
+# 发送弹幕
+await self.api.bilibili.send_danmu(room_id=12345, text="Hello!")
+```
+
+在事件处理器中，也可以使用通用的 `event.reply()`：
+
+```python
+@registrar.on_message(platform="bilibili")
+async def on_danmu(self, event):
+    await event.reply(text="收到弹幕！")
+```
+
+---
+
+## 私信发送
+
+### 文字私信
+
+```python
+await self.api.bilibili.send_private_msg(user_id=67890, content="你好！")
+```
+
+### 图片私信
+
+```python
+await self.api.bilibili.send_private_image(
+    user_id=67890,
+    image_url="https://example.com/img.png",
+)
+```
+
+---
+
+## 评论发送
+
+### 发送新评论
+
+```python
+await self.api.bilibili.send_comment(
+    resource_id="BV1xx411c7mD",
+    resource_type="video",
+    text="好视频！",
+)
+```
+
+### 回复评论
+
+```python
+await self.api.bilibili.reply_comment(
+    resource_id="BV1xx411c7mD",
+    resource_type="video",
+    root_id=123456,
+    parent_id=789012,
+    text="谢谢！",
+)
+```
+
+---
+
+## 与 QQ 的对比
+
+| 特性 | QQ | Bilibili |
+|------|:--:|:--------:|
+| 富文本消息（图文混排） | ✅ MessageArray | ❌ 纯文本 |
+| 消息段构造 | ✅ MessageSegment | ❌ |
+| 合并转发 | ✅ Forward | ❌ |
+| event.reply() | ✅ | ✅ |
+| 语法糖方法 | ✅ post_group_msg 等 | ❌ 直接调用 API |
+
+---
+
+## 实战示例
+
+```python
+class BiliMessenger(NcatBotPlugin):
+    name = "bili_messenger"
+    version = "1.0.0"
+
+    @registrar.on_message(platform="bilibili")
+    async def on_danmu(self, event):
+        """弹幕自动回复"""
+        if event.content == "签到":
+            await event.reply(text=f"签到成功！欢迎 {event.sender.nickname}")
+
+    @registrar.on_notice(platform="bilibili")
+    async def on_comment(self, event):
+        """新评论通知"""
+        if hasattr(event, "comment_id"):
+            await self.api.bilibili.reply_comment(
+                resource_id=event.resource_id,
+                resource_type=event.resource_type,
+                root_id=event.comment_id,
+                parent_id=event.comment_id,
+                text="感谢评论！",
+            )
+```
+
+---
+
+> **返回**：[Bilibili 消息发送](README.md) · **相关**：[Bilibili API 指南](../../api_usage/bilibili/README.md)
+
+
+---
+
+# 文件: 4. 消息发送\3. Bilibili\README.md
+
+---
+title: Bilibili 消息发送
+createTime: 2026/03/19 17:26:45
+permalink: /guide/ntzxhpfp/
+---
+
+> Bilibili 平台的消息发送方式 — 弹幕、私信与评论。
+
+---
+
+## Quick Start
+
+### 发送弹幕
+
+```python
+from ncatbot.plugin import NcatBotPlugin
+from ncatbot.core import registrar
+
+
+class MyPlugin(NcatBotPlugin):
+    name = "my_plugin"
+    version = "1.0.0"
+
+    async def on_load(self):
+        # 向直播间发送弹幕
+        await self.api.bilibili.send_danmu(room_id=12345, text="Hello!")
+```
+
+### 发送私信
+
+```python
+# 文字私信
+await self.api.bilibili.send_private_msg(user_id=67890, content="你好")
+
+# 图片私信
+await self.api.bilibili.send_private_image(user_id=67890, image_url="https://example.com/pic.jpg")
+```
+
+### 发送评论与回复
+
+```python
+# 发送视频评论
+await self.api.bilibili.send_comment(resource_id="BV1xxx", resource_type="video", text="好看！")
+
+# 回复已有评论
+await self.api.bilibili.reply_comment(
+    resource_id="BV1xxx",
+    resource_type="video",
+    root_id=100,
+    parent_id=200,
+    text="同意！",
+)
+```
+
+---
+
+## Quick Reference
+
+| 类型 | 方法 | 说明 |
+|------|------|------|
+| 弹幕 | `send_danmu(room_id, text)` | 直播间弹幕 |
+| 私信 | `send_private_msg(user_id, content)` | 文字私信 |
+| 私信图片 | `send_private_image(user_id, image_url)` | 图片私信 |
+| 评论 | `send_comment(resource_id, resource_type, text)` | 视频/动态评论 |
+| 回复评论 | `reply_comment(resource_id, resource_type, root_id, parent_id, text)` | 回复已有评论 |
+| 删除评论 | `delete_comment(resource_id, resource_type, comment_id)` | 删除评论 |
+| 点赞评论 | `like_comment(resource_id, resource_type, comment_id)` | 点赞评论 |
+
+> 所有方法通过 `self.api.bilibili` 访问。与 QQ 不同，Bilibili 的消息以纯文本为主，不需要 MessageArray 或消息段构造。
+
+---
+
+## 本目录索引
+
+| 文档 | 内容 |
+|------|------|
+| [消息发送详解](1_messaging.md) | 弹幕、私信、评论的发送方式与示例 |
+
+---
+
+> **相关**：[Bilibili API 使用指南](../../api_usage/bilibili/README.md)
+
+
+---
+
+# 文件: 4. 消息发送\4. GitHub\1. 消息发送.md
+
+---
+title: GitHub 消息发送详解
+createTime: 2026/03/19 17:26:45
+permalink: /guide/tn3ordoc/
+---
+
+> GitHub 平台的三种消息类型：Issue Comment、PR Comment、PR Review Comment。
+> 消息内容支持 GitHub Flavored Markdown。
+
+---
+
+## Issue 评论
+
+### 通过事件回复
+
+```python
+from ncatbot.core import registrar
+from ncatbot.event.github import GitHubIssueEvent
+
+@registrar.github.on_issue()
+async def on_new_issue(self, event: GitHubIssueEvent):
+    if event.action != "opened":
+        return
+    await event.reply(
+        f"## 感谢反馈\n\n"
+        f"Issue **#{event.issue_number}** 已收到。\n"
+        f"- 标签: {', '.join(event.labels) or '无'}\n"
+        f"- 仓库: {event.repo}"
     )
-
-bot.run_frontend()
 ```
 
-### 同步调用
-
-同步调用可以直接在普通函数中使用 API 方法，不需要 `await` 关键字，但函数名需要以 `_sync` 结尾。
-
-异步方法的同步版本在方法名后加 `_sync`，例如 `send_private_msg` 的同步版本是 `send_private_msg_sync`。
+### 通过 API 主动评论
 
 ```python
-from ncatbot.core import BotClient
-
-bot = BotClient()
-
-@bot.on_private_msg
-def handle_private_msg(event):
-    # 发送私聊消息
-    bot.send_private_msg_sync(
-        user_id=event.user_id,
-        message="Hello, this is a sync message!"
-    )
-
-bot.run_frontend()
+await self.api.github.create_issue_comment(
+    repo="owner/repo",
+    issue_number=42,
+    body="这个问题已在 v1.2.0 修复，请升级后验证。",
+)
 ```
 
-## 互斥参数
-
-部分接口存在互斥参数（必须且只能二选一），例如：
-
-- `get_record(file=None, file_id=None)`、`get_image(file=None, file_id=None)`：二选一。
-
-当传入冲突参数时，内部会使用 `check_exclusive_argument` 抛出错误。
-
-## 返回约定
-
-- 发送消息类接口统一返回 `message_id: str`。
-- 管理、设置类接口无返回值（正常完成即视为成功），失败将抛出异常。
-- 获取类接口返回结构化对象（例如 `GroupMemberInfo`、`Image` 等）或字典数据。
-
-## API 目录
-
-
----
-
-# 文件: 5. API 参考\2. Message 有关 API.md
-
----
-title: Message API
-createTime: 2025/09/26 17:22:00
-permalink: /guide/apimessage/
----
-
-## 概览
-
-这里给出消息发送与获取相关接口。
-
-事件对象已封装常用便捷方法（如 `GroupMessageEvent.reply`），本页列出底层异步 API，便于跨上下文调用。
-
-依赖类型：`MessageArray`、`Forward`、`Image`、`Record`、`PlainText` 等，[详见](../4.%20数据结构介绍/3.%20MessageArray.md)。
-
----
-
-## 群聊发送
-
-### send_group_msg
-
-- **功能**: 发送群消息（底层直发，传 OneBot 片段字典列表）。
-- **参数**:
-  - `group_id: str | int`
-  - `message: list[dict]` OneBot 风格消息片段，例如 `[{"type":"text","data":{"text":"hi"}}]`
-- **返回**: `str`，message_id
-- **示例**：
+## PR 评论
 
 ```python
-await api.send_group_msg(123456, [{"type":"text","data":{"text":"hi"}}])
+from ncatbot.event.github import GitHubPREvent
+
+@registrar.github.on_pr()
+async def on_pr(self, event: GitHubPREvent):
+    if event.action == "opened":
+        await event.reply(
+            f"PR **#{event.pr_number}** 已收到。\n"
+            f"分支: `{event.data.head_ref}` → `{event.data.base_ref}`"
+        )
 ```
 
-### post_group_array_msg
-
-- **功能**: 使用 `MessageArray` 发送群消息。
-- **参数**:
-  - `group_id: str | int`
-  - `msg: MessageArray`
-- **返回**: `str`，message_id
-- **示例**：
+主动评论：
 
 ```python
-msg = MessageArray().add_text("hello").add_image("/path/a.jpg")
-await api.post_group_array_msg(123456, msg)
+await self.api.github.create_pr_comment(
+    repo="owner/repo",
+    pr_number=10,
+    body="CI 通过，LGTM! :rocket:",
+)
 ```
 
-### post_all_group_array_msg
+## 评论的编辑与删除
 
-- **功能**: 向所有已加入的群发送 `MessageArray` 消息（慎用）。
-- **参数**:
-  - `msg: MessageArray`
-- **返回**: `dict[str | int, str]`，群号到 message_id 的映射
-- **示例**：
+### 编辑评论
 
 ```python
-msg = MessageArray().add_text("hello").add_image("/path/a.jpg")
-res = await api.post_all_group_array_msg(msg)
-print(res)  # {"1234561": "12345671", "1234562": "12345672", ...}
+await self.api.github.update_comment(
+    repo="owner/repo",
+    comment_id=123456,
+    body="[已更新] 这个问题已修复。",
+)
 ```
 
-### post_group_msg
-
-- **功能**: 快速组合群消息（文本/艾特/引用/图片/富文本）。
-- **参数**:
-  - `group_id: str | int`
-  - `text: str | None`
-  - `at: str | int | None` 要 @ 的 QQ 号
-  - `reply: str | int | None` 要引用的 message_id
-  - `image: str | None` 图片本地路径或 URL
-  - `rtf: MessageArray | None` 兼容旧富文本
-- **返回**: `str`，message_id
-- **示例**：
+### 删除评论
 
 ```python
-await api.post_group_msg(123456, text="hi", at=987654, reply=mid, image="https://.../a.png")
-await api.post_group_msg(123456, text="hello")
-await api.post_group_msg(123456, rtf=MessageArray().add_image("C:/a.jpg").add_text("hi"))
+# 方式 1：通过事件
+from ncatbot.event.github import GitHubIssueCommentEvent
+
+@registrar.github.on_comment()
+async def on_comment(self, event: GitHubIssueCommentEvent):
+    if "spam" in event.comment_body.lower():
+        await event.delete()  # 删除当前评论
+
+# 方式 2：通过 API
+await self.api.github.delete_comment(repo="owner/repo", comment_id=123456)
 ```
 
-*不需要的成分可以不填写。*
-
-### post_all_group_msg
-
-- **功能**: 向所有已加入的群发送消息（慎用）。
-- **参数**:
-  - `text: str | None`
-  - `at: str | int | None` 要 @ 的 QQ 号
-  - `reply: str | int | None` 要引用的 message_id
-  - `image: str | None` 图片本地路径或 URL
-  - `rtf: MessageArray | None` 兼容旧富文本
-- **返回**: `dict[str | int, str]`，群号到 message_id 的映射
-- **示例**：
+## 列出评论
 
 ```python
-res = await api.post_all_group_msg(text="hello everyone", img="C:/a.jpg")
-print(res)  # {"1234561": "12345671", "1234562": "12345672", ...}
+comments = await self.api.github.list_issue_comments(
+    repo="owner/repo",
+    issue_number=42,
+    page=1,
+    per_page=30,
+)
+for c in comments:
+    print(c["body"])
 ```
 
-### send_group_text
-
-- **功能**: 群文本（支持 CQ 码）。
-- **参数**: `group_id: str | int`, `text: str`
-- **返回**: `str`，message_id
-- **示例**：
+## 实战示例：Issue 自动回复 Bot
 
 ```python
-await api.send_group_text(123456, "[CQ:face,id=66] 大家好")
-```
+from ncatbot.core import registrar
+from ncatbot.event.github import GitHubIssueEvent, GitHubIssueCommentEvent
+from ncatbot.plugin import NcatBotPlugin
 
-### send_group_plain_text
+class IssueBotPlugin(NcatBotPlugin):
+    name = "issue_bot"
+    version = "1.0.0"
 
-- **功能**: 群纯文本（不转义）。
-- **参数**: `group_id: str | int`, `text: str`
-- **返回**: `str`，message_id
-- **示例**：
+    @registrar.github.on_issue()
+    async def on_issue(self, event: GitHubIssueEvent):
+        if event.action == "opened":
+            await event.reply("感谢反馈！请确保已搜索过已有 Issue。")
+        elif event.action == "closed":
+            await event.reply("Issue 已关闭。如有后续问题请重新开启。")
 
-```python
-await api.send_group_plain_text(123456, "<b>不会被解析</b>")
-```
-
-### send_group_image
-
-- **功能**: 群图片。
-- **参数**: `group_id: str | int`, `image: str` 图片路径或 URL
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_group_image(123456, "C:/tmp/a.jpg")
-```
-
-[参考](../4.%20数据结构介绍/4.%20MessageSegment.md#Image（图片）)
-
-### send_group_record
-
-- **功能**: 群语音。
-- **参数**: `group_id: str | int`, `file: str` 语音文件路径或 URL
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_group_record(123456, "/tmp/a.mp3")
-```
-
-[参考](../4.%20数据结构介绍/4.%20MessageSegment.md#Record（语音）)
-
-### send_group_dice
-
-- **功能**: 群骰子（value 当前由端实现，传 1 占位）。
-- **参数**: `group_id: str | int`, `value: int = 1`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_group_dice(123456)
-```
-
-### send_group_rps
-
-- **功能**: 群猜拳（value 预留）。
-- **参数**: `group_id: str | int`, `value: int = 1`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_group_rps(123456)
-```
-
-### send_group_file
-
-- **功能**: 群文件。
-- **参数**: `group_id: str | int`, `file: str` 文件路径, `name: str | None` 文件名
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_group_file(123456, "./a.zip", name="包.zip")
-```
-
-[参考](../4.%20数据结构介绍/4.%20MessageSegment.md#File（通用文件）)
-
-### send_group_music
-
-- **功能**: 群音乐卡片（平台 qq/163）。
-- **参数**: `group_id: str | int`, `type: Literal["qq","163"]`, `id: int | str`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_group_music(123456, "qq", 123456789)
-```
-
-[参考](../4.%20数据结构介绍/4.%20MessageSegment.md#Music（音乐卡片）)
-
-### send_group_custom_music
-
-- **功能**: 自定义音乐卡片。
-- **参数**: `group_id: str | int`, `audio: str`, `url: str`, `title: str`, `content: str | None`, `image: str | None`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_group_custom_music(123456, audio="https://a.mp3", url="https://page", title="标题", content="副标题", image="https://img.jpg")
-```
-
-[参考](../4.%20数据结构介绍/4.%20MessageSegment.md#Music（音乐卡片）)
-
-### send_group_forward_msg_by_id
-
-- **功能**: 通过消息 ID 列表构建并发送合并转发。
-- **参数**: `group_id: str | int`, `messages: list[str | int]`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_group_forward_msg_by_id(123456, [1231, 1232, 1233])
-```
-
-### send_group_forward_msg
-
-- **功能**: 发送合并转发（直接提供节点/新闻等原始结构）。
-- **参数**:
-    - `group_id: str | int`: 群号
-    - `messages: list[dict]`: OneBot 风格消息片段列表
-    - `news: list[str]`: 前若干条消息内容预览。
-    - `prompt: str`: 外显文本，（通常为 "[聊天记录]"）
-    - `summary: str`: 底部介绍（通常为 "查看xxx条转发消息"）
-    - `source: str`: 顶部介绍（通常为 "群聊的聊天记录"）
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_group_forward_msg(123456, messages=[...], news=[...], prompt="...", summary="...", source="...")
-```
-
-### forward_group_single_msg
-
-- **功能**: 向群转发单条消息。
-- **参数**: `group_id: str | int`, `message_id: str | int`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.forward_group_single_msg(123456, mid)
-```
-
-### group_poke
-
-- **功能**: 群内戳一戳。
-- **参数**: `group_id: str | int`, `user_id: str | int`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.group_poke(123456, 987654)
+    @registrar.github.on_comment()
+    async def on_comment(self, event: GitHubIssueCommentEvent):
+        if event.comment_body.strip().lower() == "/close":
+            await self.api.github.close_issue(event.repo, event.issue_number)
+            await event.reply("Issue 已通过命令关闭。")
 ```
 
 ---
 
-## 私聊发送
+> **返回**：[GitHub 消息发送](README.md) · **相关**：[GitHub API 使用](../../api_usage/github/README.md)
 
-### send_private_msg
 
-- **功能**: 发送私聊消息（底层直发）。
-- **参数**: `user_id: str | int`, `message: list[dict]`
-- **返回**: `str`，message_id
-- **示例**：
+---
+
+# 文件: 4. 消息发送\4. GitHub\README.md
+
+---
+title: GitHub 消息发送
+createTime: 2026/03/19 17:26:45
+permalink: /guide/solrpr7b/
+---
+
+> GitHub 平台的消息发送方式 — Issue 评论、PR 评论与 API 直接调用。
+> GitHub 平台消息以纯文本 / Markdown 为主，不支持富媒体消息段（At、Image 等）。
+
+---
+
+## Quick Start
+
+### 通过事件回复
 
 ```python
-await api.send_private_msg(123, [{"type":"text","data":{"text":"hi"}}])
+from ncatbot.core import registrar
+from ncatbot.event.github import GitHubIssueEvent, GitHubPREvent
+
+@registrar.github.on_issue()
+async def on_issue(self, event: GitHubIssueEvent):
+    await event.reply("感谢你的反馈！")                   # Issue 评论
+
+@registrar.github.on_pr()
+async def on_pr(self, event: GitHubPREvent):
+    await event.reply("PR 已收到，正在 review。")          # PR 评论
 ```
 
-### post_private_array_msg
-
-- **功能**: 以 `MessageArray` 发送私聊消息。
-- **参数**: `user_id: str | int`, `msg: MessageArray`
-- **返回**: `str`，message_id
-- **示例**：
+### 通过 API 直接调用
 
 ```python
-msg = MessageArray().add_text("hi").add_image("/a.jpg")
-await api.post_private_array_msg(123, msg)
-```
+# Issue 评论
+await self.api.github.create_issue_comment("owner/repo", issue_number=42, body="已处理")
 
-### post_private_msg
-
-- **功能**: 快速组合（文本/引用/图片/富文本）。
-- **参数**: `user_id: str | int`, `text: str | None`, `reply: str | int | None`, `image: str | None`, `rtf: MessageArray | None`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.post_private_msg(123, text="hi", reply=mid, image="https://.../a.png")
-```
-
-参考[post_group_msg](#post_group_msg)。
-
-### send_private_text
-
-- **功能**: 私聊文本（支持 CQ 码）。
-- **参数**: `user_id: str | int`, `text: str`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_private_text(123, "[CQ:face,id=66] hi")
-```
-
-### send_private_plain_text
-
-- **功能**: 私聊纯文本（不转义）。
-- **参数**: `user_id: str | int`, `text: str`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_private_plain_text(123, "<b>不会被解析</b>")
-```
-
-### send_private_image
-
-- **功能**: 私聊图片。
-- **参数**: `user_id: str | int`, `image: str`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_private_image(123, "C:/a.jpg")
-```
-
-[参考](../4.%20数据结构介绍/4.%20MessageSegment.md#Image（图片）)
-
-### send_private_record
-
-- **功能**: 私聊语音。
-- **参数**: `user_id: str | int`, `file: str`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_private_record(123, "/a.mp3")
-```
-
-[参考](../4.%20数据结构介绍/4.%20MessageSegment.md#Record（语音）)
-
-### send_private_dice
-
-- **功能**: 私聊骰子。
-- **参数**: `user_id: str | int`, `value: int = 1`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_private_dice(123)
-```
-
-### send_private_rps
-
-- **功能**: 私聊猜拳。
-- **参数**: `user_id: str | int`, `value: int = 1`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_private_rps(123)
-```
-
-### send_private_file
-
-- **功能**: 私聊文件。
-- **参数**: `user_id: str | int`, `file: str`, `name: str | None`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_private_file(123, "./a.zip", name="a.zip")
-```
-
-[参考](../4.%20数据结构介绍/4.%20MessageSegment.md#File（通用文件）)
-
-### send_private_music
-
-- **功能**: 私聊音乐卡片。
-- **参数**: `user_id: str | int`, `type: Literal["qq","163"]`, `id: int | str`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_private_music(123, "163", 987654)
-```
-
-[参考](../4.%20数据结构介绍/4.%20MessageSegment.md#Music（音乐卡片）)
-
-### send_private_custom_music
-
-- **功能**: 自定义音乐卡片。
-- **参数**: `user_id: str | int`, `audio: str`, `url: str`, `title: str`, `content: str | None`, `image: str | None`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_private_custom_music(123, audio="https://a.mp3", url="https://page", title="标题")
-```
-
-[参考](../4.%20数据结构介绍/4.%20MessageSegment.md#Music（音乐卡片）)
-
-### send_private_forward_msg
-
-- **功能**: 发送私聊合并转发（自带节点等）。
-- **参数**: `user_id: str | int`, `messages: list[dict]`, `news: list[str]`, `prompt: str`, `summary: str`, `source: str`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_private_forward_msg(123, messages=[...], news=[...], prompt="...", summary="...", source="...")
-```
-
-参考 [send_group_forward_msg](#send_group_forward_msg)。
-
-### send_private_forward_msg_by_id
-
-- **功能**: 通过消息 ID 列表构建并发送私聊合并转发。
-- **参数**: `user_id: str | int`, `messages: list[str | int]`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.send_private_forward_msg_by_id(123, [m1, m2])
-```
-
-### forward_private_single_msg
-
-- **功能**: 向私聊转发单条消息。
-- **参数**: `user_id: str | int`, `message_id: str | int`
-- **返回**: `str`，message_id
-- **示例**：
-
-```python
-await api.forward_private_single_msg(123, mid)
-```
-
-### friend_poke
-
-- **功能**: 私聊戳一戳。
-- **参数**: `user_id: str | int`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.friend_poke(123)
+# PR 评论
+await self.api.github.create_pr_comment("owner/repo", pr_number=10, body="LGTM!")
 ```
 
 ---
 
-## 通用操作
+## Quick Reference
 
-### send_poke
+| 方式 | 调用 | 适用场景 |
+|------|------|---------|
+| `event.reply(text)` | `await event.reply("内容")` | 事件 handler 内回复（Issue / PR / Comment） |
+| `create_issue_comment()` | `await api.github.create_issue_comment(repo, issue_number, body)` | 主动评论 Issue |
+| `create_pr_comment()` | `await api.github.create_pr_comment(repo, pr_number, body)` | 主动评论 PR |
+| `update_comment()` | `await api.github.update_comment(repo, comment_id, body)` | 编辑已有评论 |
+| `delete_comment()` | `await api.github.delete_comment(repo, comment_id)` | 删除评论 |
+| `event.delete()` | `await event.delete()` | 删除当前评论（评论事件） |
 
-- **功能**: 戳一戳。若传入了 `group_id` 则在指定群聊内戳一戳。
-- **参数**: `user_id: str | int`, `group_id: str | int | None`
-- **返回**: `None`
-- **示例**：
+### 与其他平台的差异
 
-```python
-# 在群 123456 内戳用户 123
-await api.send_poke(user_id=123, group_id=123456)
-
-# 私聊戳用户 123
-await api.send_poke(user_id=123)
-```
-
-### delete_msg
-
-- **功能**: 撤回/删除消息。
-- **参数**: `message_id: str | int`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.delete_msg(mid)
-```
-
-### set_msg_emoji_like
-
-- **功能**: 贴表情反应。
-- **参数**: `message_id: str | int`, `emoji_id: str | int`, `set: bool = True`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.set_msg_emoji_like(mid, 128512)
-```
+| 特性 | QQ | Bilibili | GitHub |
+|------|-----|----------|--------|
+| 消息格式 | 富文本（消息段） | 纯文本 | 纯文本 / Markdown |
+| At / 图片 / 视频 | ✅ | 部分 | ❌ |
+| `event.reply()` | ✅ | ✅ | ✅ |
+| `event.delete()` | ✅ | ✅ | ✅（仅评论事件） |
+| MessageArray | ✅ | — | — |
 
 ---
 
-## 消息获取
+## 本目录索引
 
-### get_group_msg_history
-
-- **功能**: 拉取群历史消息。
-- **参数**: `group_id: str | int`, `message_seq: str | int`, `count: int = 20`, `reverseOrder: bool = False`
-- **返回**: `list[GroupMessageEvent]`
-- **示例**：
-
-```python
-msgs = await api.get_group_msg_history(123456, message_seq=1000, count=20)
-```
-
-### get_msg
-
-- **功能**: 获取单条消息详情。
-- **参数**: `message_id: str | int`
-- **返回**: `BaseMessageEvent`
-- **示例**：
-
-```python
-evt = await api.get_msg(mid)
-```
-
-### get_forward_msg
-
-- **功能**: 获取合并转发详情。
-- **参数**: `message_id: str | int`
-- **返回**: `Forward`
-- **示例**：
-
-```python
-forward = await api.get_forward_msg(mid)
-```
-
-### get_friend_msg_history
-
-- **功能**: 拉取私聊历史消息。
-- **参数**:
-    - `user_id: str | int`： 对方 QQ 号
-    - `message_seq: str | int`：消息 ID
-    - `count: int = 20`：拉取数量
-    - `reverseOrder: bool = False`：是否按时间正序返回
-- **返回**: `list[PrivateMessageEvent]`
-- **示例**：
-
-```python
-msgs = await api.get_friend_msg_history(123, 1000, 20)
-```
-
-### get_record
-
-- **功能**: 获取语音文件（互斥：`file` 与 `file_id`）。
-- **参数**:
-    - `file: str | None`：文件路径
-    - `file_id: str | None`：文件 ID
-    - `out_format: Literal["mp3","amr","wma","m4a","ogg","wav","flac","spx"] = "mp3"`：输出格式
-- **返回**: `Record`
-- **示例**：
-
-```python
-rec = await api.get_record(file_id="abc")
-```
-
-[参考](../4.%20数据结构介绍/4.%20MessageSegment.md#Record（语音）)
-
-### get_image
-
-- **功能**: 获取图片文件（互斥：`file` 与 `file_id`）。
-- **参数**: `file: str | None`, `file_id: str | None`
-- **返回**: `Image`
-- **示例**：
-
-```python
-img = await api.get_image(file_id="abc")
-```
-
-[参考](../4.%20数据结构介绍/4.%20MessageSegment.md#Image（图片）)
-
-### fetch_emoji_like
-
-- **功能**: 获取消息的表情回应详情。可以获取到具体是哪些用户对某条消息贴了某个表情。
-- **参数**:
-  - `message_id: str | int`: 目标消息的 ID。
-  - `emoji_id: str | int`: 要查询的表情 ID。
-  - `emoji_type: str | int`: 表情类型，通常为 `1`。
-- **返回**: `dict`，包含表情回应的详细信息。成功时 `retcode` 为 0，`data` 字段结构如下：
-  ```json
-  {
-    "result": 0,
-    "errMsg": "",
-    "emojiLikesList": [
-      {
-        "tinyId": "", // 回应用户的qq号
-        "nickName": "",     // 用户的昵称 (可能为空)
-        "headUrl": ""       // 用户的头像 URL (可能为空)
-      }
-    ],
-    "cookie": "",
-    "isLastPage": true,
-    "isFirstPage": true
-  }
-
-- **示例**：
-
-```python
-detail = await api.fetch_emoji_like(mid, 128512, 1)
-```
+| 文档 | 内容 |
+|------|------|
+| [1_messaging.md](1_messaging.md) | Issue / PR / Review Comment 发送详解与示例 |
 
 ---
+
+> **相关**：[GitHub API 使用](../../api_usage/github/README.md) · [跨平台通用消息段](../common/README.md) · [多平台开发](../../multi_platform/README.md)
 
 
 ---
 
-# 文件: 5. API 参考\3. Account 有关 API.md
+# 文件: 4. 消息发送\README.md
 
 ---
-title: Account API
-createTime: 2025/09/26 17:25:00
-permalink: /guide/apiaccount/
+title: 发送消息指南
+createTime: 2026/03/19 17:26:45
+permalink: /guide/newizyxu/
+---
+
+> 从快速发送到精细构造，NcatBot 的完整消息发送参考 — 支持多平台。
+
+---
+
+## Quick Reference
+
+### 通用回复（所有平台）
+
+```python
+await event.reply(text="收到")  # 自动适配当前平台
+```
+
+### QQ 平台
+
+```python
+# sugar 方法 — 关键字自动组装
+await self.api.qq.post_group_msg(group_id, text="Hello!", at=user_id, image="photo.jpg")
+
+# MessageArray — 精细控制
+msg = MessageArray().add_at(user_id).add_text(" 看看这些图 ").add_image("img.png")
+await self.api.qq.post_group_array_msg(group_id, msg)
+```
+
+### Bilibili 平台
+
+```python
+# 弹幕
+await self.api.bilibili.send_danmu(room_id, "Hello!")
+
+# 私信
+await self.api.bilibili.send_private_msg(user_id, "你好！")
+
+# 评论
+await self.api.bilibili.send_comment(resource_id, "video", "好视频！")
+```
+
+### GitHub 平台
+
+```python
+# Issue 评论（通过事件回复）
+await event.reply("感谢你的反馈！")
+
+# Issue 评论（通过 API）
+await self.api.github.create_issue_comment("owner/repo", 42, "已处理")
+
+# PR 评论
+await self.api.github.create_pr_comment("owner/repo", 10, "LGTM!")
+```
+
+---
+
+## 本目录索引
+
+### 通用
+
+| 文档 | 内容 |
+|------|------|
+| [通用消息概念](common/README.md) | 消息段与 MessageArray 概览 |
+| [消息段参考](common/1_segments.md) | 所有消息段类型的字段、构造方式和序列化格式 |
+| [MessageArray 消息数组](common/2_array.md) | 容器：创建、链式构造、查询过滤、序列化 |
+
+### QQ 平台
+
+| 文档 | 内容 |
+|------|------|
+| [QQ 消息发送](qq/README.md) | QQ 消息发送方式概览 |
+| [便捷接口参考](qq/1_sugar.md) | event.reply()、所有 sugar 方法完整清单 |
+| [合并转发](qq/2_forward.md) | ForwardNode / Forward / ForwardConstructor 构造器 |
+| [实战示例](qq/3_examples.md) | 常见场景速查：纯文本、图文、回复、转发等 |
+
+### Bilibili 平台
+
+| 文档 | 内容 |
+|------|------|
+| [Bilibili 消息发送](bilibili/README.md) | 弹幕、私信、评论发送概览 |
+| [消息发送详解](bilibili/1_messaging.md) | 弹幕、私信、评论的发送方式与示例 |
+
+### GitHub 平台
+
+| 文档 | 内容 |
+|------|------|
+| [GitHub 消息发送](github/README.md) | Issue / PR 评论发送概览 |
+| [消息发送详解](github/1_messaging.md) | Issue / PR / Review Comment 发送与示例 |
+
+
+---
+
+# 文件: 5. API 使用\1. 通用\1. 事件方法.md
+
+---
+title: 事件方法
+createTime: 2026/03/19 17:26:45
+permalink: /guide/mg63xeur/
+---
+
+> 跨平台事件行为 Mixin — 通过 `isinstance` 检查事件能力，安全调用通用方法。
+
 ---
 
 ## 概览
 
-账号资料、好友、消息已读与最近联系人等接口。
+事件实体通过多继承组合行为 Mixin，插件代码可用 `isinstance` 检查事件是否支持某操作：
+
+```python
+from ncatbot.event import Replyable, Deletable, Kickable
+
+@registrar.on_message()
+async def on_msg(self, event):
+    if isinstance(event, Replyable):
+        await event.reply(text="收到")
+```
+
+所有 Mixin 定义在 `ncatbot/event/common/mixins.py`，通过 `ncatbot.event` 导入。
 
 ---
 
-## 账号相关
+## Replyable — 回复
 
-### set_qq_profile
-
-- **功能**: 设置昵称/签名/性别。
-- **参数**: `nickname: str`, `personal_note: str`, `sex: Literal["未知","男","女"]`
-- **返回**: `None`
-- **示例**：
+支持回复的事件（消息事件、评论事件等）。
 
 ```python
-await api.set_qq_profile("阿猫", "保持学习", "男")
+async def reply(self, **kwargs) -> Any
 ```
 
-### set_online_status
-
-- **功能**: 设置在线与扩展状态。
-- **参数**: `status: int`, `ext_status: int`, `battary_status: int`
-- **返回**: `None`
-- **示例**：
+| 平台 | 支持的关键字参数 |
+|------|----------------|
+| QQ | `text=, at=, image=, video=, rtf=`（自动引用 + @发送者） |
+| Bilibili | `text=`（弹幕回复 / 评论回复，取决于事件类型） |
 
 ```python
-await api.set_online_status(11, 0, 100)
-```
+# 最常用的回复方式
+await event.reply(text="pong!")
 
-### set_avatar
-
-- **功能**: 设置头像。
-- **参数**: `file: str`（本地或 URL，经 `convert_uploadable_object` 适配）
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.set_avatar("https://example.com/avatar.jpg")
-```
-
-### set_self_longnick
-
-- **功能**: 设置长签。
-- **参数**: `longNick: str`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.set_self_longnick("写代码，爱生活")
-```
-
-### get_login_info
-
-- **功能**: 获取登录信息。
-- **返回**: `LoginInfo`（`nickname: str`, `user_id: str`）
-- **示例**：
-
-```python
-info = await api.get_login_info()
-print(info.user_id, info.nickname)
-```
-
-### get_status
-
-- **功能**: 获取运行状态。
-- **返回**: `dict`
-- **示例**：
-
-```python
-status = await api.get_status()
+# QQ 平台支持富文本回复
+await event.reply(text="看图", image="photo.jpg")
 ```
 
 ---
 
-## 好友
+## Deletable — 撤回/删除
 
-### get_friends_with_cat
+支持撤回或删除的事件。
 
-- **功能**: 获取好友列表（Cat 分类）。
-- **返回**: `list[dict]`
-- **示例**：
-
-```python
-friends = await api.get_friends_with_cat()
-```
-
-### send_like
-
-- **功能**: 对好友点赞。
-- **参数**: `user_id`, `times: int = 1`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.send_like(123456, times=5)
-```
-
-### set_friend_add_request
-
-- **功能**: 审核加好友请求。
-- **参数**: `flag: str`, `approve: bool`, `remark: str | None`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.set_friend_add_request(flag, approve=True, remark="同学")
-```
-
-### get_friend_list
-
-- **功能**: 获取好友列表。
-- **返回**: `list[dict]`
-- **示例**：
-
-```python
-friends = await api.get_friend_list()
-```
-
-### delete_friend
-
-- **功能**: 删除好友（可拉黑、双向）。
-- **参数**: `user_id`, `block: bool = True`, `both: bool = True`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.delete_friend(123456, block=True, both=True)
-```
-
-### set_friend_remark
-
-- **功能**: 设置好友备注。
-- **参数**: `user_id`, `remark: str`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.set_friend_remark(123456, "同学-张三")
-```
-
----
-
-## 消息
-
-### mark_group_msg_as_read
-
-- **功能**: 将群消息标记为已读。
-- **参数**: `group_id`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.mark_group_msg_as_read(123456)
-```
-
-### mark_private_msg_as_read
-
-- **功能**: 将私聊消息标记为已读。
-- **参数**: `user_id`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.mark_private_msg_as_read(123456)
-```
-
-### create_collection
-
-- **功能**: 新建收藏。
-- **参数**: `rawData: str`, `brief: str`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.create_collection("{...}", "重要记录")
-```
-
-### get_recent_contact
-
-- **功能**: 最近联系人。
-- **返回**: `list[dict]`
-- **示例**：
-
-```python
-contacts = await api.get_recent_contact()
-```
-
-### _mark_all_as_read
-
-- **功能**: 全部设为已读。
-- **返回**: `None`
-- **示例**：
-
-```python
-await api._mark_all_as_read()
-```
-
----
-
-## 群（账号维度）
-
-### AskShareGroup
-
-- **功能**: 请求分享群（NapCat 能力）。
-- **参数**: `group_id`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.AskShareGroup(123456)
-```
-
----
-
-## 其它
-
-### get_stranger_info
-
-- **功能**: 获取陌生人信息（结构依赖端实现）。
-- **参数**: `user_id`
-- **返回**: `dict`
-- **示例**：
-
-```python
-info = await api.get_stranger_info(123456)
-```
-
-### fetch_custom_face
-
-- **功能**: 拉取自定义表情 URL 列表。
-- **参数**: `count: int = 48`
-- **返回**: `CustomFaceList`（字段：`urls: list[str]`）
-- **示例**：
-
-```python
-faces = await api.fetch_custom_face(48)
-print(faces.urls[:3])
-```
-
-### nc_get_user_status
-
-- **功能**: NapCat 用户在线状态。
-- **参数**: `user_id`
-- **返回**: `dict`
-- **示例**：
-
-```python
-status = await api.nc_get_user_status(123456)
-```
-
-
-
-
----
-
-# 文件: 5. API 参考\4. Group 有关 API.md
-
----
-title: Group API
-createTime: 2025/09/26 17:23:00
-permalink: /guide/apigroup/
----
-
-## 概览
-
-群管理、群文件、荣誉与信息等接口。
-
----
-
-## 成员管理
-
-### set_group_kick_members
-
-- **功能**: 踢人（可能适配多成员端点）。
-- **参数**: `group_id: str | int`, `user_id: str | int`, `reject_add_request: bool = False`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.set_group_kick_members(123456, 987654, reject_add_request=True)
-```
-
-### set_group_kick
-
-- **功能**: 踢人。
-- **参数**: 同上
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.set_group_kick(123456, 987654)
-```
-
-### set_group_ban
-
-:::tip
-duration 为 0 时为解除禁言
-:::
-
-- **功能**: 禁言成员。
-- **参数**: `group_id`, `user_id`, `duration: int = 1800`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.set_group_ban(123456, 987654, duration=600)
-```
-
-### set_group_whole_ban
-
-- **功能**: 全员禁言开关。
-- **参数**: `group_id`, `enable: bool`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.set_group_whole_ban(123456, True)
-```
-
-### set_group_admin
-
-- **功能**: 设为/取消管理员。
-- **参数**: `group_id`, `user_id`, `enable: bool`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.set_group_admin(123456, 987654, enable=True)
-```
-
-### set_group_leave
-
-- **功能**: 退群/解散。
-- **参数**: `group_id`, `is_dismiss: bool = False`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.set_group_leave(123456, is_dismiss=False)
-```
-
-### set_group_special_title
-
-- **功能**: 设定专属头衔。
-- **参数**: `group_id`, `user_id`, `special_title: str = ""`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.set_group_special_title(123456, 987654, "优秀猫娘")
-```
-
-### set_group_add_request
-
-- **功能**: 审核加群请求。
-- **参数**: `flag: str`, `approve: bool`, `reason: str | None`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.set_group_add_request(flag, approve=True)
-await api.set_group_add_request(flag, approve=False, reason="抱歉，群满员")
-```
-
-### set_group_card
-
-- **功能**: 修改群名片。
-- **参数**: `group_id`, `user_id`, `card: str = ""`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.set_group_card(123456, 987654, "小明")
-```
-
----
-
-## 群消息管理
-
-### set_essence_msg
-
-- **功能**: 设为精华。
-- **参数**: `message_id: str | int`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.set_essence_msg(mid)
-```
-
-### delete_essence_msg
-
-- **功能**: 取消精华。
-- **参数**: `message_id: str | int`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.delete_essence_msg(mid)
-```
-
-### get_group_essence_msg
-
-- **功能**: 获取群精华列表。
-- **参数**: `group_id: str | int`
-- **返回**: `list[dict]`
-- **示例**：
-
-```python
-lst = await api.get_group_essence_msg(123456)
-```
-
----
-
-## 群文件
-
-### post_group_file
-
-- **功能**: 便捷上传群文件（四选一：image/record/video/file）。
-- **参数**: `group_id`, `image: str | None`, `record: str | None`, `video: str | None`, `file: str | None`
-- **返回**: `str`（message_id）
-- **示例**：
-
-```python
-await api.post_group_file(123456, image="C:/a.jpg")
-```
-
-[参考](../4.%20数据结构介绍/4.%20MessageSegment.md#File（通用文件）)
-
-### move_group_file
-
-- **功能**: 移动群文件到指定文件夹。
-- **参数**: `group_id`, `file_id: str`, `current_parent_directory: str`, `target_parent_directory: str`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.move_group_file(123456, file_id, "[文件夹ID1]", "[文件夹ID2]")
-```
-
-### trans_group_file
-
-- **功能**: 转存为永久文件。
-- **参数**: `group_id`, `file_id: str`
-- **返回**: `None`
-- **示例**：
-```python
-await api.trans_group_file(123456, file_id)
-```
-
-### rename_group_file
-
-- **功能**: 重命名群文件。
-- **参数**: `group_id`, `file_id: str`, `new_name: str`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.rename_group_file(123456, file_id, "新名字.zip")
-```
-
-### get_file
-
-- **功能**: 取文件元信息。
-- **参数**: `file_id: str`, `file: str`
-- **返回**: `File`
-- **示例**：
-
-```python
-meta = await api.get_file(file_id, "a.zip")
-```
-
-### upload_group_file
-
-- **功能**: 上传群文件。
-- **参数**: `group_id`, `file: str`, `name: str`, `folder`
-- **返回**: `str` 或无（以实现为准）
-- **示例**：
-
-```python
-await api.upload_group_file(123456, "./a.zip", "a.zip", folder="[文件夹ID]")
-```
-
-### create_group_file_folder
-
-- **功能**: 新建群文件夹。
-- **参数**: `group_id`, `folder_name: str`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.create_group_file_folder(123456, "资料")
-```
-
-### group_file_folder_makedir
-
-:::warning
-还没实现
-:::
-
-- **功能**: 递归创建文件夹路径。
-- **参数**: `group_id`, `path: str`
-- **返回**: `str`（文件夹 id）
-- **示例**：
-
-```python
-folder_id = await api.group_file_folder_makedir(123456, "/资料/图片")
-```
-
-### delete_group_file
-
-- **功能**: 删除群文件。
-- **参数**: `group_id`, `file_id: str`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.delete_group_file(123456, file_id)
-```
-
-### delete_group_folder
-
-- **功能**: 删除群文件夹。
-- **参数**: `group_id`, `folder_id: str`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.delete_group_folder(123456, "[文件夹ID]")
-```
-
-### get_group_root_files
-
-:::warning
-数据结构可能发生变化
-:::
-
-- **功能**: 列出根目录文件。
-- **参数**: `group_id`, `file_count: int = 50`
-- **返回**: `dict`
-- **示例**：
-
-```python
-root = await api.get_group_root_files(123456, 100)
-```
-
-### get_group_files_by_folder
-
-:::warning
-数据结构可能发生变化
-:::
-
-- **功能**: 按文件夹列出文件。
-- **参数**: `group_id`, `folder_id: str`, `file_count: int = 50`
-- **返回**: `dict`
-- **示例**：
-
-```python
-files = await api.get_group_files_by_folder(123456, folder_id, 100)
-```
-
-### get_group_file_url
-
-- **功能**: 获取群文件直链。
-- **参数**: `group_id`, `file_id: str`
-- **返回**: `str`
-- **示例**：
-
-```python
-url = await api.get_group_file_url(123456, file_id)
-```
-
----
-
-## 荣誉与信息
-
-:::warning
-数据结构待完善
-:::
-
-### get_group_honor_info
-
-- **功能**: 获取群荣誉信息。
-- **参数**: `group_id`, `type: Literal["talkative", "performer", "legend", "emotion", "all"]`
-- **返回**: `GroupChatActivity`
-- **示例**：
-
-```python
-honor = await api.get_group_honor_info(123456, "talkative")
-```
-
-### get_group_info
-
-- **功能**: 获取群信息。
-- **参数**: `group_id`
-- **返回**: `GroupInfo`
-- **示例**：
-
-```python
-info = await api.get_group_info(123456)
-```
-
-### get_group_info_ex
-
-- **功能**: 获取扩展群信息。
-- **参数**: `group_id`
-- **返回**: `dict`
-- **示例**：
-
-```python
-data = await api.get_group_info_ex(123456)
-```
-### get_group_list
-
-- **功能**: 获取群列表。
-- **参数**: `info: bool = False`，如果为 True 则返回详细信息，否则只返回群号列表
-- **返回**: `list[str]` 或 `list[dict]`
-- **示例**：
-- 
-```python
-groups = await api.get_group_list(info=False)
-print(groups)  # ['123456', ...]
-```
-
-
-### get_group_member_info
-
-- **功能**: 获取群成员信息。
-- **参数**: `group_id`, `user_id`
-- **返回**: `GroupMemberInfo`
-- **示例**：
-
-```python
-member = await api.get_group_member_info(123456, 987654)
-```
-
-### get_group_member_list
-
-- **功能**: 获取群成员列表。
-- **参数**: `group_id`
-- **返回**: `GroupMemberList`
-- **示例**：
-
-```python
-members = await api.get_group_member_list(123456)
-```
-
-### get_group_shut_list
-
-- **功能**: 获取禁言名单。
-- **参数**: `group_id`
-- **返回**: `GroupMemberList`
-- **示例**：
-
-```python
-shut = await api.get_group_shut_list(123456)
-```
-
-### set_group_remark
-
-- **功能**: 设置群备注。
-- **参数**: `group_id`, `remark: str`
-- **返回**: `None`
-- **示例**：
-```python
-await api.set_group_remark(123456, "学习群")
-```
-
-### set_group_sign
-
-- **功能**: 群签到。
-- **参数**: `group_id`
-- **返回**: `None`
-- **示例**：
-```python
-await api.set_group_sign(123456)
-```
-
-### send_group_sign
-
-- **功能**: 发起群签到。
-- **参数**: `group_id`
-- **返回**: `None`
-- **示例**：
-```python
-await api.send_group_sign(123456)
-```
-
----
-
-## 管理员功能
-
-### set_group_avatar
-
-- **功能**: 设置群头像（目前仅 URL）。
-- **参数**: `group_id`, `file: str`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.set_group_avatar(123456, "https://img.example.com/a.png")
-```
-
-### set_group_name
-
-- **功能**: 设置群名。
-- **参数**: `group_id`, `name: str`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.set_group_name(123456, "编程交流")
-```
-
-### _send_group_notice
-
-- **功能**: 发送群公告。
-- **参数**: `group_id`, `content: str`, `confirm_required: bool = False`, `image: str | None`, `is_show_edit_card: bool = False`, `pinned: bool = False`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api._send_group_notice(123456, "今晚 8 点开会", pinned=True)
-```
-
-### set_group_todo
-- **功能**: 设置群待办。
-- **参数**: `group_id`, `message_id`
-- **返回**: `None`
-- **示例**：
-```python
-await api.set_group_todo(123456, 123456789)
-```
-
----
-
-## 群相册
-
-### get_group_album_list
-- **功能**: 获取群相册列表。
-- **参数**: `group_id`
-- **返回**: `list[dict]`
-- **示例**：
-```python
-await api.get_group_album_list(123456789)
-```
-
-### upload_image_to_group_album
-:::warning
-以`album_id`(通过get_group_album_list获取)代表的相册为准，==album_name参数暂时无效==，如果不传album_id，则上传到默认群相册
-:::
-- **功能**: 上传图片到群相册。
-- **参数**: `group_id`，`file`, `album_id`, `album_name`
-- **返回**: `list[dict]`
-- **示例**：
-```python
-await api.upload_image_to_group_album(123456789,"D:\pic.jpg", "A1B2C3D4E5", "群相册")
-```
-
-
----
-
-# 文件: 5. API 参考\5. private 有关 API.md
-
----
-title: Private API
-createTime: 2025/09/26 17:24:00
-permalink: /guide/apiprivate/
----
-
-## 概览
-
-私聊文件上传与输入状态等接口（消息发送请见 [Message API](./message.md)）。
-
----
-
-## 文件
-
-### upload_private_file
-
-- **功能**: 上传私聊文件。
-- **参数**: `user_id: str | int`, `file: str`, `name: str`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.upload_private_file(123, "./a.zip", "a.zip")
-```
-
-### get_private_file_url
-
-- **功能**: 获取已上传文件 URL。
-- **参数**: `file_id: str`
-- **返回**: `str` URL
-
-```python
-url = await api.get_private_file_url("file_id")
-```
-
-### post_private_file
-
-- **功能**: 便捷上传（四选一）。
-- **参数**: `user_id`, `image: str | None`, `record: str | None`, `video: str | None`, `file: str | None`
-- **返回**: `str`（message_id）
-
-```python
-await api.post_private_file(123, image="C:/a.jpg")
-```
-
----
-
-## 其它
-
-### set_input_status
-
-- **功能**: 设置输入状态。
-- **参数**: `event_type: int`（0="对方正在说话"，1="对方正在输入"）, `user_id: str | int`
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.set_input_status(1, user_id=1)
-```
-
-
----
-
-# 文件: 5. API 参考\6. Support 有关 API.md
-
----
-title: Support API
-createTime: 2025/09/26 17:26:00
-permalink: /guide/apisupport/
----
-
-## 概览
-
-辅助能力（OCR、版本信息、可发送能力检查、AI 声聊等）。
-
----
-
-## AI 声聊
-
-### get_ai_characters
-
-- **功能**: 获取可用 AI 角色列表。
-- **参数**: `group_id: str | int`, `chat_type: Literal[1,2]`
-- **返回**: `AICharacterList`（封装 `characters: list[AICharacter]`）
-- **示例**：
-
-```python
-characters = await api.get_ai_characters(123456, 1)
-```
-
-### get_ai_record
-
-- **功能**: 请求 AI 语音并返回链接（实验性）。
-- **参数**: `group_id: str | int`, `character_id: str`, `text: str`
-- **返回**: `str` URL
-- **示例**：
-
-```python
-url = await api.get_ai_record(123456, character_id, "你好")
-```
-
----
-
-## 状态检查
-
-### can_send_image
-
-- **功能**: 是否可发图片。
-- **返回**: `bool`
-- **示例**：
-
-```python
-ok = await api.can_send_image()
-```
-
-### can_send_record
-
-- **功能**: 是否可发语音。
-- **参数**: `group_id: str | int`
-- **返回**: `bool`
-- **示例**：
-
-```python
-ok = await api.can_send_record(123456)
-```
-
----
-
-## OCR（Windows）
-
-### ocr_image
-
-- **功能**: 本地 OCR 图片（Windows）。
-- **参数**: `image: str`
-- **返回**: `list[dict]`
-- **示例**：
-
-```python
-items = await api.ocr_image("C:/a.jpg")
-```
-
----
-
-## 其它
-
-### get_version_info
-
-- **功能**: 获取 NapCat 版本信息。
-- **返回**: `dict`
-- **示例**：
-
-```python
-ver = await api.get_version_info()
-```
-
-### bot_exit
-
-- **功能**: 退出机器人进程。
-- **返回**: `None`
-- **示例**：
-
-```python
-await api.bot_exit()
-```
-
-
-
-
----
-
-# 文件: 5. API 参考\7. 实战手册\1. 常见场景.md
-
----
-title:  常见场景
-createTime: 2025/09/28 10:43:51
-permalink: /guide/gmjlpndo/
----
-## 处理小抄（Handlers Cookbook）
-
-这里给出基于“事件快速回复”方法的常见场景代码片段，便于即抄即用。
-
-基本格式：
-```python
-from ncatbot.core.events import BaseMessageEvent, RequestEvent
-
-async def your_message_handler(event: BaseMessageEvent):
-    # 你的处理代码
-    pass
-
-async def your_request_handler(event: RequestEvent):
-    # 你的处理代码
-    pass
-
-```
-
----
-
-### 群聊戳一戳反戳
-
-```python
-from ncatbot.core import BotClient, NoticeEvent, MessageArray
-from ncatbot.utils import config
-
-bot = BotClient()
-
-@bot.on_notice() # type: ignore
-async def on_notice(event: NoticeEvent):
-    notice = event.sub_type
-    if notice == 'poke' and event.is_group_event(): # 群聊戳一戳消息            
-        if event.target_id == event.self_id: 
-            # Bot 被戳时戳回去
-            await bot.api.send_poke(user_id=event.user_id, group_id=event.group_id)
-
-bot.run_frontend()
-
-```
-
-### 群消息：回复并 @ 对方
-```python
-async def on_group(event):
-    await event.reply(text="收到", at=True)
-```
-
-### 群消息：仅引用回复（不@）
 ```python
-await event.reply(text="只引用", at=False)
+async def delete(self) -> Any
 ```
 
-### 群消息：撤回当前消息
 ```python
+# 撤回触发事件的消息
 await event.delete()
 ```
 
-### 群消息：禁言消息发送者 60 秒
+| 平台 | 行为 |
+|------|------|
+| QQ | 撤回消息（需要权限） |
+| Bilibili | 删除评论（需要权限） |
+
+---
+
+## HasSender — 发送者信息
+
+包含发送者信息的事件。
+
 ```python
-await event.ban(ban_duration=60)
+@property
+def user_id(self) -> str
+
+@property
+def sender(self) -> Any
 ```
 
-### 群消息：踢出消息发送者
 ```python
+print(f"消息来自: {event.user_id}")
+print(f"发送者昵称: {event.sender.nickname}")
+```
+
+---
+
+## GroupScoped — 群/频道作用域
+
+属于群或频道的事件。
+
+```python
+@property
+def group_id(self) -> str
+```
+
+```python
+if isinstance(event, GroupScoped):
+    print(f"来自群 {event.group_id}")
+```
+
+---
+
+## Kickable — 踢出成员
+
+支持踢出成员的事件（群消息事件等）。
+
+```python
+async def kick(self, **kwargs) -> Any
+```
+
+```python
+# 踢出发送违规消息的用户
 await event.kick()
 ```
 
-### 群消息：带图片的回复
+---
+
+## Bannable — 禁言
+
+支持禁言的事件。
+
 ```python
-await event.reply(image="./pic.png")
+async def ban(self, duration: int = 1800, **kwargs) -> Any
 ```
 
-### 私聊消息：快速文本/图片回复
-```python
-await event.reply(text="你好")
-await event.reply(image="./pic.png")
-```
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| duration | int | 1800 | 禁言时长（秒），0 = 解除 |
 
-### 请求：同意加好友并设置备注
 ```python
-if event.request_type == "friend":
-    await event.approve(True, remark="新朋友 XXX")
-```
-
-### 请求：拒绝入群并给理由
-```python
-if event.request_type == "group":
-    await event.approve(False, reason="请先完成实名认证")
+await event.ban(duration=600)   # 禁言 10 分钟
+await event.ban(duration=0)     # 解除禁言
 ```
 
 ---
 
-### 同步环境用法（示例）
+## Approvable — 同意/拒绝
+
+支持审批的事件（好友请求、加群请求等）。
 
 ```python
-# 群
-event.reply_sync(text="OK", at=True)
-event.delete_sync()
-event.ban_sync(60)
-event.kick_sync()
+async def approve(self, **kwargs) -> Any
+async def reject(self, **kwargs) -> Any
+```
 
-# 私聊
-event.reply_sync(text="你好")
+```python
+from ncatbot.event import Approvable
 
-# 请求
-event.approve_sync(True, remark="新同学")
+@registrar.qq.on_friend_request()
+async def on_request(self, event):
+    if isinstance(event, Approvable):
+        await event.approve()
 ```
 
 ---
 
+## 跨平台插件示例
+
+```python
+from ncatbot.event import Replyable, GroupScoped, Bannable
+
+@registrar.on_message()
+async def cross_platform_handler(self, event):
+    """处理所有平台的消息"""
+    if isinstance(event, Replyable):
+        await event.reply(text=f"来自 {event.platform} 的消息已收到")
+
+    if isinstance(event, GroupScoped):
+        print(f"群/频道: {event.group_id}")
+
+    if isinstance(event, Bannable):
+        # 可以禁言的事件
+        pass
+```
+
+---
+
+> **返回**：[通用 API](README.md) · **相关**：[API Trait 协议](2_traits.md)
 
 
 ---
 
-# 文件: 7. 插件系统\1. 介绍.md
+# 文件: 5. API 使用\1. 通用\2. Traits.md
 
 ---
-title: 概览
-createTime: 2025/02/08 10:07:54
-permalink: /guide/dplugins/
+title: API Trait 协议
+createTime: 2026/03/19 17:26:45
+permalink: /guide/nmcqap93/
 ---
 
-::: details NcatBot 插件系统小故事
-凌晨三点的机房里，鱼鱼面前的四块显示器泛着幽幽蓝光。她机械地敲击着键盘， console 里不断刷新的报错信息在视网膜上投下跳动的残影。
+> 跨平台 API 能力协议 — 各平台 APIClient 按功能实现的 Protocol 接口。
 
-“为什么就是抓不到这个事件触发时机......”鱼鱼扯下挂在脖子上的工牌甩在桌上，金属链子撞到咖啡杯发出清脆响声。ncatbot的插件系统像座迷宫，每个API接口都藏着意想不到的陷阱。五天前就该完成的天气插件，此刻仍卡在事件订阅的泥潭里。
+---
 
-冷风突然掀动窗帘，鱼鱼下意识缩了缩脖子。带着松木香气的保温杯轻轻落在手边，蒸腾的热气在显示器的代码注释区晕开一片水雾。
+## 概览
 
-“异步回调里嵌套同步方法，不卡死才怪。”熟悉的声音让鱼鱼猛地转头，三个月未见的彭彭正俯身查看她的屏幕，苍白的指尖点在某个await关键字上，“这里需要加个 Promise.resolve 做缓冲层。”
+NcatBot 将 API 能力拆分为 4 个 Trait 协议（`ncatbot/api/traits/`），各平台按需实现：
 
-鱼鱼怔怔看着好友从帆布包里掏出那台贴满电路板贴纸的 ThinkPad ，十指翻飞地调出半个月前的 git 提交记录。“你看，上周重构事件总线的时候，是不是把生命周期钩子的执行顺序改了？”彭彭的呼吸声里混着细微的杂音，像是老旧的通风管道。
+| Trait | 功能 | QQ | Bilibili |
+|-------|------|:--:|:--------:|
+| `IMessaging` | 消息发送与撤回 | ✅ | 部分 |
+| `IGroupManage` | 群/频道管理 | ✅ | 部分 |
+| `IQuery` | 信息查询 | ✅ | 部分 |
+| `IFileTransfer` | 文件上传/下载 | ✅ | ❌ |
 
-他们并排而坐的姿势与大学时代别无二致。那时彭彭总能在鱼鱼卡壳时，用他特有的“五层分析法”把问题拆解成漂亮的思维导图。此刻他正用vscode的调试器下断点，控制台突然跳出的内存警告却让动作顿住。
+---
 
-“你的肝酶指标...”鱼鱼瞥见彭彭袖口下露出的住院手环，话音被剧烈的咳嗽声打断。零散的药片从彭彭口袋里滚落，在机械键盘的缝隙间闪着微光。
-
-彭彭却已重新聚焦在屏幕上：“还记得我们给开源社区写的那个中间件吗？把它的发布-订阅模式移植过来，事件触发延迟能降低70%。”他苍白的脸上泛起病态的红晕，手指在触摸板上划出流畅的轨迹，“看，用RxJS重构事件流，再配合...咳咳...配合装饰器语法做插件注册...”
-
-当晨曦爬上窗棂时，编译成功的提示框终于弹出。鱼鱼看着单元测试全部通过的绿色标记，突然发现彭彭的呼吸不知何时变得平稳绵长。那些散落的头孢克肟药片旁，静静躺着一本翻旧的《分布式系统设计模式》，扉页上是他们毕业时在樱花树下的合影。
-
-“下周的CT复查...”鱼鱼轻声开口，却被彭彭截住话头。好友正在给 README.MD 添加最后一行文档，光标在“特别鸣谢”后欢快地跳动：“就说感谢某位不愿透露姓名的架构师——就像我们给 Linux 内核提交 Patch 时那样。”
-
-晨光中，两个影子在满墙的架构图上交错重叠。鱼鱼突然想起三年前那个暴雨夜，当她的毕业设计因硬盘损坏即将泡汤时，是彭彭连夜用数据恢复工具从物理坏道中抢救出源码。此刻他们面前的屏幕上，NcatBot 的天气插件正在测试群里弹出今日的朝阳预报，而窗外真正的曙光正漫过彭彭不再颤抖的指尖。
-
-TO BE CONTINUED...
-:::
-
-## NcatBot 插件
-
-NcatBot 的插件位于工作目录下 `plugins` 文件夹中。每个插件是一个**独立的 Python 包**，包含插件代码和资源。
-
-因而，一个典型的插件结构如下:
-
-::: file-tree
-- main.py
-- plugins
-  - your_plugin1
-    - folder1
-      - f1.py
-      - f2.py
-    - \_\_init\_\_.py
-    - plugin.py
-  - your_plugin2.py
-:::
-
-`main.py` 负责启动 NcatBot, `plugins/` 文件夹下的每个文件夹或 `.py` 文件都是一个插件。注意，如果插件以文件夹的形式存在，那么必须包含一个 `__init__.py` 文件。
-
-使用 `bot.run_xxxend()` 启动 NcatBot 时, 会自动加载所有插件。
-
-## 插件基类的结构
-
-`NcatBot` 提供 `NcatBotPlugin` 作为插件的基类, 所有插件类必须继承自 `NcatBotPlugin`.
-
-`NcatBotPlugin` 位于 `ncatbot.plugin_system.base_plugin.NcatBotPlugin`。
-
-`NcatBotPlugin` 继承模式图：
-
-```mermaid
-classDiagram
-    class FunctionMixin {
-        +get_registered_funcs()          查询已注册函数
-        +unregister_func()               取消注册函数
-        +register_user_func()            注册普通用户函数
-        +register_admin_func()           注册管理员函数
-    }
-
-    class CommandMixin {
-        +register_command()              注册命令
-        +register_user_command()         注册普通用户命令
-        +register_admin_command()        注册管理员命令
-        +unregister_command()            取消注册命令
-        +get_registered_commands()       查询已注册命令
-    }
-
-    class ConfigMixin {
-        +register_config()               注册配置项
-        +get_registered_configs()        查询已注册配置
-    }
-
-    class TimeTaskMixin {
-        +add_scheduled_task()            添加定时任务
-        +remove_scheduled_task()         移除定时任务
-        +restart_scheduler()             重启调度器
-    }
-
-    class BasePlugin {
-        +event_bus                       事件总线（属性）
-        +register_handler()              注册事件处理器
-        +unregister_handler()            取消注册处理器
-        +unregister_all_handler()        取消全部处理器
-        +publish()                       异步发布事件
-        +request()                       异步调用接口
-        +get_plugin()                    获取插件实例
-        +list_plugins()                  列出插件
-        +_init_()                       插件加载时同步回调
-        +_reinit_()                     插件重载时同步回调
-        +_close_()                      插件关闭时同步回调
-    }
-
-    class NcatBotPlugin {
-        +on_load()                       插件加载时回调
-        +on_reload()                     插件重载时回调
-        +on_close()                      插件关闭时回调
-    }
-
-    FunctionMixin <|-- CommandMixin
-    CommandMixin  <|-- ConfigMixin
-    BasePlugin    <|-- NcatBotPlugin
-    ConfigMixin   <|-- NcatBotPlugin
-    TimeTaskMixin <|-- NcatBotPlugin
-```
-
-`NcatBotPlugin` 成员模式图
-
-```mermaid
-classDiagram
-    class NcatBotPlugin {
-        +config: dict
-        +api: BotAPI
-        +event_bus: EventBus
-        +rbac_manager: RBACManager
-    }
-
-    class EventBus
-    class RBACManager {
-      +user_exists 检查用户是否存在
-      +role_exists 检查角色是否存在
-      +permission_path_exists 检查权限路径是否存在
-      +check_permission 检查用户是否有权限
-      +user_has_role 检查用户是否有角色
-      +add_role 添加角色
-      +add_user 添加用户
-      +assign_role_to_user 分配角色给用户（用户不存在时自动创建）
-      +assign_permissions_to_role 分配白名单权限给角色（权限路径不存在时自动创建）
-      +assign_permissions_to_user 分配白名单权限给用户（权限路径不存在时自动创建）
-      +ban_permissions_to_role 分配黑名单权限给角色（权限路径不存在时自动创建）
-      +ban_permissions_to_user 分配黑名单权限给角色（权限路径不存在时自动创建）
-      +revoke_permissions_from_role 从角色撤销所有权限分配信息
-      +revoke_permissions_from_user 从用户撤销所有权限分配信息
-      +add_role_inheritance 添加角色继承
-      +add_permissions 添加权限路径（如果存在则不操作）
-    }
-    class BotAPI
-
-    %% 依赖关系（聚合/组合）
-    NcatBotPlugin o-- EventBus        : 事件分发
-    NcatBotPlugin o-- RBACManager     : 权限控制
-    NcatBotPlugin o-- BotAPI          : 业务 API
-```
-
-## 插件的结构
-
-### 单文件插件
+## IMessaging — 消息收发
 
 ```python
-from ncatbot.plugin_system import NcatBotPlugin, filter_registry
-from ncatbot.utils import get_log
-from ncatbot.core import PrivateMessage
-
-LOG = get_log("MyPlugin")
-
-class MyPlugin(NcatBotPlugin):
-    name = "MyPlugin" # 必须，插件名称，要求全局独立
-    version = "0.0.1" # 必须，插件版本
-    dependencies = {}  # 必须，依赖的其他插件和版本
-    description = "这是一个示例插件" # 可选
-    author = "你的名字" # 可选
-
-    async def on_load(self):
-        print(f"{self.name} 插件已加载")
-        print(f"插件版本: {self.version}")
-    
-    @filter_registry.private_filter
-    async def on_private_message(self, msg: PrivateMessage):
-        await self.api.post_group_msg(msg.group_id, text="Hello, world!")
-
-__all__ = ["MyPlugin"]
+from ncatbot.api.traits import IMessaging
 ```
 
-注意事项：
-- 插件类必须继承自 `NcatBotPlugin`。
-- 插件类必须定义 `name`、 `version`、`dependencies` 属性。
-- 这里定义了 `on_load` 方法, 该方法在插件加载时调用。
-- 这里使用 `@filter_registry.private_filter` 装饰器注册私聊消息处理函数，收到私聊消息时会回复 `Hello, World!`。
-
-其他：
-- 一个文件可以定义多个插件，只要在 `__all__` 中声明即可。
-
-
-### 文件夹插件
-
-一个插件包含以下文件:
-
-::: file-tree
-- main.py
-- plugins
-  - your_plugin
-    - \_\_init\_\_.py
-    - plugin.py
-    - other.py
-    - README.md
-    - requirements.txt
-    - .gitignore
-
-
-其中：
-- `__init__.py`：插件声明文件，必须包含且只能包含插件声明代码。
-- `plugin.py`：插件主程序，必须包含且只能包含插件定义代码。
-- `other.py`：插件其他代码文件，可选。
-- `README.md`：插件说明文件，可选。
-- `requirements.txt`：插件依赖文件，可选。
-- `.gitignore`：Git 忽略文件，可选。
-
-我们称 `your_plugin` 为**插件文件夹**, 字符串 `your_plugin` 称为**插件文件夹名**。
-
-::: tip
-推荐使用 `__file__` 参数来定位代码的路径.
-:::
-
-#### \_\_init\_\_.py
-
-`__init__.py` 中：
+| 方法 | 说明 |
+|------|------|
+| `send_private_msg(user_id, message)` | 发送私聊消息 |
+| `send_group_msg(group_id, message)` | 发送群消息 |
+| `delete_msg(message_id)` | 撤回消息 |
+| `send_forward_msg(message_type, target_id, messages)` | 合并转发 |
 
 ```python
-from .plugin import MyPlugin
-
-__all__ = ["MyPlugin"]
+# 跨平台消息发送
+client = self.api.platform("qq")
+if isinstance(client.messaging, IMessaging):
+    await client.messaging.send_group_msg(group_id, message)
 ```
 
-NcatBot 不对工作目录做任何保证, 插件项目内部只建议使用==相对导入==.
+---
 
-#### plugin.py
-
-一般在 `plugin.py` 中定义插件, `name` 称为**插件名**, 派生类类名(即 `MyPlugin.__name__` 的值)称为**插件类名**.
-
-一般来说，一个**插件文件夹**只能包含一个**插件类**。为了方便管理，我们推荐以下三个值保持一致：
-- 插件文件夹名
-- 插件类名
-- 插件名
+## IGroupManage — 群管理
 
 ```python
-from ncatbot.plugin import BasePlugin, CompatibleEnrollment
-
-class MyPlugin(BasePlugin):
-    name = "MyPlugin" # 插件名
-    version = "0.0.1" # 插件版本
-    dependencies = {}  # 依赖的其他插件和版本
+from ncatbot.api.traits import IGroupManage
 ```
 
-## 文档导航
+| 方法 | 说明 |
+|------|------|
+| `set_group_kick(group_id, user_id, reject_add_request=False)` | 踢出成员 |
+| `set_group_ban(group_id, user_id, duration=1800)` | 禁言 |
+| `set_group_whole_ban(group_id, enable=True)` | 全员禁言 |
+| `set_group_admin(group_id, user_id, enable=True)` | 设置管理员 |
+| `set_group_name(group_id, name)` | 修改群名 |
+| `set_group_leave(group_id, is_dismiss=False)` | 退群 |
 
+---
+
+## IQuery — 信息查询
+
+```python
+from ncatbot.api.traits import IQuery
+```
+
+| 方法 | 说明 |
+|------|------|
+| `get_login_info()` | 获取登录信息 |
+| `get_stranger_info(user_id)` | 陌生人/用户信息 |
+| `get_friend_list()` | 好友列表 |
+| `get_group_info(group_id)` | 群信息 |
+| `get_group_list()` | 群列表 |
+| `get_group_member_info(group_id, user_id)` | 群成员信息 |
+| `get_group_member_list(group_id)` | 群成员列表 |
+
+---
+
+## IFileTransfer — 文件传输
+
+```python
+from ncatbot.api.traits import IFileTransfer
+```
+
+| 方法 | 说明 |
+|------|------|
+| `upload_group_file(group_id, file, name, folder_id="")` | 上传群文件 |
+| `upload_private_file(user_id, file, name)` | 上传私聊文件 |
+| `download_file(url="", file="", headers="")` | 下载文件 |
+
+> `upload_attachment()` 是 QQ 平台专属 sugar，不属于跨平台 Trait。参见 [QQ 文件操作](../../qq/3_query_support.md)。
+
+---
+
+## 在插件中使用 Trait
+
+Trait 协议的主要用途是编写跨平台插件时进行能力检查：
+
+```python
+from ncatbot.api.traits import IMessaging, IGroupManage
+
+class CrossPlatformPlugin(NcatBotPlugin):
+    name = "cross_platform"
+
+    @registrar.on_group_command("ban")
+    async def on_ban(self, event, target=None):
+        # 获取当前平台的 API
+        client = self.api.platform(event.platform)
+
+        # 检查平台是否支持群管理
+        if isinstance(client.manage, IGroupManage):
+            await client.manage.set_group_ban(event.group_id, target.user_id)
+        else:
+            await event.reply(text="当前平台不支持禁言操作")
+```
+
+---
+
+> **返回**：[通用 API](README.md) · **相关**：[事件方法](1_event_methods.md)
 
 
 ---
 
-# 文件: 7. 插件系统\2. 插件类的成员.md
+# 文件: 5. API 使用\1. 通用\README.md
 
 ---
-title: 插件类的成员
-createTime: 2025/02/08 10:07:54
-permalink: /guide/loadplg/
+title: 通用 API
+createTime: 2026/03/19 17:26:45
+permalink: /guide/2248858x/
 ---
 
-## 加载和卸载钩子
-
-### 插件加载
-
-`NcatBot` 提供 `on_load` **异步方法**, 重写 `on_load` 方法可以在在插件加载时执行一些任务。
-
-一般来说, 以下工作需要**你**在插件加载时完成:
-
-- 为插件[订阅事件](../7.%20插件系统/3.%20插件的交互系统/3.1%20事件的发布和订阅.md).
-- 为插件[注册插件配置项](./4.%20插件高级功能/4.4%20插件配置项.md).
-- 为插件[注册功能](./3.%20插件的交互系统/3.2%20注册功能.md).
-- 为插件[注册定时任务](./4.%20插件高级功能/4.3%20定时任务.md).
-- 其它你**自定义的**需要在加载时初始化的任务.
-
-```python
-class MyPlugin(BasePlugin):
-    name = "MyPlugin"
-    version = "1.0.0"
-    dependencies = {}
-    async def on_load(self):
-        print(f"插件 {self.name} 加载成功")
-    
-    async def on_close(self):
-        print(f"插件 {self.name} 卸载成功")
-```
-
-### 插件卸载
-
-`BasePlugin` 提供 `on_close` 方法, 重写 `_close_` 方法可以在在插件卸载时执行一些任务.
-
-一般来说, 以下工作需要**你**在插件卸载时完成:
-
-- 其它你**自定义的**需要在加载时初始化的任务(对应 `on_load` 方法中的自定义任务).
-
-:::tip
-还提供 `_init_`， `_close_` 两个同步方法，你可以根据需要使用。
-:::
-
-## BotAPI
-
-`NcatBotPlugin` 有一个 `api` 成员变量, 该成员变量持有 `BotAPI` 对象的引用, 用于调用 NcatBot 的各种 API.
-
-[BotAPI](../3.%20组件介绍/6.%20BotAPI.md)
-
-```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        await self.api.post_group_msg(123456789, text="Hello, world!")
-```
-
-## 获取其它插件的信息
-
-### list_plugins
-
-`NcatBotPlugin` 提供 `list_plugins` 方法, 该方法返回一个包含所有已加载插件信息的列表。
-
-```python
-class NcatBotPlugin(...):
-    def list_plugins(self, *, obj: bool = False) -> List[Union[str, 'BasePlugin']]:
-        """获取插件列表
-        Args:
-            obj: 实例模式，如果为 True 则返回插件实例列表, 否则返回插件名称列表.
-        """
-        ...
-```
-
-### get_plugin
-
-`NcatBotPlugin` 提供 `get_plugin` 方法, 该方法返回指定插件的实例。
-
-```python
-class NcatBotPlugin(...):
-    def get_plugin(self, name: str) -> Optional['BasePlugin']:
-        """获取指定插件的实例
-        Args:
-            name: 插件名称
-        Returns:
-            插件实例, 如果插件不存在则返回 None
-        """
-        ...
-```
-
-## 更多
-
-- [订阅和发布事件](3.%20插件的交互系统/3.1%20事件的发布和订阅.md)
-- [注册功能（已过时但未废弃，有上位替代）](3.%20插件的交互系统/3.2%20注册功能.md)
-- [配置项](4.%20插件高级功能/4.4%20插件配置项.md)
-- [定时任务](4.%20插件高级功能/4.3%20定时任务.md)
+> 跨平台通用的事件方法和 API Trait 协议 — 适用于所有已接入平台。
 
 ---
 
-# 文件: 7. 插件系统\3. 插件的交互系统\3.1 事件的发布和订阅.md
+## Quick Reference
+
+NcatBot 通过 Trait 协议实现跨平台统一：
+
+| 层级 | 说明 | 适用场景 |
+|------|------|---------|
+| 事件方法 | `event.reply()`, `event.delete()` 等 | 处理器内直接操作事件 |
+| API Trait | `IMessaging`, `IGroupManage` 等 | 编写跨平台插件时按协议调用 |
+
+### 事件方法 vs 平台 API
+
+```python
+# 通用 — 任何平台都能用
+await event.reply(text="收到")
+
+# 平台专属 — 仅 QQ
+await self.api.qq.post_group_msg(group_id, text="Hello!")
+
+# 平台专属 — 仅 Bilibili
+await self.api.bilibili.send_danmu(room_id, "弹幕内容")
+```
 
 ---
-title: 事件的订阅和发布
-createTime: 2025/03/06 10:07:54
-permalink: /guide/pasevent/
----
 
-## 事件
+## 本目录索引
 
-### 事件对象
-
-事件是基本的可处理对象, 一个事件由 `ncatbot.plugin_system.event.event.NcatBotEvent` 类表示.
-
-`NcatBotEvent` 类主要包含两个成员变量
-
-- `data: Any` 事件携带的数据。
-- `type: str` 事件类型
-
-### 事件类型
-
-事件在被发布时会携带上**事件类型**, 事件类型用于订阅和处理事件.
-
-事件类型命名规范为 `[插件名].[事件名]`.
-
-**官方事件** (群聊消息, 私聊消息, 请求消息, 通知消息, 启动事件, 心跳事件, 关闭事件) 的事件名封装如下:
-
-- `ncatbot.utils.assets.literals.OFFICIAL_GROUP_MESSAGE_EVENT = "ncatbot.group_message_event"`
-- `ncatbot.utils.assets.literals.OFFICIAL_PRIVATE_MESSAGE_EVENT = "ncatbot.private_message_event"`
-- `ncatbot.utils.assets.literals.OFFICIAL_REQUEST_EVENT = "ncatbot.request_event"`
-- `ncatbot.utils.assets.literals.OFFICIAL_NOTICE_EVENT = "ncatbot.notice_event"`
-- `ncatbot.utils.assets.literals.OFFICIAL_STARTUP_EVENT = "ncatbot.startup_event"`
-- `ncatbot.utils.assets.literals.OFFICIAL_HEARTBEAT_EVENT = "ncatbot.heartbeat_event"`
-- `ncatbot.utils.assets.literals.OFFICIAL_SHUTDOWN_EVENT = "ncatbot.shutdown_event"`
-
-官方事件携带的数据**一定是[ BaseEventData ](../../4.%20数据结构介绍/2.%20BaseEventData.md)的子类**。
-
-插件也可以自行发布事件, 具体请继续阅读.
-
-### 事件传播
-
-事件沿**[事件总线](../../3.%20组件介绍/4.%20EventBus.md)**传播, 处理事件时可以主动停止事件传播或者添加事件处理结果, 相关函数:
-
-- `NcatBotEvent.stop_propagation()`
-- `NcatBotEvent.add_result(result)`
-
-## 订阅事件
-
-插件可以通过**订阅事件**来处理事件.
-
-订阅事件时，需要提供事件名和事件回调函数。
-
-`NcatBotPlugin` 有一个 `event_bus` 成员变量, 该成员变量持有 `EventBus` 对象的引用, 用于管理事件的订阅和发布。你可以用 `event_bus` 来订阅事件。但是我们提供一个更方便的接口 `register_handler` 来订阅事件。
-
-### 示例代码
-
-```python
-from ncatbot.plugin_system.event import NcatBotEvent
-from ncatbot.plugin_system import NcatBotPlugin
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        # 支持正则匹配,re:前缀
-        self.hid1 = self.register_handler("re:test\.", self.handle_test) # 订阅 test 插件发布的所有事件
-        self.hid2 = self.register_handler("exact.match", self.handle_exact) # 订阅 exact 插件发布的 match 事件
-
-    async def handle_test(self, event: NcatBotEvent):
-        print(f"正则匹配处理器: {event.data}")
-
-    async def handle_exact(self, event: NcatBotEvent):
-        print(f"精确匹配处理器: {event.data}")
-
-    async def close_plugin(self):
-        # 注销事件处理器
-        self.event_bus.unregister_handler(self.hid1)
-        self.event_bus.unregister_handler(self.hid2)
-```
-
-- 理论上讲在任何时间都可以订阅事件，但一般在 `on_load` 函数中订阅。
-
-### 事件回调函数
-
-订阅事件时需要指定一个回调函数, 回调函数需要接受一个 `NcatBotEvent` 类型的参数。
-
-本示例中, `handle_test` 和 `handle_exact` 都是事件回调函数，且他们都是 `MyPlugin` 类的成员函数。因此可以使用
-
-### 其它有关方法
-
-```python
-class NcatBotPlugin(...):
-    def unregister_handler(self, handler_id: UUID) -> bool:
-        """注销事件处理器。
-        Args:
-            handler_id: 要注销的事件处理器UUID
-        Returns:
-            是否成功注销
-        """
-        ...
-
-    def unregister_all_handler(self) -> None:
-        """注销本插件所有事件处理器。"""
-        ...
-        
-    ...
-```
-
-### 参数绑定失败事件
-
-当用户输入的命令参数与该命令实际要求的参数不匹配时（例如参数缺失、参数类型错误、参数数量不符等），NcatBot 会发布`ncatbot.param_bind_failed` 事件。插件可通过订阅该事件，自定义参数错误的提示逻辑，向用户反馈清晰的错误信息。
-```python
-    async def on_load(self):
-        self.event_bus.subscribe(
-            event_type="ncatbot.param_bind_failed",
-            handler=self.handle_param_error
-        )
-        LOG.info(f"{self.name} 已订阅ncatbot.param_bind_failed事件")
-
-    @command_registry.command("hello", description="简单问候指令（需要姓名参数）")
-    async def hello_cmd(self, event: BaseMessageEvent, name: str):
-        await event.reply(f"Hello!, {name}!")
-
-    async def handle_param_error(self, event: NcatBotEvent):
-        await self.api.post_private_msg(
-            user_id=event.data["event"].user_id,
-            text=f"❌命令「{event.data['cmd']}」\n{event.data['msg']}"
-        )
-```
-当用户发送`/hello TestUser 123`时，则会返回`命令「hello」\n参数解析异常：list index out of range`
-
-## 发布事件
-
-:::tip
-一般用于跨插件的通讯
-:::
-
-在 `NcatBotPlugin` 上下文中任意位置均可发布事件。
-
-插件发布的事件会被所有订阅该事件的插件接收和处理。就像官方事件一样。
-
-```python
-class MyPlugin(NcatBotPlugin):
-    async def some_func(self):
-        event = Event("MyPlugin.event", {"message": "hello"})
-        await self.event_bus.publish_async(event)  # 异步发布不等待结果
-```
+| 文档 | 内容 |
+|------|------|
+| [事件方法](1_event_methods.md) | `event.reply()`, `event.delete()`, `event.kick()` 等跨平台事件操作 |
+| [API Trait 协议](2_traits.md) | `IMessaging`, `IGroupManage`, `IQuery`, `IFileTransfer` 协议说明 |
 
 
 ---
 
-# 文件: 7. 插件系统\3. 插件的交互系统\3.2 功能和命令.md
+# 文件: 5. API 使用\2. QQ\1. 消息发送.md
 
 ---
-title: 注册功能
-createTime: 2025-03-27 10:52:00
-permalink: /guide/regifunc/
+title: 消息发送详解
+createTime: 2026/03/19 17:26:45
+permalink: /guide/eyiefl70/
 ---
 
-:::warning
-这是 3.x.y 版本的常用方法；从 4.0.0 版本起，更推荐使用[统一命令注册器](../../8.%20高级教程/1.%20统一命令注册器/1.%20概览.md)来注册命令和功能。
-:::
+> `BotAPIClient` 消息发送 API 的任务导向教程。完整参数表见 [reference/api/qq/1_message_api.md](../../../reference/api/qq/1_message_api.md)。
 
-## 使用功能
+---
 
-功能是对**事件发布和处理**的进一步封装, 使用功能可以方便快捷的接入 NcatBot 的[权限管理机制](3.3%20权限系统.md).
+## 获取 API 客户端
 
-功能的运作对象是==消息事件==, 只有**群聊和私聊消息事件**才会进行下面的判定.
+| 方式 | 类型 | 场景 |
+|------|------|------|
+| `self.api.qq` | `QQAPIClient` | 插件中（推荐，含语法糖） |
+| `event.reply()` | — | 最便捷的回复方式 |
 
-## 注册功能
+---
 
-注册功能需要在插件==[加载](../2.%20插件类的成员.md#加载和卸载钩子)时==进行.
+## 常用发送方式
 
-以下函数用于注册功能:
+### 1. event.reply() — 一行回复
 
 ```python
-def register_user_func(
+await event.reply(text="pong!")  # 自动引用 + @发送者
+```
+
+### 2. post_group_msg — 关键字发送
+
+```python
+await self.api.qq.post_group_msg(event.group_id, text="Hello!", at=654321)
+await self.api.qq.post_group_msg(event.group_id, text="看这个", reply=msg_id, image="img.png")
+```
+
+组装顺序：`reply → at → text → image → video → rtf`
+
+### 3. MessageArray — 精细控制
+
+```python
+from ncatbot.types import MessageArray
+msg = MessageArray().add_text("你好").add_image("img.png")
+await self.api.qq.post_group_array_msg(event.group_id, msg)
+```
+
+### 4. 原子 API — OneBot v11 格式
+
+```python
+await self.api.qq.messaging.send_group_msg(123456, [{"type": "text", "data": {"text": "你好"}}])
+```
+
+---
+
+## 合并转发
+
+```python
+from ncatbot.types import Forward
+forward = Forward()
+forward.add_message(user_id=10001, nickname="Bot", content="第一条")
+await self.api.qq.post_group_forward_msg(group_id, forward)
+
+# 或通过消息 ID 转发已有消息
+await self.api.qq.send_group_forward_msg_by_id(group_id, [msg_id_1, msg_id_2])
+```
+
+---
+
+## 撤回消息
+
+```python
+result = await self.api.qq.messaging.send_group_msg(group_id, message)
+await self.api.qq.messaging.delete_msg(result["message_id"])
+
+# 或直接撤回触发事件的消息
+await event.delete()
+```
+
+---
+
+## 延伸阅读
+
+- [消息 API 完整参数表](../../../reference/api/qq/1_message_api.md) — 核心方法与 Sugar 方法签名
+- [消息段参考](../../send_message/common/1_segments.md) — MessageSegment 类型
+- [通用消息段](../../../reference/types/1_common_segments.md) — 通用段完整字段表
+- [QQ 消息段](../../../reference/types/3_qq_segments.md) — QQ 专属段
+- [群管理 API](2_manage.md) — 踢人、禁言等管理操作
+| `group_id` | `str \| int` | 群号 |
+| `user_id` | `str \| int` | 被戳的用户 QQ |
+
+**示例**
+
+```python
+@registrar.on_group_command("戳我")
+async def on_poke(self, event: GroupMessageEvent):
+    await self.api.qq.messaging.send_poke(event.group_id, event.user_id)
+```
+
+---
+
+## 语法糖方法
+
+`QQAPIClient`（通过 `self.api.qq` 访问）继承了 `QQMessageSugarMixin`，提供 **关键字参数自动组装消息** 的便捷方法，无需手动构造 `message` 列表。
+
+### post_group_msg — 便捷群消息
+
+```python
+async def post_group_msg(
     self,
-    name: str,
-    handler: Callable[[BaseMessageEvent], Any],
-    filter: Callable = None,
-    prefix: str = None,
-    regex: str = None,
-    description: str = "",
-    usage: str = "",
-    examples: List[str] = None,
-    tags: List[str] = None,
-    metadata: Dict[str, Any] = None,
-    timeout: float = None,
-) -> Func:
-  ...
-
-def register_admin_func(...)
+    group_id: Union[str, int],
+    text: Optional[str] = None,
+    at: Optional[Union[str, int]] = None,
+    reply: Optional[Union[str, int]] = None,
+    image: Optional[Union[str, Image]] = None,
+    video: Optional[Union[str, Video]] = None,
+    rtf: Optional[MessageArray] = None,
+) -> dict
 ```
 
-### `register_user_func`
+所有关键字参数都是可选的，按需组合：
 
-注册一个用户功能, 如果能满足触发条件则触发该功能.
+```python
+# 发送纯文本
+await self.api.qq.post_group_msg(group_id, text="Hello!")
 
-- `name`: 功能名称, 用于建立权限结构, 该功能的[权限路径](3.3%20权限系统.md)为 `<plugin_name>.<name>`.
-功能.
-- `handler`: 功能处理函数, 接受一个 `BaseMessageEvent` 类型的参数, .
-- `filter`: 自定义过滤函数, 接受一个 `NcatBotEvent` 类型的参数, 返回布尔值表示是否触发功能. 如果为 `None` 则不进行过滤.
-- `prefix`: 前缀匹配字符串, 如果消息以该前缀开头则触发功能. 例如 `prefix="/help"` 会匹配以 "/help" 开头的消息.
-- `regex`: 正则表达式字符串, 如果消息匹配该正则表达式则触发功能. 例如 `regex="\d*"` 会匹配包含任意数量数字的消息. 可以使用 Python 的 re 模块支持的所有正则表达式语法.
-- `description`: 功能描述, 用于帮助文档.
-- `permission_raise`: 是否针对群聊提权, 如果 `user_id` (消息发送者 QQ 号) 为 admin 级别及以上权限, 则临时提升消息来源群聊的权限为 `root`. 私聊被分在一个特殊的群组, 权限为 `root`.
-- `usage`: 使用说明, 用于帮助文档.
-- `examples`: 使用示例列表, 用于帮助文档.
-- `tags`: 功能标签列表, 用于功能分类.
-- `metadata`: 额外元数据字典, 可以存储任意自定义数据.
+# 发送文本 + @某人
+await self.api.qq.post_group_msg(group_id, text="欢迎", at=user_id)
 
-注意: `filter`, `prefix`, `regex` 三个参数可以组合使用, 组合时需要同时满足所有条件才会触发功能. 如果都为 `None` 则该功能会被每条消息触发(不推荐).
+# 发送文本 + 图片
+await self.api.qq.post_group_msg(group_id, text="看图", image="/path/to/img.jpg")
 
-### `register_admin_func`
+# 发送引用回复
+await self.api.qq.post_group_msg(group_id, text="收到", reply=message_id)
 
-注册一个管理员功能, 如果能满足触发条件则触发该功能, 其它同上.
+# 发送自定义 MessageArray
+msg = MessageArray()
+msg.add_text("复杂消息")
+msg.add_image("https://example.com/img.png")
+await self.api.qq.post_group_msg(group_id, rtf=msg)
+```
 
-## 命令
+### post_private_msg — 便捷私聊消息
 
-我觉得它没啥用；所以就不写文档了。
+```python
+async def post_private_msg(
+    self,
+    user_id: Union[str, int],
+    text: Optional[str] = None,
+    reply: Optional[Union[str, int]] = None,
+    image: Optional[Union[str, Image]] = None,
+    video: Optional[Union[str, Video]] = None,
+    rtf: Optional[MessageArray] = None,
+) -> dict
+```
 
-用内置插件[UnifiedRegistry](../../8.%20高级教程/1.%20统一命令注册器/1.%20概览.md)吧。
+### 其他 sugar 方法速查
 
-## 系统命令
+| 方法 | 说明 |
+|------|------|
+| `send_group_text(group_id, text)` | 发送群纯文本 |
+| `send_group_image(group_id, image)` | 发送群图片 |
+| `send_group_record(group_id, file)` | 发送群语音 |
+| `send_group_file(group_id, file, name=None)` | 发送群文件消息 |
+| `send_group_video(group_id, video)` | 发送群视频 |
+| `send_group_sticker(group_id, image)` | 发送群动画表情 |
+| `send_private_text(user_id, text)` | 发送私聊纯文本 |
+| `send_private_image(user_id, image)` | 发送私聊图片 |
+| `send_private_record(user_id, file)` | 发送私聊语音 |
+| `send_private_file(user_id, file, name=None)` | 发送私聊文件消息 |
+| `send_private_video(user_id, video)` | 发送私聊视频 |
+| `send_private_sticker(user_id, image)` | 发送私聊动画表情 |
+| `post_group_forward_msg(group_id, forward)` | 发送群合并转发（`Forward` 对象） |
+| `post_private_forward_msg(user_id, forward)` | 发送私聊合并转发 |
+| `send_group_forward_msg_by_id(group_id, message_ids)` | 通过消息 ID 列表转发群消息 |
+| `send_private_forward_msg_by_id(user_id, message_ids)` | 通过消息 ID 列表转发私聊消息 |
+| `post_group_array_msg(group_id, msg)` | 发送 `MessageArray` 群消息 |
+| `post_private_array_msg(user_id, msg)` | 发送 `MessageArray` 私聊消息 |
 
-参考[系统命令](3.4%20系统命令.md)
+---
 
+> **返回**：[Bot API 使用指南](../README.md) · **相关**：[消息发送指南](../../send_message/README.md)
 
 
 ---
 
-# 文件: 7. 插件系统\3. 插件的交互系统\3.3 权限系统.md
+# 文件: 5. API 使用\2. QQ\2. 群管理.md
 
 ---
-title: 权限系统
-createTime: 2025-03-27 10:52:00
-permalink: /guide/permission/
+title: 群管理详解
+createTime: 2026/03/19 17:26:45
+permalink: /guide/2yjku6u7/
 ---
 
-## 权限分级
+> `.manage` 命名空间提供的群管理操作使用指南。完整参数表见 [reference/api/qq/2_manage_api.md](../../../reference/api/qq/2_manage_api.md)。
+>
+> 所有方法通过 `self.api.qq.manage` 访问，均为 `async`。执行需要 Bot 拥有对应群权限。
 
-NcatBot 的基本权限机制包括 `user`, `admin`, `root` 三级:
+---
 
-- `user` 权限: 使用 `user` 级别功能, `user` 权限**默认分配给所有用户**。
-- `admin` 权限: `user` 的全部权限以及 `admin` 级别功能.
-- `root` 权限: `admin` 的全部权限以及 `root` 级别功能.
+## 核心操作
 
-## 权限存储
-
-**正常退出**后，会保存权限信息到工作目录下 `data/rbac.json` 文件中，**强制关闭**则不会保存。
-
-:::tip
-`Ctrl+C` 关闭（前台模式）或调用 `BotClient.exit()` 关闭（后台模式）会被视为正常退出。
-:::
-
-NcatBot 停止运行时，可以格式化文件后手动修改权限。
-
-root 权限账号只能通过[配置项](../../2.%20基本开发/4.%20配置项.md)指定。
-
-## 权限机制
-
-### RBAC 机制
-
-NcatBot 使用**基于角色的访问控制** (Role-Based Access Control, RBAC) 机制来管理权限。
-
-一个用户可以被赋予多个角色, 每个角色可以被赋予多个权限路径。用户自身也可以被直接赋予权限路径。
-
-授予权限路径时可以选择**白名单**或**黑名单**模式。
-
-### 权限路径
-
-权限路径是一个用点号 (`.`) 分隔的字符串, 例如 `plugin.demo.read`。
-
-可以在权限路径中使用通配符 (`*`) 来表示任意字符串, 例如 `plugin.*` 表示 `plugin` 下的所有权限。
-
-:::warning
-通配符作为独立的路径段使用，例如，授予 `plugin.*` 白名单不会解除 `plugin.demo.read` 的黑名单限制。必须手动 `revoke_permissions_from_user` 或 `revoke_permissions_from_role` 来解除黑名单限制。
-
-同理，授予 `plugin.demo` 白名单不会解除 `plugin.*` 的黑名单限制。
-:::
-
-
-### 权限判定
-
-使用 `check_permission` 判定用户是否拥有某权限路径时，会收集用户所有的角色和用户自身的权限路径, 然后按以下顺序进行检查：
-
-1. 检查精确黑名单路径，如果匹配则拒绝。
-2. 检查精确白名单路径，如果匹配则允许。
-3. 检查通配符黑名单路径，如果匹配则拒绝。
-4. 检查通配符白名单路径，如果匹配则允许。
-
-## 联动
-
-### 权限和功能
-
-通过[功能](3.2%20功能和命令.md)注册的功能会自动绑定权限, 权限路径为 `<plugin_name>.<func_name>`。
-
-可以使用上面的接口控制权限路径。
-
-### 内置权限管理命令
-
-内置了[授予 admin 角色命令](3.4%20系统命令.md#set_admin-命令) 来管理 admin 角色。这个命令是仅限 `root` 执行的。
-
-### 统一注册器
-
-使用 [admin_filter](../../8.%20高级教程/1.%20统一命令注册器/5.%20过滤器系统.md#2-AdminFilter-管理员过滤器) 的命令会过滤掉没有 `admin` **角色** 的用户。
-
-## 权限接口
-
-所有的 `NcatBotPlugin` 都持有 `self.rbac_manager` 权限管理实例，通过它可以来操作权限系统。
-
-[状态量](../../2.%20基本开发/5.%20状态量.md) 中也持有一个 `rbac_manager` 实例。
-
-### user_exists
-
-#### 函数原型
+### 踢人
 
 ```python
-class RBACManager:
-    ...
-    def user_exists(self, user_name: str) -> bool:
-        """"
-        判断用户是否存在。
-        Args:
-            user_name: 用户名
-        Returns:
-            bool，存在为 True。
-        """
-        ...
+@registrar.on_group_command("踢")
+async def on_kick(self, event: GroupMessageEvent, target: At = None):
+    if target is None:
+        await event.reply("请 @一个用户")
+        return
+    await self.api.qq.manage.set_group_kick(event.group_id, target.user_id)
+    await event.reply(f"已踢出用户 {target.user_id}")
 ```
 
-#### 示例用法
+### 禁言 / 解除禁言
 
 ```python
-class MyPlugin(NcatBotPlugin):
-    ...
-    async def some_method(self):
-        if self.rbac_manager.user_exists("alice"):
-            print("User 'alice' exists.")
+await self.api.qq.manage.set_group_ban(event.group_id, target.user_id, 60)   # 禁言 60 秒
+await self.api.qq.manage.set_group_ban(event.group_id, target.user_id, 0)    # 解除禁言
 ```
 
-
-### role_exists
-
-#### 函数原型
+### 全员禁言
 
 ```python
-class RBACManager:
-    ...
-    def role_exists(self, role_name: str) -> bool:
-        """
-        判断角色是否存在。
-        Args:
-            role_name: 角色名
-        Returns:
-            bool，存在为 True。
-        """
-        ...
+await self.api.qq.manage.set_group_whole_ban(group_id, True)   # 开启
+await self.api.qq.manage.set_group_whole_ban(group_id, False)  # 关闭
 ```
 
-#### 示例用法
+---
+
+## 方法速查
+
+| 方法 | 说明 |
+|------|------|
+| `set_group_kick(gid, uid, reject_add_request=False)` | 踢人 |
+| `set_group_ban(gid, uid, duration=1800)` | 禁言（0=解除） |
+| `set_group_whole_ban(gid, enable=True)` | 全员禁言 |
+| `set_group_admin(gid, uid, enable=True)` | 设置/取消管理员 |
+| `set_group_card(gid, uid, card="")` | 设置群名片 |
+| `set_group_name(gid, name)` | 设置群名 |
+| `set_group_leave(gid, is_dismiss=False)` | 退群 |
+| `set_group_special_title(gid, uid, special_title="")` | 设置专属头衔 |
+| `send_group_notice(gid, content, image="")` | 发布群公告 |
+| `delete_group_notice(gid, notice_id)` | 删除群公告 |
+| `set_essence_msg(message_id)` | 设为精华消息 |
+| `delete_essence_msg(message_id)` | 取消精华消息 |
+| `set_group_kick_members(gid, user_ids, reject=False)` | 批量踢人 |
+| `set_group_remark(gid, remark)` | 设置群备注 |
+| `set_friend_add_request(flag, approve=True, remark="")` | 处理好友请求 |
+| `set_group_add_request(flag, sub_type, approve=True, reason="")` | 处理群请求 |
+| `set_friend_remark(uid, remark)` | 设置好友备注 |
+| `delete_friend(uid)` | 删除好友 |
+
+---
+
+## 延伸阅读
+
+- [群管理 API 参考](../../../reference/api/qq/2_manage_api.md) — 完整参数表与返回值
+- [RBAC 权限控制](../../rbac/) — 限制谁可以执行管理操作
+- [示例：群管理机器人](../../../../examples/qq/06_group_manager/) — 完整实现
 
 ```python
-class MyPlugin(NcatBotPlugin):
-    ...
-    async def some_method(self):
-        if self.rbac_manager.role_exists("auditor"):
-            print("Role 'auditor' exists.")
+# 需要群主权限
+await self.api.qq.manage.set_group_special_title(group_id, user_id, "🏆 最强王者")
 ```
 
-### permission_path_exists
+---
 
-#### 函数原型
+## kick_and_block — 组合操作
+
+`ManageExtension` 提供的组合操作方法：
 
 ```python
-class RBACManager:
-    ...
-    def permission_path_exists(self, permissions_path: str) -> bool:
-        """
-        判断权限路径是否已在权限 Trie 中注册。
-        Args:
-            permissions_path: 权限路径（大小写敏感）
-        Returns:
-            bool，存在为 True。
-        """
-        ...
+async def kick_and_block(
+    self,
+    group_id: Union[str, int],
+    user_id: Union[str, int],
+    message_id: Optional[Union[str, int]] = None,
+) -> None
 ```
 
-#### 示例用法
+**功能**：撤回消息 → 踢出用户 → 拒绝再加群（一步到位）。
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `group_id` | `str \| int` | — | 群号 |
+| `user_id` | `str \| int` | — | 被踢用户 QQ |
+| `message_id` | `str \| int \| None` | `None` | 可选，传入则先撤回该消息 |
 
 ```python
-class MyPlugin(NcatBotPlugin):
-    ...
-    async def some_method(self):
-        if not self.rbac_manager.permission_path_exists("plugin.demo.read"):
-            self.rbac_manager.add_permissions("plugin.demo.read")
-
+# 撤回违规消息 + 踢出 + 拉黑
+await self.api.qq.manage.kick_and_block(
+    group_id=event.group_id,
+    user_id=event.user_id,
+    message_id=event.message_id,  # 可选，传入则先撤回
+)
 ```
 
-### check_permission
+---
 
-检查用户是否拥有某权限路径。
-
-#### 函数原型
-
-```python
-from typing import Literal
-
-class RBACManager:
-    ...
-    def check_permission(self, user_name: str, path: str, create_user_if_not_exists: bool = True) -> bool:
-        """
-        检查用户是否拥有某权限路径。
-        Args:
-            user_name: 用户名
-            path: 权限路径
-            create_user_if_not_exists: 用户不存在时是否自动创建（默认 True）
-        Returns:
-            bool，允许为 True。
-        """
-        ...
-```
-
-#### 示例用法
-
-```python
-class MyPlugin(NcatBotPlugin):
-    ...
-    async def some_method(self):
-        # 常规用法：
-        allowed = self.rbac_manager.check_permission("alice", "plugin.demo.read")
-        if not allowed:
-            print("no permission")
-
-        # 严格控制用户生命周期时：
-        try:
-            allowed = self.rbac_manager.check_permission("bob", "plugin.demo.read", create_user_if_not_exists=False)
-        except IndexError:
-            print("user not exists")
-```
-
-### user_has_role
-
-#### 函数原型
-
-```python
-class RBACManager:
-    ...
-    def user_has_role(self, user_name: str, role_name: str) -> bool:
-        """
-        判断用户是否拥有指定角色。
-        Args:
-            user_name: 用户名
-            role_name: 角色名
-        Returns:
-            bool，拥有为 True。
-        """
-        ...
-```
-
-#### 示例用法
-
-```python
-class MyPlugin(NcatBotPlugin):
-    ...
-    async def some_method(self):
-        if not self.rbac_manager.user_has_role("alice", "auditor"):
-            print("alice has no 'auditor' role")
-```
-
-### add_role
-
-#### 函数原型
-
-```python
-class RBACManager:
-    ...
-    def add_role(self, role_name: str, ignore_if_exists: bool = True):
-        """
-        创建新角色。
-        Args:
-            role_name: 角色名
-            ignore_if_exists: 若已存在是否忽略（默认 True）
-        """
-        ...
-```
-
-#### 示例用法
-
-```python
-class MyPlugin(NcatBotPlugin):
-    ...
-    async def some_method(self):
-        self.rbac_manager.add_role("auditor")
-```
-
-### add_user
-
-#### 函数原型
-
-```python
-class RBACManager:
-    ...
-    def add_user(self, user_name: str, role_list: list[str] | None = None, ignore_if_exists: bool = True):
-        """
-        创建新用户，可选地赋予一组角色。
-        Args:
-            user_name: 用户名
-            role_list: 角色列表（可选）
-            ignore_if_exists: 已存在时是否忽略（默认 True）
-        """
-        ...
-```
-
-#### 示例用法
-
-```python
-class MyPlugin(NcatBotPlugin):
-    ...
-    async def some_method(self):
-        self.rbac_manager.add_user("alice")
-```
-
-### assign_role_to_user
-
-#### 函数原型
-
-```python
-class RBACManager:
-    ...
-    def assign_role_to_user(self, user_name: str, role_name: str, create_user_if_not_exists: bool = True):
-        """
-        为用户赋予角色。
-        Args:
-            user_name: 用户名
-            role_name: 角色名
-            create_user_if_not_exists: 用户不存在是否自动创建（默认 True）
-        """
-        ...
-```
-
-#### 示例用法
-
-```python
-class MyPlugin(NcatBotPlugin):
-    ...
-    async def some_method(self):
-        self.rbac_manager.assign_role_to_user("alice", "auditor")
-```
-
-### assign_permissions_to_role
-
-#### 函数原型
-
-```python
-from typing import Literal
-
-class RBACManager:
-    ...
-    def assign_permissions_to_role(self, role_name: str, permissions_path: str, mode: Literal["white", "black"] = "white", create_path_if_not_exists: bool = True):
-        """
-        为角色分配权限（白名单或黑名单）。
-        Args:
-            role_name: 角色名
-            permissions_path: 权限路径，支持通配符
-            mode: "white" 或 "black"（默认 "white"）
-            create_path_if_not_exists: 权限不存在时是否自动创建（默认 True）
-        """
-        ...
-```
-
-#### 示例用法
-
-```python
-class MyPlugin(NcatBotPlugin):
-    ...
-    async def some_method(self):
-        self.rbac_manager.add_role("auditor")
-        self.rbac_manager.add_role("superadmin")
-        self.rbac_manager.add_permissions("plugin.demo.read")
-        self.rbac_manager.add_permissions("plugin.demo.write")
-        self.rbac_manager.assign_permissions_to_role("auditor", "plugin.demo.read", mode="white") # 只授予读取权限
-        self.rbac_manager.assign_permissions_to_role("superadmin", "plugin.demo.*", mode="white") # 授予所有 plugin.demo 下的权限
-```
-
-### assign_permissions_to_user
-
-当 `assign_permissions_to_role` 的结果和 `assign_permissions_to_user` 的结果冲突时，**用户权限优先级更高**。
-
-#### 函数原型
-
-```python
-from typing import Literal
-
-class RBACManager:
-    ...
-    def assign_permissions_to_user(self, user_name: str, permissions_path: str, mode: Literal["white", "black"] = "white", create_path_if_not_exists: bool = True):
-        """
-        为用户直接分配权限（白/黑名单）。
-        Args:
-            user_name: 用户名
-            permissions_path: 权限路径，支持通配符
-            mode: "white" 或 "black"（默认 "white"）
-            create_path_if_not_exists: 权限不存在时是否自动创建（默认 True）
-        """
-        ...
-```
-
-#### 示例用法
-
-```python
-class MyPlugin(NcatBotPlugin):
-    ...
-    async def some_method(self):
-        self.rbac_manager.add_permissions("plugin.demo.write")
-        self.rbac_manager.assign_permissions_to_user("alice", "plugin.demo.write", mode="white")
-```
-
-### unassign_role_to_user
-
-#### 函数原型
-
-```python
-class RBACManager:
-    ...
-    def unassign_role_to_user(self, user_name: str, role_name: str):
-        """
-        撤销用户的某个角色。
-        Args:
-            user_name: 用户名
-            role_name: 角色名
-        """
-        ...
-```
-
-#### 示例用法
-
-```python
-class MyPlugin(NcatBotPlugin):
-    ...
-    async def some_method(self):
-        self.rbac_manager.unassign_role_to_user("alice", "auditor")
-```
-
-### ban_permissions_to_role
-
-等价于将该权限路径以黑名单形式分配给角色。
-
-#### 函数原型
-
-```python
-class RBACManager:
-    ...
-    def ban_permissions_to_role(self, role_name: str, permissions_path: str):
-        """
-        从角色撤销某权限。
-        Args:
-            role_name: 角色名
-            permissions_path: 权限路径，支持通配符
-        """
-        ...
-```
-
-#### 示例用法
-
-```python
-class MyPlugin(NcatBotPlugin):
-    ...
-    async def some_method(self):
-        self.rbac_manager.ban_permissions_to_role("auditor", "plugin.demo.read")
-```
-
-### ban_permissions_to_user
-
-等价于将该权限路径以黑名单形式分配给用户。
-
-#### 函数原型
-
-```python
-class RBACManager:
-    ...
-    def ban_permissions_to_user(self, user_name: str, permissions_path: str):
-        """
-        从用户撤销某权限。
-        Args:
-            user_name: 用户名
-            permissions_path: 权限路径，支持通配符
-        """
-        ...
-```
-
-#### 示例用法
-
-```python
-class MyPlugin(NcatBotPlugin):
-    ...
-    async def some_method(self):
-        self.rbac_manager.ban_permissions_to_user("alice", "plugin.demo.write")
-```
-
-### revoke_permissions_from_role
-
-#### 函数原型
-
-```python
-class RBACManager:
-    ...
-    def revoke_permissions_from_role(self, role_name: str, permissions_path: str):
-        """
-        撤销角色的某个权限分配（无论白名单或黑名单）。
-        Args:
-            role_name: 角色名
-            permissions_path: 权限路径，支持通配符
-        """
-        ...
-```
-
-#### 示例用法
-
-```python
-class MyPlugin(NcatBotPlugin):
-    ...
-    async def some_method(self):
-        self.rbac_manager.revoke_permissions_from_role("auditor", "plugin.demo.read")
-```
-
-### revoke_permissions_from_user
-
-#### 函数原型
-
-```python
-class RBACManager:
-    ...
-    def revoke_permissions_from_user(self, user_name: str, permissions_path: str):
-        """
-        撤销用户的某个权限分配（无论白名单或黑名单）。
-        Args:
-            user_name: 用户名
-            permissions_path: 权限路径，支持通配符
-        """
-        ...
-```
-
-#### 示例用法
-
-```python
-class MyPlugin(NcatBotPlugin):
-    ...
-    async def some_method(self):
-        self.rbac_manager.revoke_permissions_from_user("alice", "plugin.demo.write")
-```
-
-### add_role_inheritance
-
-#### 函数原型
-
-```python
-class RBACManager:
-    ...
-    def add_role_inheritance(self, role: str, inherited_role: str):
-        """
-        设置角色继承关系（role 继承 inherited_role 的权限）。
-        Args:
-            role: 子角色
-            inherited_role: 被继承的父角色
-        """
-        ...
-```
-
-#### 示例用法
-
-```python
-class MyPlugin(NcatBotPlugin):
-    ...
-    async def on_load(self):        
-        # 第一次创建时才会发生 "无角色"
-        if not self.rbac_manager.role_exists("auditor"):
-            self.rbac_manager.add_role("auditor")
-            self.rbac_manager.add_role("superadmin")
-            self.rbac_manager.add_role_inheritance("superadmin", "auditor") # superadmin 继承 auditor 的权限
-```
-
-### add_permissions
-
-#### 函数原型
-
-```python
-class RBACManager:
-    ...
-    def add_permissions(self, permissions_path: str, ignore_if_exists: bool = True):
-        """
-        向权限 Trie 注册一个权限路径。
-        Args:
-            permissions_path: 权限路径
-            ignore_if_exists: 已存在时是否忽略（默认 True）
-        """
-        ...
-```
-
-#### 示例用法
-
-
-```python
-class MyPlugin(NcatBotPlugin):
-    ...
-    async def some_method(self):
-        self.rbac_manager.add_permissions("plugin.demo.read")
-```
-
-
-
-
+> **返回**：[Bot API 使用指南](../README.md) · **相关**：[查询与支持操作](3_query_support.md)
 
 
 ---
 
-# 文件: 7. 插件系统\3. 插件的交互系统\3.4 系统命令.md
+# 文件: 5. API 使用\2. QQ\3. 查询与支持.md
 
 ---
-title: 系统命令
-createTime: 2025/03/27 10:00:05
-permalink: /guide/builtinf/
+title: 查询与文件操作
+createTime: 2026/03/19 17:26:45
+permalink: /guide/q7b1pdt5/
 ---
 
-## SystemManager 内置插件
+> `.query` 和 `.file` 命名空间的常用方法和使用场景。完整参数表见 [reference/api/qq/3_info_support_api.md](../../../reference/api/qq/3_info_support_api.md)。
 
-### set_admin 命令
+---
 
-设置和取消管理员权限。
+## 信息查询（.query 命名空间）
 
-- `/set_admin <user_id>`: 授予管理员权限。
-- `/sa --remove <user_id>`: 取消管理员权限。（别名）
-- `/sa @user`: 通过 At 方式指定用户授予管理员权限。
+### 常用查询示例
 
-### ncatbot_status 命令
+```python
+# 获取登录信息
+info = await self.api.qq.query.get_login_info()
+# {"user_id": 10001, "nickname": "MyBot"}
 
-查看 NcatBot 运行状态。
+# 群列表
+groups = await self.api.qq.query.get_group_list()
 
-- `/ncatbot_status`：查看 NcatBot 运行状态。（别名）
-- `/ncs`：查看 NcatBot 运行状态。（别名）
+# 群成员信息
+member = await self.api.qq.query.get_group_member_info(event.group_id, target.user_id)
+# 含 nickname, card, role("owner"/"admin"/"member"), join_time
+
+# 查询消息详情（通过消息 ID）
+msg_data = await self.api.qq.query.get_msg(message_id)
+```
+
+### 方法速查
+
+| 方法 | 说明 |
+|------|------|
+| `get_login_info()` | 获取 Bot 登录信息 |
+| `get_friend_list()` | 好友列表 |
+| `get_group_list()` | 群列表 |
+| `get_group_info(gid)` | 群信息 |
+| `get_group_member_info(gid, uid)` | 群成员详情 |
+| `get_group_member_list(gid)` | 群成员列表 |
+| `get_stranger_info(uid)` | 陌生人信息 |
+| `get_msg(message_id)` | 查询消息详情 |
+| `get_forward_msg(msg_id)` | 合并转发内容 |
+| `get_group_notice(gid)` | 群公告 |
+| `get_essence_msg_list(gid)` | 精华消息列表 |
+| `get_group_honor_info(gid, type="all")` | 群荣誉信息 |
+| `get_group_at_all_remain(gid)` | @全体成员 剩余次数 |
+| `get_group_shut_list(gid)` | 群禁言列表 |
+| `get_group_system_msg()` | 群系统消息 |
+| `get_recent_contact(count=10)` | 最近联系人 |
+| `get_version_info()` | 版本信息 |
+| `get_status()` | 运行状态 |
+| `ocr_image(image)` | OCR 图片识别 |
+
+---
+
+## 文件操作（.file 命名空间）
+
+```python
+# 上传群文件
+await self.api.qq.file.upload_group_file(group_id, "/path/to/report.pdf", "月报.pdf")
+
+# 获取群文件下载链接
+url = await self.api.qq.query.get_group_file_url(group_id, file_id)
+
+# 删除群文件
+await self.api.qq.file.delete_group_file(group_id, file_id)
+```
+
+> `upload_group_file` 通过群文件系统上传。以消息形式发送文件请用 `self.api.qq.send_group_file()`（sugar 方法）。
+
+### 方法速查
+
+| 方法 | 说明 |
+|------|------|
+| `upload_group_file(gid, file, name="", folder_id="")` | 上传群文件（`file` 支持 str \| Attachment） |
+| `delete_group_file(gid, file_id)` | 删除群文件 |
+| `create_group_file_folder(gid, name, parent_id="")` | 创建群文件夹 |
+| `delete_group_folder(gid, folder_id)` | 删除群文件夹 |
+| `upload_private_file(uid, file, name="")` | 上传私聊文件（`file` 支持 str \| Attachment） |
+| `download_file(url="", file="", headers="")` | 下载文件到本地 |
+| `upload_attachment(target_id, att, *, folder="", ...)` | 一步上传 Attachment（sugar） |
+| `get_or_create_group_folder(gid, folder_name, parent_id="")` | 查找/创建文件夹（sugar） |
+
+#### get_or_create_group_folder 示例
+
+```python
+# 在根目录查找或创建
+folder_id = await self.api.qq.file.get_or_create_group_folder(group_id, "备份")
+
+# 在指定父文件夹下查找或创建
+child_id = await self.api.qq.file.get_or_create_group_folder(
+    group_id, "daily", parent_id=folder_id
+)
+
+# 使用路径格式自动创建两级目录
+folder_id = await self.api.qq.file.get_or_create_group_folder(group_id, "备份/daily")
+
+# 上传文件到该文件夹
+await self.api.qq.file.upload_group_file(group_id, "/tmp/report.pdf", "报告.pdf", folder_id)
+```
+
+### 群文件查询（通过 .query）
+
+| 方法 | 说明 |
+|------|------|
+| `get_group_root_files(gid)` | 群根目录文件列表 |
+| `get_group_files_by_folder(gid, folder_id)` | 指定文件夹内容 |
+| `get_group_file_url(gid, file_id)` | 获取文件下载 URL |
+| `get_group_file_system_info(gid)` | 群文件系统信息 |
+| `get_private_file_url(uid, file_id)` | 私聊文件下载 URL |
+| `get_file(file_id)` | 通用文件信息 |
+
+---
+
+## 请求处理
+
+好友请求和加群请求通过 `.manage` 命名空间处理。通常在 `RequestEvent` 的处理器中调用。
+
+```python
+from ncatbot.event.qq import FriendRequestEvent, GroupRequestEvent
+
+@registrar.qq.on_friend_request()
+async def on_friend_request(self, event: FriendRequestEvent):
+    # 自动同意好友请求
+    await event.approve()
+
+@registrar.qq.on_group_request()
+async def on_group_request(self, event: GroupRequestEvent):
+    if event.sub_type == "invite":
+        await self.api.qq.manage.set_group_add_request(
+            flag=event.flag, sub_type=event.sub_type, approve=True,
+        )
+```
+
+---
+
+## 延伸阅读
+
+- [查询与支持 API 参考](../../../reference/api/qq/3_info_support_api.md) — 完整签名与返回值
+- [消息发送指南](1_messaging.md) — 消息发送方式
+```
+
+---
+
+## 错误处理与日志
+
+### _LoggingAPIProxy 自动日志
+
+`BotAPIClient` 内部通过 `_LoggingAPIProxy` 代理所有底层 `IAPIClient` 的异步方法调用，自动输出 `INFO` 级别日志，格式如下：
 
 ```text
-ncatbot 状态:
-插件数量: 3
-插件列表: SystemManager, UnifiedRegistry, MyPlugin
-CPU 使用率: 12.5%
-内存使用率: 45.3%
-NcatBot 版本: 4.1.0
-Star NcatBot Meow~:
-https://github.com/ncatbot/ncatbot
+INFO  BotAPIClient API调用 send_group_msg 123456 [{"type":"text","data":{"text":"hello"}}]
 ```
 
+日志特点：
+- **自动截断**：参数超过 2000 字符时自动截断并添加 `...`
+- **零侵入**：无需手动记录日志，所有 API 调用都被自动追踪
+- **dict/list 自动序列化**：JSON 格式，便于排查
 
----
-
-# 文件: 7. 插件系统\3. 插件的交互系统\3.5 内置插件的拓展功能.md
-
----
-title: 内置插件的拓展功能
-createTime: 2025/03/27 10:00:05
-permalink: /guide/extendfuncs/
----
-
-## 内置插件表
-
-- `UnifiedRegistry`: 统一命令注册器，提供命令和过滤器注册功能。
-- `SystemManager`: 系统管理插件，提供插件管理、运行状态管理等功能。
-
-## UnifiedRegistry 拓展功能
-
-### 事件过滤器
-
-#### 例如`on_request 注册器`
-
-为插件方法或普通方法注册 Request 事件处理器。
-
-[on_request 参考案例](../../9.%20实际项目参考/教程项目/4.%20处理好友请求和加群请求.md#前台模式（插件版）)
-
----
-
-# 文件: 7. 插件系统\4. 插件高级功能\4.1. 添加依赖.md
-
----
-title: 依赖其它插件
-creatTime: 2025/03/06 10:07:54
-permalink: /guide/plugindep/
-createTime: 2025/03/06 11:19:14
----
-
-## 依赖 Python 第三方库
-
-部分复杂插件可能需要 **Python 第三方库**。
-
-文件结构：
-:::file-tree
-- main.py
-- plugins/
-    - MyPlugin/
-       - \_\_init\_\_.py
-       - requirements.txt  <-- 新增此文件
-       - plugin.py
-:::
-
-加载插件时会自动安装 `requirements.txt` 中列出的第三方库。
-
-## 依赖其它插件（尚未完工）
-
-使用 `BasePlugin.dependencies` 声明插件依赖, 格式见下.
+### 异常处理最佳实践
 
 ```python
-class MyPlugin(BasePlugin):
-    name = "MyPlugin"
+@registrar.on_group_command("踢人")
+async def on_kick(self, event: GroupMessageEvent, target: At = None):
+    if target is None:
+        await event.reply("请 @一个用户")
+        return
+
+    try:
+        await self.api.qq.manage.set_group_kick(event.group_id, target.user_id)
+        await event.reply(f"已踢出 {target.user_id}")
+    except Exception as e:
+        LOG.error(f"踢人失败: {e}")
+        await event.reply("操作失败，请检查 Bot 权限")
+```
+
+**建议**：
+
+1. **权限检查在先**：调用群管理 API 前，先通过 RBAC 或 `get_group_member_info` 确认 Bot 和操作者的权限
+2. **善用日志**：`_LoggingAPIProxy` 已自动记录所有调用，出错时查看 `logs/bot.log.*` 即可定位
+3. **避免死循环**：在处理请求事件时，注意不要无条件触发新的请求
+
+---
+
+> **返回**：[Bot API 使用指南](../README.md) · **相关**：[群管理详解](2_manage.md)
+
+
+---
+
+# 文件: 5. API 使用\2. QQ\README.md
+
+---
+title: QQ 平台 API 使用指南
+createTime: 2026/03/19 17:26:45
+permalink: /guide/bg0mhv3o/
+---
+
+> QQ 平台（NapCat 适配器）的完整 API 使用教程 — 消息收发、群管理、信息查询与文件操作。
+
+---
+
+## Quick Start
+
+### 获取 API 客户端
+
+插件中通过 `self.api.qq` 访问，类型为 `QQAPIClient`：
+
+```python
+from ncatbot.plugin import NcatBotPlugin
+from ncatbot.core import registrar
+from ncatbot.event.qq import GroupMessageEvent
+
+
+class MyPlugin(NcatBotPlugin):
+    name = "my_plugin"
     version = "1.0.0"
-    dependencies = {
-        "OtherPlugin": ">=1.0.0",
-        "LLM_API": ">=0.0.1"
-    }
+
+    @registrar.on_group_command("ping")
+    async def on_ping(self, event: GroupMessageEvent):
+        await self.api.qq.post_group_msg(event.group_id, text="pong!")
 ```
 
+> 最便捷的回复方式：`await event.reply(text="pong!")`，内部自动引用原消息并 @发送者。
 
----
-
-# 文件: 7. 插件系统\4. 插件高级功能\4.2 私有工作目录.md
-
----
-title: 私有工作目录
-createTime: 2025/03/27 10:07:54
-permalink: /guide/prispace/
----
-
-# 暂未支持
-
-## 私有工作目录
-
-在你的代码中, 使用 `os.chdir()` 函数是==严格禁止==的, 如果你有这个需求, 必须在**上下文管理器**控制的**私有工作目录**中进行.
-
-`BasePlugin` 提供一个上下文管理器 `BasePlugin.work_space`, 使用该上下文管理器进入插件私有目录 `data/MyPlugin/`. 上下文结束时, 会自动修正工作目录.
+### 发送消息
 
 ```python
-class MyPlugin(BasePlugin):
-    name = 'MyPlugin'
-    version = '1.0.0'
+# 语法糖 — 最常用
+await self.api.qq.post_group_msg(group_id, text="Hello!")
+await self.api.qq.post_group_msg(group_id, text="看图", image="/path/to/img.jpg")
+await self.api.qq.post_private_msg(user_id, text="私聊消息")
 
-    def callback(self, event: Event):
-        with self.workspace.open():
-            # 此时目录为 data/MyPlugin/
-            # 可以使用 os.chdir 等函数操作了
-            
-        
-        # 退出上下文, 目录切换到你不应该知道的位置.
+# 原子 API — 手动构造消息段
+await self.api.qq.messaging.send_group_msg(group_id, [{"type": "text", "data": {"text": "你好"}}])
+```
+
+### 群管理
+
+```python
+# 禁言 60 秒
+await self.api.qq.manage.set_group_ban(group_id, user_id, 60)
+
+# 踢人
+await self.api.qq.manage.set_group_kick(group_id, user_id)
+
+# 撤回 + 踢出 + 拉黑（一步到位）
+await self.api.qq.manage.kick_and_block(group_id, user_id, message_id)
+```
+
+### 信息查询
+
+```python
+# 获取群成员列表
+members = await self.api.qq.query.get_group_member_list(group_id)
+
+# 获取消息详情
+msg = await self.api.qq.query.get_msg(message_id)
+```
+
+---
+
+## Quick Reference
+
+### 访问方式
+
+| 方式 | 类型 | 场景 |
+|------|------|------|
+| `self.api.qq` | `QQAPIClient` | 插件中（推荐，含语法糖） |
+| `bot.api.qq` | `QQAPIClient` | 非插件模式 |
+| `event.reply()` | — | 最便捷的回复方式 |
+
+### API 分层结构
+
+| 层级 | 访问方式 | 说明 |
+|------|---------|------|
+| 事件回复 | `event.reply(text=, at=, image=, video=, rtf=)` | 最便捷，自动引用 + @发送者 |
+| 语法糖 | `self.api.qq.post_group_msg(...)` | 关键字自动组装 MessageArray |
+| 消息 API | `self.api.qq.messaging.*` | QQMessaging — 底层 OB11 消息操作 |
+| 群管理 | `self.api.qq.manage.*` | QQManage — 踢人/禁言/设置等 |
+| 信息查询 | `self.api.qq.query.*` | QQQuery — 群/好友/消息查询 |
+| 文件操作 | `self.api.qq.file.*` | QQFile — 上传/下载/文件夹管理 |
+
+### sugar — 便捷消息发送
+
+| 方法 | 关键参数 | 说明 |
+|------|---------|------|
+| `post_group_msg(group_id, ...)` | `text=, at=, reply=, image=, video=, rtf=` | 群消息（关键字自动组装） |
+| `post_private_msg(user_id, ...)` | `text=, reply=, image=, video=, rtf=` | 私聊消息 |
+| `post_group_array_msg(group_id, msg)` | `msg: MessageArray` | 直接发送 MessageArray |
+| `post_private_array_msg(user_id, msg)` | `msg: MessageArray` | 直接发送 MessageArray |
+| `send_group_text(group_id, text)` | | 纯文本 |
+| `send_group_image(group_id, image)` | | 图片 |
+| `send_group_sticker(group_id, image)` | | 动画表情 |
+| `send_group_record(group_id, file)` | | 语音 |
+| `send_group_video(group_id, video)` | | 视频 |
+| `send_group_file(group_id, file, name=)` | | 文件 |
+| `send_private_text(user_id, text)` | | 私聊纯文本 |
+| `send_private_image(user_id, image)` | | 私聊图片 |
+| `post_group_forward_msg(group_id, forward)` | `forward: Forward` | 群合并转发 |
+| `post_private_forward_msg(user_id, forward)` | `forward: Forward` | 私聊合并转发 |
+
+> 私聊还有 `send_private_record`, `send_private_file`, `send_private_video` 等方法，签名与群聊版对称。
+
+### messaging — 消息操作
+
+| 方法 | 关键参数 | 说明 |
+|------|---------|------|
+| `send_group_msg(group_id, message)` | `message: list` | 发送群消息（原始格式） |
+| `send_private_msg(user_id, message)` | `message: list` | 发送私聊消息 |
+| `delete_msg(message_id)` | | 撤回消息 |
+| `send_forward_msg(message_type, target_id, messages)` | | 合并转发 |
+| `send_poke(group_id, user_id)` | | 群内戳一戳 |
+| `friend_poke(user_id)` | | 好友戳一戳 |
+| `send_like(user_id, times=1)` | | 点赞 |
+| `set_msg_emoji_like(message_id, emoji_id, set=True)` | | 消息表情回应 |
+| `mark_group_msg_as_read(group_id)` | | 标记群消息已读 |
+| `mark_private_msg_as_read(user_id)` | | 标记私聊已读 |
+| `mark_all_as_read()` | | 全部已读 |
+| `forward_friend_single_msg(user_id, message_id)` | | 转发到好友 |
+| `forward_group_single_msg(group_id, message_id)` | | 转发到群 |
+| `get_group_msg_history(group_id, message_seq=, count=20)` | | 群消息历史 |
+| `get_friend_msg_history(user_id, message_seq=, count=20)` | | 好友消息历史 |
+
+### manage — 群管理 / 账号操作
+
+| 方法 | 关键参数 | 说明 |
+|------|---------|------|
+| `set_group_kick(group_id, user_id, reject_add_request=False)` | | 踢出群成员 |
+| `set_group_ban(group_id, user_id, duration=1800)` | | 禁言 |
+| `set_group_whole_ban(group_id, enable=True)` | | 全员禁言 |
+| `set_group_admin(group_id, user_id, enable=True)` | | 设置/取消管理员 |
+| `set_group_card(group_id, user_id, card="")` | | 设置群名片 |
+| `set_group_name(group_id, name)` | | 修改群名 |
+| `set_group_leave(group_id, is_dismiss=False)` | | 退群/解散群 |
+| `set_group_special_title(group_id, user_id, special_title="")` | | 设置专属头衔 |
+| `send_group_notice(group_id, content, image="")` | | 发布群公告 |
+| `delete_group_notice(group_id, notice_id)` | | 删除群公告 |
+| `set_essence_msg(message_id)` | | 设置精华消息 |
+| `delete_essence_msg(message_id)` | | 移除精华消息 |
+| `set_group_kick_members(group_id, user_ids, ...)` | | 批量踢人 |
+| `set_friend_add_request(flag, approve=True, remark="")` | | 处理好友请求 |
+| `set_group_add_request(flag, sub_type, approve=True, reason="")` | | 处理加群请求 |
+| `kick_and_block(group_id, user_id, message_id=None)` | | 撤回+踢出+拉黑 |
+
+### query — 信息查询
+
+| 方法 | 返回类型 | 说明 |
+|------|---------|------|
+| `get_login_info()` | `LoginInfo` | 获取登录号信息 |
+| `get_friend_list()` | `List[FriendInfo]` | 好友列表 |
+| `get_group_info(group_id)` | `GroupInfo` | 群信息 |
+| `get_group_list()` | `List[GroupInfo]` | 群列表 |
+| `get_group_member_info(group_id, user_id)` | `GroupMemberInfo` | 群成员信息 |
+| `get_group_member_list(group_id)` | `List[GroupMemberInfo]` | 群成员列表 |
+| `get_stranger_info(user_id)` | `StrangerInfo` | 陌生人信息 |
+| `get_msg(message_id)` | `MessageData` | 获取消息详情 |
+| `get_forward_msg(message_id)` | `ForwardMessageData` | 获取合并转发内容 |
+| `get_group_msg_history(group_id, ...)` | `MessageHistory` | 群消息历史 |
+| `get_friend_msg_history(user_id, ...)` | `MessageHistory` | 好友消息历史 |
+| `get_essence_msg_list(group_id)` | `List[EssenceMessage]` | 精华消息列表 |
+| `get_group_honor_info(group_id, type="all")` | `GroupHonorInfo` | 群荣誉信息 |
+| `get_group_notice(group_id)` | `List[GroupNotice]` | 群公告 |
+| `get_status()` | `BotStatus` | 运行状态 |
+| `get_version_info()` | `VersionInfo` | 版本信息 |
+
+> 完整查询方法还包括 `get_group_at_all_remain`, `get_group_shut_list`, `get_group_system_msg` 等。
+
+### file — 文件操作
+
+| 方法 | 说明 |
+|------|------|
+| `upload_group_file(group_id, file, name="", folder_id="")` | 上传群文件（`file` 支持 str \| Attachment） |
+| `upload_private_file(user_id, file, name="")` | 上传私聊文件（`file` 支持 str \| Attachment） |
+| `upload_attachment(target_id, att, *, folder="", ...)` | 一步上传 Attachment（sugar） |
+| `download_file(url=, file=, headers=)` | 下载文件 |
+| `get_group_root_files(group_id)` | 获取群根目录文件 |
+| `get_group_file_url(group_id, file_id)` | 获取文件下载链接 |
+| `delete_group_file(group_id, file_id)` | 删除群文件 |
+| `create_group_file_folder(group_id, name, parent_id="")` | 创建文件夹 |
+| `delete_group_folder(group_id, folder_id)` | 删除文件夹 |
+| `get_or_create_group_folder(group_id, folder_name, parent_id="")` | 查找/创建文件夹（sugar） |
+
+---
+
+## 本目录索引
+
+| 文档 | 内容 |
+|------|------|
+| [消息发送详解](1_messaging.md) | sugar 方法、原子 messaging API、合并转发 |
+| [群管理详解](2_manage.md) | .manage 每个方法的参数与示例 |
+| [查询与文件操作](3_query_support.md) | .query + .file 方法详解 |
+
+---
+
+> **返回**：[Bot API 使用指南](../README.md) · **相关**：[QQ 消息发送指南](../../send_message/qq/README.md) · [QQ API 参考](../../../reference/api/qq/1_message_api.md)
+
+
+---
+
+# 文件: 5. API 使用\3. Bilibili\1. 直播间.md
+
+---
+title: 直播间操作
+createTime: 2026/03/19 17:26:45
+permalink: /guide/tokfrklt/
+---
+
+> Bilibili 直播间相关 API — 弹幕发送、用户禁言、全员禁言与房间信息查询。
+>
+> 所有方法通过 `self.api.bilibili` 访问，均为 `async`。
+
+---
+
+## 发送弹幕
+
+```python
+await self.api.bilibili.send_danmu(room_id=12345, text="Hello!")
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `room_id` | `int` | 直播间 ID |
+| `text` | `str` | 弹幕内容 |
+
+---
+
+## 禁言用户
+
+```python
+# 禁言 1 小时（默认）
+await self.api.bilibili.ban_user(room_id=12345, user_id=67890)
+
+# 禁言 24 小时
+await self.api.bilibili.ban_user(room_id=12345, user_id=67890, hour=24)
+```
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `room_id` | `int` | — | 直播间 ID |
+| `user_id` | `int` | — | 被禁言的用户 ID |
+| `hour` | `int` | `1` | 禁言时长（小时） |
+
+---
+
+## 解除禁言
+
+```python
+await self.api.bilibili.unban_user(room_id=12345, user_id=67890)
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `room_id` | `int` | 直播间 ID |
+| `user_id` | `int` | 被解除禁言的用户 ID |
+
+---
+
+## 全员禁言
+
+```python
+await self.api.bilibili.set_room_silent(room_id=12345, enable=True)   # 开启
+await self.api.bilibili.set_room_silent(room_id=12345, enable=False)  # 关闭
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `room_id` | `int` | 直播间 ID |
+| `enable` | `bool` | `True` 开启全员禁言，`False` 关闭 |
+
+---
+
+## 获取直播间信息
+
+```python
+info = await self.api.bilibili.get_room_info(room_id=12345)
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `room_id` | `int` | 直播间 ID |
+
+**返回值**：`dict` — 直播间信息（标题、状态、主播信息等）
+
+---
+
+## 实战示例
+
+```python
+from ncatbot.core import registrar
+
+class LiveManager(NcatBotPlugin):
+    name = "live_manager"
+    version = "1.0.0"
+
+    async def on_enable(self):
+        await self.api.bilibili.add_live_room(12345)
+
+    @registrar.on_message(platform="bilibili")
+    async def on_danmu(self, event):
+        # 自动回复弹幕
+        if "你好" in event.content:
+            await self.api.bilibili.send_danmu(event.room_id, "欢迎！")
+
+        # 违规弹幕自动禁言
+        if "广告" in event.content:
+            await self.api.bilibili.ban_user(event.room_id, event.user_id, hour=1)
+```
+
+---
+
+> **返回**：[Bilibili API 指南](README.md) · **下一篇**：[私信操作](2_private_msg.md) · **示例**：[examples/bilibili/02_live_room/](../../../../examples/bilibili/02_live_room/)
+
+
+---
+
+# 文件: 5. API 使用\3. Bilibili\2. 私信.md
+
+---
+title: 私信操作
+createTime: 2026/03/19 17:26:45
+permalink: /guide/w7cuu5v9/
+---
+
+> Bilibili 私信 API — 发送文字/图片私信与获取私信历史。
+>
+> 所有方法通过 `self.api.bilibili` 访问，均为 `async`。
+
+---
+
+## 发送私信
+
+```python
+await self.api.bilibili.send_private_msg(user_id=67890, content="你好！")
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `user_id` | `int` | 目标用户 ID |
+| `content` | `str` | 私信文字内容 |
+
+---
+
+## 发送私信图片
+
+```python
+await self.api.bilibili.send_private_image(user_id=67890, image_url="https://example.com/img.png")
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `user_id` | `int` | 目标用户 ID |
+| `image_url` | `str` | 图片 URL |
+
+---
+
+## 获取私信历史
+
+```python
+history = await self.api.bilibili.get_session_history(user_id=67890, count=20)
+```
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `user_id` | `int` | — | 目标用户 ID |
+| `count` | `int` | `20` | 拉取条数 |
+
+**返回值**：`list` — 私信历史记录列表
+
+---
+
+## 实战示例
+
+```python
+@registrar.on_private_message(platform="bilibili")
+async def on_bili_pm(self, event):
+    # 自动回复私信
+    await self.api.bilibili.send_private_msg(event.user_id, "收到你的消息！")
+
+    # 查看历史记录
+    history = await self.api.bilibili.get_session_history(event.user_id, count=5)
+    print(f"最近 {len(history)} 条私信")
+```
+
+---
+
+> **返回**：[Bilibili API 指南](README.md) · **上一篇**：[直播间操作](1_live_room.md) · **下一篇**：[评论操作](3_comment.md) · **示例**：[examples/bilibili/03_private_message/](../../../../examples/bilibili/03_private_message/)
+
+
+---
+
+# 文件: 5. API 使用\3. Bilibili\3. 评论.md
+
+---
+title: 评论操作
+createTime: 2026/03/19 17:26:45
+permalink: /guide/d6derub8/
+---
+
+> Bilibili 评论 API — 发送、回复、删除、点赞评论与获取评论列表。
+>
+> 所有方法通过 `self.api.bilibili` 访问，均为 `async`。
+
+---
+
+## 发送评论
+
+```python
+await self.api.bilibili.send_comment(
+    resource_id="BV1xx411c7mD",
+    resource_type="video",
+    text="好视频！",
+)
+```
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `resource_id` | `str` | — | 资源 ID（BV 号、动态 ID 等） |
+| `resource_type` | `str` | — | 资源类型：`"video"`, `"dynamic"` 等 |
+| `text` | `str` | — | 评论内容 |
+
+---
+
+## 回复评论
+
+```python
+await self.api.bilibili.reply_comment(
+    resource_id="BV1xx411c7mD",
+    resource_type="video",
+    root_id=123456,      # 根评论 ID
+    parent_id=789012,    # 被回复的评论 ID
+    text="谢谢！",
+)
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `resource_id` | `str` | 资源 ID |
+| `resource_type` | `str` | 资源类型 |
+| `root_id` | `int` | 根评论 ID（楼主评论） |
+| `parent_id` | `int` | 被回复的评论 ID |
+| `text` | `str` | 回复内容 |
+
+---
+
+## 删除评论
+
+```python
+await self.api.bilibili.delete_comment(
+    resource_id="BV1xx411c7mD",
+    resource_type="video",
+    comment_id=123456,
+)
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `resource_id` | `str` | 资源 ID |
+| `resource_type` | `str` | 资源类型 |
+| `comment_id` | `int` | 要删除的评论 ID |
+
+---
+
+## 点赞评论
+
+```python
+await self.api.bilibili.like_comment(
+    resource_id="BV1xx411c7mD",
+    resource_type="video",
+    comment_id=123456,
+)
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `resource_id` | `str` | 资源 ID |
+| `resource_type` | `str` | 资源类型 |
+| `comment_id` | `int` | 要点赞的评论 ID |
+
+---
+
+## 获取评论列表
+
+```python
+comments = await self.api.bilibili.get_comments(
+    resource_id="BV1xx411c7mD",
+    resource_type="video",
+    page=1,
+)
+```
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `resource_id` | `str` | — | 资源 ID |
+| `resource_type` | `str` | — | 资源类型 |
+| `page` | `int` | `1` | 页码 |
+
+**返回值**：`list` — 评论列表
+
+---
+
+## 实战示例
+
+```python
+class CommentBot(NcatBotPlugin):
+    name = "comment_bot"
+    version = "1.0.0"
+
+    async def on_enable(self):
+        # 监听视频评论
+        await self.api.bilibili.add_comment_watch("BV1xx411c7mD", "video")
+
+    @registrar.on_notice(platform="bilibili")
+    async def on_new_comment(self, event):
+        # 自动回复新评论
+        if hasattr(event, "comment_id"):
+            await self.api.bilibili.reply_comment(
+                resource_id=event.resource_id,
+                resource_type=event.resource_type,
+                root_id=event.comment_id,
+                parent_id=event.comment_id,
+                text="感谢评论！",
+            )
+```
+
+---
+
+> **返回**：[Bilibili API 指南](README.md) · **上一篇**：[私信操作](2_private_msg.md) · **下一篇**：[数据源与查询](4_source_query.md) · **示例**：[examples/bilibili/04_comment/](../../../../examples/bilibili/04_comment/)
+
+
+---
+
+# 文件: 5. API 使用\3. Bilibili\4. 源查询.md
+
+---
+title: 数据源与查询
+createTime: 2026/03/19 17:26:45
+permalink: /guide/jjmcihg7/
+---
+
+> Bilibili 数据源管理与用户查询 — 添加/移除直播间和评论监听，查询用户信息。
+>
+> 所有方法通过 `self.api.bilibili` 访问，均为 `async`。
+
+---
+
+## 数据源管理
+
+Bilibili 适配器通过"数据源"概念管理监听目标。需要先添加数据源，才能接收对应的事件。
+
+### 添加直播间监听
+
+```python
+await self.api.bilibili.add_live_room(room_id=12345)
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `room_id` | `int` | 直播间 ID |
+
+添加后，Bot 将接收该直播间的弹幕、礼物、进场等事件。
+
+### 移除直播间监听
+
+```python
+await self.api.bilibili.remove_live_room(room_id=12345)
+```
+
+### 添加评论监听
+
+```python
+await self.api.bilibili.add_comment_watch(
+    resource_id="BV1xx411c7mD",
+    resource_type="video",
+)
+```
+
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `resource_id` | `str` | — | 资源 ID（BV 号、动态 ID 等） |
+| `resource_type` | `str` | `"video"` | 资源类型 |
+
+### 移除评论监听
+
+```python
+await self.api.bilibili.remove_comment_watch(resource_id="BV1xx411c7mD")
+```
+
+### 列出所有数据源
+
+```python
+sources = await self.api.bilibili.list_sources()
+for src in sources:
+    print(src)
+```
+
+**返回值**：`List[Dict[str, Any]]` — 所有已注册的数据源列表
+
+---
+
+## 用户查询
+
+### 获取用户信息
+
+```python
+info = await self.api.bilibili.get_user_info(user_id=67890)
+```
+
+| 参数 | 类型 | 说明 |
+|------|------|------|
+| `user_id` | `int` | B 站用户 ID |
+
+**返回值**：`dict` — 用户信息（昵称、头像、等级等）
+
+---
+
+## 实战示例
+
+```python
+class BiliMonitor(NcatBotPlugin):
+    name = "bili_monitor"
+    version = "1.0.0"
+
+    async def on_enable(self):
+        # 启动时添加监听
+        await self.api.bilibili.add_live_room(12345)
+        await self.api.bilibili.add_comment_watch("BV1xx411c7mD")
+
+        # 查看当前数据源
+        sources = await self.api.bilibili.list_sources()
+        print(f"已监听 {len(sources)} 个数据源")
+
+    async def on_disable(self):
+        # 停用时清理
+        await self.api.bilibili.remove_live_room(12345)
+        await self.api.bilibili.remove_comment_watch("BV1xx411c7mD")
+```
+
+---
+
+> **返回**：[Bilibili API 指南](README.md) · **上一篇**：[评论操作](3_comment.md)
+
+
+---
+
+# 文件: 5. API 使用\3. Bilibili\README.md
+
+---
+title: Bilibili 平台 API 使用指南
+createTime: 2026/03/19 17:26:45
+permalink: /guide/9jzb0z71/
+---
+
+> Bilibili 平台（B 站适配器）的完整 API 使用教程 — 直播间操作、私信、评论与数据源管理。
+
+---
+
+## Quick Reference
+
+### 访问方式
+
+| 方式 | 类型 | 场景 |
+|------|------|------|
+| `self.api.bilibili` | `IBiliAPIClient` | 插件中 |
+| `bot.api.bilibili` | `IBiliAPIClient` | 非插件模式 |
+| `event.reply()` | — | 通用回复（弹幕/评论回复） |
+
+### API 功能分类
+
+| 类别 | 典型方法 | 说明 |
+|------|---------|------|
+| 直播间操作 | `send_danmu`, `ban_user`, `set_room_silent` | 弹幕、禁言、房间管理 |
+| 私信 | `send_private_msg`, `send_private_image` | 私信文字与图片 |
+| 评论 | `send_comment`, `reply_comment`, `delete_comment` | 视频/动态评论操作 |
+| 数据源管理 | `add_live_room`, `add_comment_watch` | 监听直播间/评论 |
+| 用户查询 | `get_user_info` | 获取用户信息 |
+
+### 快速示例
+
+```python
+from ncatbot.plugin import NcatBotPlugin
+from ncatbot.core import registrar
+
+class BiliPlugin(NcatBotPlugin):
+    name = "bili_demo"
+    version = "1.0.0"
+
+    async def on_enable(self):
+        # 添加直播间监听
+        await self.api.bilibili.add_live_room(12345)
+
+    @registrar.on_message(platform="bilibili")
+    async def on_msg(self, event):
+        await event.reply(text="收到弹幕！")
+```
+
+---
+
+## 认证方式
+
+### 方式 1：扫码登录（推荐）
+
+将 bilibili 适配器的 `sessdata` / `bili_jct` 留空，启动 Bot 时会自动在终端显示二维码：
+
+```yaml
+adapters:
+  - type: bilibili
+    platform: bilibili
+    enabled: true
+    config:
+      sessdata: ""         # 留空即可触发扫码
+      bili_jct: ""
+      live_rooms: [12345]
+```
+
+启动后终端会打印 ASCII 二维码，同时保存 PNG 到临时目录（路径会打印在终端）。使用 Bilibili APP 扫码确认后，凭据自动写入 config.yaml，下次启动不再需要扫码。
+
+凭据过期后再次启动会自动检测并重新触发扫码流程。
+
+### 方式 2：手动填入 Cookie
+
+从浏览器 DevTools → Application → Cookies → bilibili.com 获取以下字段并填入 config.yaml：
+
+```yaml
+config:
+  sessdata: "从浏览器获取"
+  bili_jct: "从浏览器获取"
+  buvid3: "可选"
+  dedeuserid: "可选"
+```
+
+---
+
+## 本目录索引
+
+| 文档 | 内容 |
+|------|------|
+| [直播间操作](1_live_room.md) | 弹幕发送、用户禁言、全员禁言、房间信息 |
+| [私信操作](2_private_msg.md) | 发送私信文字/图片、获取私信历史 |
+| [评论操作](3_comment.md) | 发送/回复/删除/点赞评论 |
+| [数据源与查询](4_source_query.md) | 直播间/评论监听管理、用户信息查询 |
+
+---
+
+> **返回**：[Bot API 使用指南](../README.md) · **相关**：[Bilibili 消息发送](../../send_message/bilibili/README.md) · [Bilibili API 参考](../../../reference/api/bilibili/1_api.md) · **示例**：[examples/bilibili/](../../../../examples/bilibili/)
+
+
+---
+
+# 文件: 5. API 使用\4. GitHub\1. Issue 评论.md
+
+---
+title: Issue 与评论 API
+createTime: 2026/03/19 17:26:45
+permalink: /guide/k1fd317a/
+---
+
+> Issue 的创建、更新、关闭、标签管理、指派管理，以及 Issue 评论的增删改查。
+
+---
+
+## Issue 管理
+
+### 创建 Issue
+
+```python
+result = await self.api.github.create_issue(
+    repo="owner/repo",
+    title="Bug: 启动失败",
+    body="## 复现步骤\n\n1. 执行 `ncatbot run`\n2. 报错",
+    labels=["bug", "high-priority"],
+    assignees=["octocat"],
+)
+print(result.number)  # 新 Issue 编号
+```
+
+### 更新 Issue
+
+```python
+await self.api.github.update_issue(
+    repo="owner/repo",
+    issue_number=42,
+    title="[Updated] Bug: 启动失败",
+    labels=["bug", "confirmed"],
+)
+```
+
+### 关闭与重开
+
+```python
+await self.api.github.close_issue("owner/repo", 42)
+await self.api.github.reopen_issue("owner/repo", 42)
+```
+
+### 查询 Issue
+
+```python
+issue = await self.api.github.get_issue("owner/repo", 42)
+print(issue.title, issue.state)
+```
+
+## 标签管理
+
+```python
+# 添加标签
+await self.api.github.add_labels("owner/repo", 42, ["enhancement", "v2.0"])
+
+# 移除单个标签
+await self.api.github.remove_label("owner/repo", 42, "enhancement")
+```
+
+## 指派管理
+
+```python
+await self.api.github.set_assignees("owner/repo", 42, ["user1", "user2"])
+```
+
+## 评论操作
+
+### 创建评论
+
+```python
+result = await self.api.github.create_issue_comment(
+    repo="owner/repo",
+    issue_number=42,
+    body="已确认，将在下个版本修复。",
+)
+print(result.id)  # 评论 ID
+```
+
+### 更新评论
+
+```python
+await self.api.github.update_comment(
+    repo="owner/repo",
+    comment_id=123456,
+    body="[更新] 已在 v1.3.0 修复。",
+)
+```
+
+### 删除评论
+
+```python
+await self.api.github.delete_comment("owner/repo", 123456)
+```
+
+### 列出评论
+
+```python
+comments = await self.api.github.list_issue_comments(
+    repo="owner/repo",
+    issue_number=42,
+    page=1,
+    per_page=50,
+)
+for c in comments:
+    print(f"#{c.id} by {c.user.login}: {c.body[:50]}")
+```
+
+## 实战：自动标签分类
+
+```python
+@registrar.github.on_issue()
+async def auto_label(self, event: GitHubIssueEvent):
+    if event.action != "opened":
+        return
+    title = event.issue_title.lower()
+    labels = []
+    if "bug" in title or "错误" in title:
+        labels.append("bug")
+    if "feature" in title or "功能" in title:
+        labels.append("enhancement")
+    if labels:
+        await self.api.github.add_labels(event.repo, event.issue_number, labels)
+```
+
+---
+
+> **返回**：[GitHub API 使用](README.md) · **相关**：[PR 与查询 API](2_pr_query.md)
+
+
+---
+
+# 文件: 5. API 使用\4. GitHub\2. PR 查询.md
+
+---
+title: PR 与查询 API
+createTime: 2026/03/19 17:26:45
+permalink: /guide/mb9besxp/
+---
+
+> Pull Request 评论、合并、关闭、审查请求，以及仓库 / 用户信息查询。
+
+---
+
+## PR 管理
+
+### PR 评论
+
+```python
+await self.api.github.create_pr_comment(
+    repo="owner/repo",
+    pr_number=10,
+    body="CI 全部通过，LGTM! :white_check_mark:",
+)
+```
+
+> GitHub REST API 中 PR 评论与 Issue 评论共用同一端点，`create_pr_comment()` 是 `create_issue_comment()` 的语义别名。
+
+### 合并 PR
+
+```python
+from ncatbot.types.github import GitHubMergeMethod
+
+result = await self.api.github.merge_pr(
+    repo="owner/repo",
+    pr_number=10,
+    merge_method=GitHubMergeMethod.SQUASH,   # "merge" | "squash" | "rebase"
+    commit_title="feat: add new feature (#10)",
+    commit_message="Squashed commit from PR #10",
+)
+```
+
+### 关闭 PR
+
+```python
+await self.api.github.close_pr("owner/repo", 10)
+```
+
+### 请求审查
+
+```python
+await self.api.github.request_review(
+    repo="owner/repo",
+    pr_number=10,
+    reviewers=["reviewer1", "reviewer2"],
+)
+```
+
+### 查询 PR
+
+```python
+pr = await self.api.github.get_pr("owner/repo", 10)
+print(pr.title, pr.state, pr.merged)
+```
+
+## 信息查询
+
+### 查询仓库
+
+```python
+repo_info = await self.api.github.get_repo("owner/repo")
+print(repo_info.full_name, repo_info.description)
+```
+
+### 查询用户
+
+```python
+user = await self.api.github.get_user("octocat")
+print(user.login, user.html_url)
+```
+
+### 查询当前认证用户
+
+```python
+me = await self.api.github.get_authenticated_user()
+print(me.login)
+```
+
+## 实战：PR 自动审查流程
+
+```python
+from ncatbot.core import registrar
+from ncatbot.event.github import GitHubPREvent
+from ncatbot.plugin import NcatBotPlugin
+
+class PRReviewPlugin(NcatBotPlugin):
+    name = "pr_review"
+    version = "1.0.0"
+
+    @registrar.github.on_pr()
+    async def on_pr(self, event: GitHubPREvent):
+        if event.action != "opened":
+            return
+        # 自动请求审查
+        await self.api.github.request_review(
+            event.repo, event.pr_number, ["lead-reviewer"]
+        )
+        # 添加评论
+        await event.reply(
+            f"PR #{event.pr_number} 已提交。\n"
+            f"分支: `{event.data.head_ref}` → `{event.data.base_ref}`\n"
+            f"已自动请求 @lead-reviewer 审查。"
+        )
+```
+
+---
+
+> **返回**：[GitHub API 使用](README.md) · **相关**：[Issue 与评论 API](1_issue_comment.md) · [GitHub API 参考](../../../reference/api/github/1_api.md)
+
+
+---
+
+# 文件: 5. API 使用\4. GitHub\README.md
+
+---
+title: GitHub API 使用
+createTime: 2026/03/19 17:26:45
+permalink: /guide/kd1r9jkg/
+---
+
+> 通过 `self.api.github` 调用 GitHub REST API — Issue 管理、评论操作、PR 管理与信息查询。
+
+---
+
+## Quick Start
+
+```python
+from ncatbot.core import registrar
+from ncatbot.event.github import GitHubIssueEvent
+from ncatbot.plugin import NcatBotPlugin
+
+class MyPlugin(NcatBotPlugin):
+    name = "github_ops"
+    version = "1.0.0"
+
+    @registrar.github.on_issue()
+    async def on_issue(self, event: GitHubIssueEvent):
+        if event.action == "opened":
+            # 自动添加标签
+            await self.api.github.add_labels(event.repo, event.issue_number, ["triage"])
+            # 评论
+            await self.api.github.create_issue_comment(
+                event.repo, event.issue_number, "已标记为 triage，等待处理。"
+            )
+```
+
+---
+
+## Quick Reference
+
+### 访问方式
+
+| 方式 | 调用 |
+|------|------|
+| 插件内 | `self.api.github.*` |
+| 按名称 | `self.api.platform("github").*` |
+| 查看平台 | `self.api.platforms` |
+
+### API 功能分类
+
+| 类别 | 方法数 | 典型操作 |
+|------|--------|---------|
+| Issue 管理 | 8 | 创建 / 更新 / 关闭 / 重开 / 标签 / 指派 |
+| 评论操作 | 4 | 创建 / 更新 / 删除 / 列出 |
+| PR 管理 | 5 | 评论 / 合并 / 关闭 / 请求审查 / 查询 |
+| 信息查询 | 3 | 查仓库 / 查用户 / 查认证用户 |
+
+### 方法速查
+
+| 方法 | 说明 |
+|------|------|
+| `create_issue(repo, title, body, labels, assignees)` | 创建 Issue |
+| `update_issue(repo, issue_number, *, title, body, state, labels, assignees)` | 更新 Issue |
+| `close_issue(repo, issue_number)` | 关闭 Issue |
+| `reopen_issue(repo, issue_number)` | 重开 Issue |
+| `get_issue(repo, issue_number)` | 查询 Issue |
+| `add_labels(repo, issue_number, labels)` | 添加标签 |
+| `remove_label(repo, issue_number, label)` | 移除标签 |
+| `set_assignees(repo, issue_number, assignees)` | 设置指派人 |
+| `create_issue_comment(repo, issue_number, body)` | 创建评论 |
+| `update_comment(repo, comment_id, body)` | 更新评论 |
+| `delete_comment(repo, comment_id)` | 删除评论 |
+| `list_issue_comments(repo, issue_number, page, per_page)` | 列出评论 |
+| `create_pr_comment(repo, pr_number, body)` | PR 评论 |
+| `merge_pr(repo, pr_number, *, merge_method, commit_title, commit_message)` | 合并 PR |
+| `close_pr(repo, pr_number)` | 关闭 PR |
+| `request_review(repo, pr_number, reviewers)` | 请求审查 |
+| `get_pr(repo, pr_number)` | 查询 PR |
+| `get_repo(repo)` | 查询仓库 |
+| `get_user(username)` | 查询用户 |
+| `get_authenticated_user()` | 查询当前认证用户 |
+
+---
+
+## 本目录索引
+
+| 文档 | 内容 |
+|------|------|
+| [1_issue_comment.md](1_issue_comment.md) | Issue CRUD、Label、Assignee、评论操作 |
+| [2_pr_query.md](2_pr_query.md) | PR 评论 / 合并 / 审查 + 信息查询 |
+
+---
+
+> **相关**：[GitHub 消息发送](../../send_message/github/README.md) · [GitHub API 参考](../../../reference/api/github/1_api.md) · [跨平台 Trait](../common/2_traits.md)
+
+
+---
+
+# 文件: 5. API 使用\README.md
+
+---
+title: Bot API 使用指南
+createTime: 2026/03/19 17:26:45
+permalink: /guide/reuhhz5p/
+---
+
+> 掌握 `BotAPIClient` 的全部能力 — 跨平台通用方法与各平台专属 API。
+
+---
+
+## Quick Reference
+
+### 多平台 API 访问
+
+```python
+# 通用 — 任何平台
+await event.reply(text="收到")
+
+# QQ 平台
+await self.api.qq.post_group_msg(group_id, text="Hello!")
+await self.api.qq.messaging.send_group_msg(group_id, message)
+await self.api.qq.manage.set_group_ban(group_id, user_id, 600)
+
+# Bilibili 平台
+await self.api.bilibili.send_danmu(room_id, "弹幕内容")
+await self.api.bilibili.send_private_msg(user_id, "私信内容")
+
+# GitHub 平台
+await self.api.github.create_issue_comment("owner/repo", 42, "已处理")
+await self.api.github.merge_pr("owner/repo", 10, merge_method="squash")
+```
+
+### API 架构总览
+
+```text
+BotAPIClient                        ← 多平台路由（纯门面）
+├── .qq : QQAPIClient               ← QQ 平台 API
+│   ├── .messaging : QQMessaging    ← 消息收发
+│   ├── .manage : QQManage          ← 群管理
+│   ├── .query : QQQuery            ← 信息查询
+│   ├── .file : QQFile              ← 文件操作
+│   └── post_group_msg() ...        ← Sugar 便捷方法
+├── .bilibili : IBiliAPIClient      ← Bilibili 平台 API
+│   ├── send_danmu()                ← 弹幕
+│   ├── send_private_msg()          ← 私信
+│   ├── send_comment()              ← 评论
+│   └── ban_user() ...              ← 直播间管理
+├── .github : GitHubBotAPI          ← GitHub 平台 API
+│   ├── create_issue()              ← Issue 管理
+│   ├── create_issue_comment()      ← 评论
+│   ├── merge_pr()                  ← PR 管理
+│   └── get_repo() ...              ← 信息查询
+├── .platform("xxx")                ← 按名称获取平台 API
+└── .platforms                      ← 所有已注册平台
+```
+
+### 插件模式示例
+
+```python
+from ncatbot.plugin import NcatBotPlugin
+from ncatbot.core import registrar
+from ncatbot.event.qq import GroupMessageEvent
+
+class DemoPlugin(NcatBotPlugin):
+    name = "demo"
+    version = "1.0.0"
+
+    @registrar.on_group_command("ping")
+    async def on_ping(self, event: GroupMessageEvent):
+        await event.reply(text="pong!", image="photo.jpg")
+        await self.api.qq.post_group_msg(event.group_id, text="Hello!", at=event.user_id)
+```
+
+---
+
+## 本目录索引
+
+### 通用
+
+| 文档 | 内容 |
+|------|------|
+| [通用 API](common/README.md) | 跨平台事件方法与 Trait 协议 |
+| [事件方法](common/1_event_methods.md) | `event.reply()`, `event.delete()`, `event.kick()` 等 |
+| [API Trait 协议](common/2_traits.md) | `IMessaging`, `IGroupManage`, `IQuery`, `IFileTransfer` |
+
+### QQ 平台
+
+| 文档 | 内容 |
+|------|------|
+| [QQ API 概览](qq/README.md) | QQ 平台 API 分层结构与速查 |
+| [消息发送详解](qq/1_messaging.md) | sugar 方法、原子 messaging API、合并转发 |
+| [群管理详解](qq/2_manage.md) | .manage 每个方法的参数与示例 |
+| [查询与文件操作](qq/3_query_support.md) | .query + .file 方法详解 |
+
+### Bilibili 平台
+
+| 文档 | 内容 |
+|------|------|
+| [Bilibili API 概览](bilibili/README.md) | Bilibili 平台 API 功能分类与速查 |
+| [直播间操作](bilibili/1_live_room.md) | 弹幕、禁言、房间信息 |
+| [私信操作](bilibili/2_private_msg.md) | 私信文字/图片、历史记录 |
+| [评论操作](bilibili/3_comment.md) | 发送/回复/删除/点赞评论 |
+| [数据源与查询](bilibili/4_source_query.md) | 监听管理、用户信息查询 |
+
+### GitHub 平台
+
+| 文档 | 内容 |
+|------|------|
+| [GitHub API 概览](github/README.md) | GitHub 平台 API 功能分类与速查 |
+| [Issue 与评论](github/1_issue_comment.md) | Issue CRUD、标签、指派、评论操作 |
+| [PR 与查询](github/2_pr_query.md) | PR 评论 / 合并 / 审查 + 信息查询 |
+
+
+---
+
+# 文件: 6. 配置管理\1. 配置安全.md
+
+---
+title: ConfigManager 与配置安全
+createTime: 2026/03/19 17:26:45
+permalink: /guide/ovucb7o3/
+---
+
+> `ConfigManager` 配置读写接口、`ConfigStorage` YAML 原子读写、以及安全工具。
+
+---
+
+## 目录
+
+- [架构概览](#架构概览)
+- [获取管理器](#获取管理器)
+- [读取配置](#读取配置)
+- [修改与保存](#修改与保存)
+- [配置安全](#配置安全)
+- [全局配置覆盖](#全局配置覆盖)
+
+---
+
+## 架构概览
+
+```mermaid
+classDiagram
+    class ConfigManager {
+        +config : Config
+        +plugin : PluginConfig
+        +bot_uin : str
+        +root : str
+        +debug : bool
+        +reload() Config
+        +save() void
+        +update_value(key, value) void
+        +get_adapter_configs() List~AdapterEntry~
+        +get_adapter_config(type) AdapterEntry
+        +get_security_issues(auto_fix) List~str~
+    }
+    class ConfigStorage {
+        +load() Config
+        +save(config) void
+    }
+    ConfigManager --> ConfigStorage : 持有
+    ConfigManager --> Config : 管理
+```
+
+---
+
+## 获取管理器
+
+```python
+from ncatbot.utils import get_config_manager, ncatbot_config
+
+manager = get_config_manager()                  # 全局单例
+manager = get_config_manager("/path/to/config.yaml")  # 指定路径
+print(ncatbot_config.bot_uin)                   # 便捷别名
+```
+
+---
+
+## 读取配置
+
+`ConfigManager` 使用**懒加载**——首次访问 `config` 属性时才从磁盘加载：
+
+```python
+manager = get_config_manager()
+uin = manager.bot_uin                         # str
+config: Config = manager.config               # 完整配置对象
+
+# 读取适配器配置
+entry = manager.get_adapter_config("napcat")  # AdapterEntry | None
+if entry:
+    ws_uri = entry.config.get("ws_uri", "ws://localhost:3001")
+```
+
+> **已弃用**：`manager.napcat` 属性仍可用，但会发出 `DeprecationWarning`，请迁移到 `get_adapter_config()`。
+
+---
+
+## 修改与保存
+
+### update_value — 通用键值写入
+
+支持直接键和嵌套点分键：
+
+```python
+manager.update_value("debug", True)
+manager.save()
+```
+
+### 修改适配器配置
+
+```python
+entry = manager.get_adapter_config("napcat")
+if entry:
+    entry.config["ws_uri"] = "ws://192.168.1.100:3001"
+    entry.config["ws_token"] = "my_strong_token"
+    manager.save()
+```
+
+> **已弃用**：`update_napcat()` 仍可用，但会发出 `DeprecationWarning`。
+
+### reload — 重新加载
+
+```python
+config = manager.reload()  # 从磁盘重新读取
+```
+
+---
+
+## 配置安全
+
+安全工具定义在 `ncatbot.utils.config.security` 模块中。
+
+### strong_password_check
+
+检查密码/令牌强度（≥12位、含大小写字母+数字+特殊字符）：
+
+```python
+from ncatbot.utils.config.security import strong_password_check
+strong_password_check("Abc123!defgh")   # True
+```
+
+### generate_strong_token
+
+```python
+from ncatbot.utils.config.security import generate_strong_token
+token = generate_strong_token()       # 16 位强令牌
+token = generate_strong_token(32)     # 32 位强令牌
+```
+
+### 自动修复
+
+`ConfigManager.get_security_issues(auto_fix=True)` 遍历所有 NapCat 类型适配器，检查 `ws_token` 和 `webui_token` 安全性：
+
+- 当 `ws_listen_ip == "0.0.0.0"` 且 `ws_token` 强度不足时，`auto_fix=True` 会自动生成新令牌
+- 当 `enable_webui=True` 且 `webui_token` 强度不足时，同样自动替换
+
+---
+
+## 全局配置覆盖
+
+在 `config.yaml` 的 `plugin.plugin_configs` 节统一管理插件配置，优先级高于插件本地配置：
+
+```yaml
+plugin:
+  plugin_configs:
+    MyPlugin:
+      api_key: sk-prod-xxxx
+      max_retries: 10
+```
+
+---
+
+## Bilibili 凭据管理
+
+Bilibili 适配器支持**扫码登录**：当 config.yaml 中 `sessdata` 为空或凭据已过期时，启动时会自动弹出二维码。扫码成功后，`sessdata`、`bili_jct`、`dedeuserid`、`ac_time_value` 会自动写回 config.yaml 的 bilibili 适配器配置段。
+
+```yaml
+# 扫码登录后 config.yaml 自动更新为:
+adapters:
+  - type: bilibili
+    config:
+      sessdata: "<自动填入>"    # 扫码后自动写入
+      bili_jct: "<自动填入>"
+      dedeuserid: "<自动填入>"
+      ac_time_value: "<自动填入>"
+      live_rooms: [12345]
+```
+
+> **安全提示**：`sessdata` 等凭据等同于登录 Cookie，请勿泄露 config.yaml 文件。建议将 config.yaml 加入 `.gitignore`。
+
+---
+
+## 延伸阅读
+
+- [CLI 配置管理](../cli/1.commands.md#配置管理) — config show / get / set 命令
+- [配置/数据 Mixin](../plugin/5a.config-data.md) — 插件中的 ConfigMixin
+- [配置参考](../../reference/utils/1a_config.md) — Config / AdapterEntry / NapCatConfig 完整字段
+
+
+---
+
+# 文件: 6. 配置管理\README.md
+
+---
+title: 配置管理
+createTime: 2026/03/19 17:26:45
+permalink: /guide/44hxka0i/
+---
+
+> NcatBot 的配置体系基于 Pydantic 模型 + YAML 文件，提供类型安全的全局配置、适配器连接配置和插件独立配置。
+
+---
+
+## Quick Reference
+
+### Config 模型字段
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `bot_uin` | `str` | `"123456"` | Bot QQ 号 |
+| `root` | `str` | `"123456"` | 超级管理员 QQ 号 |
+| `adapters` | `List[AdapterEntry]` | `[]` | 适配器列表 |
+| `plugin` | `PluginConfig` | — | 插件配置 |
+| `debug` | `bool` | `False` | 调试模式 |
+| `websocket_timeout` | `int` | `15` | WebSocket 超时秒数 |
+| `check_ncatbot_update` | `bool` | `True` | 启动时检查更新 |
+
+### AdapterEntry 字段
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `type` | `str` | 适配器类型（如 `"napcat"`） |
+| `platform` | `str` | 平台标识（如 `"qq"`） |
+| `enabled` | `bool` | 是否启用 |
+| `config` | `dict` | 适配器专属配置（`ws_uri`, `ws_token` 等） |
+
+### ConfigManager 方法
+
+| 方法/属性 | 说明 |
+|----------|------|
+| `get_config_manager()` | 获取全局单例（`from ncatbot.utils import get_config_manager`） |
+| `.config` | Config 模型实例 |
+| `.bot_uin` | Bot QQ 号 |
+| `.debug` | 调试模式 |
+| `update_value(key, value)` | 修改配置值 |
+| `save()` | 保存到 config.yaml |
+| `reload()` | 重新加载配置文件 |
+| `get_adapter_configs()` | 获取适配器配置列表 |
+
+### 插件配置方法（ConfigMixin）
+
+| 方法 | 说明 |
+|------|------|
+| `get_config(key, default=None)` | 读取配置值 |
+| `set_config(key, value)` | 设置并立即持久化 |
+| `remove_config(key)` | 移除配置项 |
+| `update_config(updates: dict)` | 批量更新并持久化 |
+
+### 最小 config.yaml
+
+```yaml
+bot_uin: '1234567890'
+root: '9876543210'
+adapters:
+  - type: napcat
+    platform: qq
+    enabled: true
+    config:
+      ws_uri: ws://localhost:3001
+```
+
+> **旧格式兼容**：如果你的 `config.yaml` 仍使用顶层 `napcat:` 字段，框架会自动迁移为 `adapters:` 列表格式并回写配置文件。
+
+---
+
+## 本目录索引
+
+| 文档 | 内容 |
+|------|------|
+| [配置管理与安全校验](1.config-security.md) | 配置管理器单例、读取/修改/保存 API、令牌强度检查、自动修复流程 |
+
+
+---
+
+# 文件: 7. RBAC 权限\1. RBAC 模型.md
+
+---
+title: RBAC 模型详解
+createTime: 2026/03/19 17:26:45
+permalink: /guide/06vj015z/
+---
+
+> 三层模型、权限路径体系、rbac.json 完整格式、角色继承与权限命名规范。
+
+---
+
+## 目录
+
+- [1. 三层模型](#1-三层模型)
+- [2. 权限路径体系](#2-权限路径体系)
+  - [2.1 路径格式与 PermissionPath](#21-路径格式与-permissionpath)
+  - [2.2 Trie 树结构](#22-trie-树结构)
+  - [2.3 通配符机制](#23-通配符机制)
+- [3. 角色与继承](#3-角色与继承)
+- [4. rbac.json 完整格式](#4-rbacjson-完整格式)
+- [5. 权限命名规范](#5-权限命名规范)
+
+---
+
+## 1. 三层模型
+
+RBAC（Role-Based Access Control）的核心思想是通过角色间接关联用户与权限：
+
+```mermaid
+graph LR
+    U1[用户 A] -->|拥有| R1[管理员角色]
+    U2[用户 B] -->|拥有| R2[普通用户角色]
+    U1 -->|拥有| R2
+    R1 -->|包含| P1["rbac.admin"]
+    R1 -->|包含| P2["rbac.user"]
+    R2 -->|包含| P2
+```
+
+修改角色的权限集合即可批量影响该角色下所有用户。
+
+NcatBot 在经典模型基础上做了以下扩展：
+
+| 特性 | 说明 |
+|---|---|
+| **白名单/黑名单双模式** | 权限可通过白名单授予，也可通过黑名单显式拒绝 |
+| **黑名单优先** | 检查规则：黑名单 > 白名单 > 默认拒绝 |
+| **角色继承** | 角色可以继承父角色的权限集，支持多层继承 |
+| **路径通配符** | 权限路径支持 `*`（单层）和 `**`（任意深度）通配符匹配 |
+| **Trie 树存储** | 权限路径以 Trie 树结构存储，高效检索与前缀匹配 |
+| **自动持久化** | 服务关闭时自动保存至 `data/rbac.json` |
+| **插件友好** | 通过 `RBACMixin` 为插件提供简洁的高层 API |
+
+判定流程：
+
+```mermaid
+flowchart TD
+    CHECK[权限检查请求] --> BL{在黑名单中?}
+    BL -->|是| DENY[❌ 拒绝]
+    BL -->|否| WL{在白名单中?}
+    WL -->|是| ALLOW[✅ 允许]
+    WL -->|否| DENY
+```
+
+---
+
+## 2. 权限路径体系
+
+### 2.1 路径格式与 PermissionPath
+
+权限路径使用 **点分隔** 的层级格式，由 `PermissionPath` 类表示：
+
+```text
+<命名空间>.<模块>.<操作>
+```
+
+**示例路径：**
+
+| 路径 | 含义 |
+|---|---|
+| `rbac.admin` | RBAC 系统管理权限 |
+| `rbac.user` | RBAC 系统普通用户权限 |
+| `group_manager.admin` | 群管理插件的管理权限 |
+| `my_plugin.feature.edit` | 自定义插件的编辑功能权限 |
+
+`PermissionPath` 的核心属性：
+
+```python
+from ncatbot.service.builtin.rbac import PermissionPath
+
+path = PermissionPath("plugin.admin.kick")
+path.raw      # "plugin.admin.kick" — 原始字符串
+path.parts    # ("plugin", "admin", "kick") — 各层级元组
+path.SEPARATOR  # "." — 分隔符
+```
+
+`PermissionPath` 支持多种初始化方式：
+
+```python
+PermissionPath("a.b.c")           # 字符串
+PermissionPath(["a", "b", "c"])   # 列表
+PermissionPath(("a", "b", "c"))   # 元组
+PermissionPath(another_path)      # 另一个 PermissionPath 实例
+```
+
+还可以使用 `join()` 拼接路径：
+
+```python
+base = PermissionPath("my_plugin")
+full = base.join("admin", "kick")  # PermissionPath("my_plugin.admin.kick")
+```
+
+### 2.2 Trie 树结构
+
+权限路径在内部以 **Trie 树**（`PermissionTrie`）存储，保证高效的路径检索和前缀匹配。
+
+```mermaid
+graph TD
+    ROOT["(root)"] --> rbac
+    ROOT --> group_manager
+    ROOT --> full_bot
+    rbac --> rbac_admin["admin"]
+    rbac --> rbac_user["user"]
+    group_manager --> gm_admin["admin"]
+    full_bot --> fb_admin["admin"]
+```
+
+上图对应 `data/rbac.json` 中 `permissions` 字段的树结构：
+
+```json
+{
+  "permissions": {
+    "rbac": {
+      "admin": {},
+      "user": {}
+    },
+    "group_manager": {
+      "admin": {}
+    },
+    "full_bot": {
+      "admin": {}
+    }
+  }
+}
+```
+
+`PermissionTrie` 的核心方法：
+
+| 方法 | 签名 | 说明 |
+|---|---|---|
+| `add` | `add(path: str) -> None` | 添加权限路径（不允许含通配符） |
+| `remove` | `remove(path: str) -> None` | 删除权限路径 |
+| `exists` | `exists(path: str, exact: bool = False) -> bool` | 检查路径是否存在，`exact=True` 要求精确匹配到叶子节点 |
+| `get_all_paths` | `get_all_paths() -> List[str]` | 获取所有已注册路径 |
+| `to_dict` | `to_dict() -> Dict` | 导出为字典 |
+| `from_dict` | `from_dict(data: Dict) -> None` | 从字典恢复 |
+
+### 2.3 通配符机制
+
+`PermissionPath.matches()` 方法支持两种通配符：
+
+| 通配符 | 含义 | 示例 |
+|---|---|---|
+| `*` | 匹配 **单层** 任意节点 | `plugin.*.read` 匹配 `plugin.foo.read`，不匹配 `plugin.foo.bar.read` |
+| `**` | 匹配 **任意深度** 的节点 | `plugin.**` 匹配 `plugin.foo`、`plugin.foo.bar.baz` |
+
+```python
+from ncatbot.service.builtin.rbac import PermissionPath
+
+pattern = PermissionPath("plugin.*.read")
+pattern.matches("plugin.news.read")      # True
+pattern.matches("plugin.news.bar.read")  # False
+
+pattern2 = PermissionPath("plugin.**")
+pattern2.matches("plugin.news")          # True
+pattern2.matches("plugin.news.detail")   # True
 ```
 
 ::: warning
-私有工作目录下的 `<插件名>.json` 文件用于保存插件可持久化数据, 不应该被占用.
+通配符用于权限检查阶段的模式匹配，注册权限路径时（`PermissionTrie.add`）不允许包含通配符。
 :::
 
 
-
 ---
 
-# 文件: 7. 插件系统\4. 插件高级功能\4.3 定时任务.md
+## 3. 角色与继承
 
----
-title: 定时任务
-createTime: 2025/03/27 10:07:54
-permalink: /guide/timertask/
----
+每个角色内部维护两个权限集合：
 
-## 概述
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `whitelist` | `set` | 白名单 — 拥有该角色的用户将获得这些权限 |
+| `blacklist` | `set` | 黑名单 — 拥有该角色的用户将被显式拒绝这些权限 |
 
-`TimeTaskMixin` 是一个强大的定时任务调度混入类，为**插件**提供了灵活的定时任务管理功能。支持多种时间格式、条件触发、参数动态生成等高级特性。
-
-### 函数原型
-
-```python
-    def add_scheduled_task(
-        self,
-        job_func: Callable,
-        name: str,
-        interval: Union[str, int, float],
-        conditions: Optional[List[Callable[[], bool]]] = None,
-        max_runs: Optional[int] = None,
-        args: Optional[Tuple] = None,
-        kwargs: Optional[Dict] = None,
-        args_provider: Optional[Callable[[], Tuple]] = None,
-        kwargs_provider: Optional[Callable[[], Dict[str, Any]]] = None,
-    ) -> bool:
-```
-
-- `job_func`：要调度的任务函数，可以是同步或异步函数。
-- `name`：任务的唯一名称标识，如果要注册多个任务，**名称必须不同**。
-
-## 基本用法
-
-### 支持的时间格式
-
-#### 间隔任务
-
-- 基础单位：`"30s"`, `"5m"`, `"2h"`, `"1d"`
-- 组合格式：`"2h30m"`, `"1d12h"`
-- 冒号分隔：`"00:05:30"` (时:分:秒)
-- 自然语言：`"2天3小时5秒"`
-
-```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        self.add_scheduled_task(
-            self.interval_task,
-            "interval_task",
-            "1h",
-        )
-    async def interval_task(self):
-        print("间隔执行")
-```
-
-#### 每日定点任务
-
-- 格式：`"09:30"`, `"23:59"`
-
-```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        self.add_scheduled_task(
-            self.daily_task,
-            "daily_task",
-            "09:30",
-        )
-    async def daily_task(self):
-        print("每日定点执行")
-```
-
-#### 一次性任务
-
-- 标准格式：`"2025-12-31 23:59:59"`
-- GitHub 格式：`"2025:12:31-23:59:59"`
-
-```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        self.add_scheduled_task(
-            self.once_task,
-            "once_task",
-            "2025-12-31 23:59:59",
-        )
-    async def once_task(self):
-        print("一次性任务执行")
-```
-
-### 2. 高级功能
-
-#### 条件执行
-
-```python
-def is_working_time():
-    return 9 <= datetime.now().hour <= 18
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        self.add_scheduled_task(
-            self.work_task,
-            "work_task",
-            "1h",
-            conditions=[is_working_time]
-        )
-    async def work_task(self):
-        print("工作时间任务执行")
-```
-
-#### 限制执行次数
-
-```python
-# 只执行5次
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        self.add_scheduled_task(
-            self.limited_task, 
-            "limited_task", 
-            "10s",
-            max_runs=5
-        )
-    async def limited_task(self):
-        print("有限次任务执行")
-```
-
-#### 动态参数生成
-
-```python
-def get_current_data():
-    return {"timestamp": time.time()}
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        self.add_scheduled_task(
-            self.data_task,
-            "data_task", 
-            "30s",
-            kwargs_provider=get_current_data
-        )
-    async def data_task(self, timestamp):
-        print(f"任务执行时间戳: {timestamp}")
-```
-
-## 完整示例
-
-```python
-class TimeTaskDemo(NcatBotPlugin):
-    name = "TimeTaskDemo"
-    
-    async def on_load(self):
-        # 每5秒执行一次
-        self.add_scheduled_task(self.heartbeat, "heartbeat", "5s")
-        
-        # 每天上午9点执行
-        self.add_scheduled_task(self.daily_report, "daily", "09:00")
-        
-        # 带条件的任务
-        self.add_scheduled_task(
-            self.conditional_task, 
-            "conditional", 
-            "1m",
-            conditions=[self.is_active]
-        )
-    
-    async def heartbeat(self):
-        print("💓 心跳检测")
-    
-    async def daily_report(self):
-        print("📊 生成日报")
-    
-    async def conditional_task(self):
-        print("✅ 条件满足，执行任务")
-    
-    def is_active(self):
-        return True  # 你的条件逻辑
-```
-
-## 任务管理
-
-### 移除任务
-
-```python
-# 移除指定任务
-self.remove_scheduled_task("task_name")
-```
-
-## 注意事项
-
-1. **任务名称唯一性**：每个任务必须有唯一的名称标识
-2. **异步支持**：支持异步和同步函数
-3. **资源清理**：插件卸载时会自动清理相关任务
-
-
-
-
----
-
-# 文件: 7. 插件系统\4. 插件高级功能\4.4 插件配置项.md
-
----
-title: 插件配置项
-createTime: 2025/09/29 10:07:54
-permalink: /guide/plugin-config/
----
-
-## 配置项
-
-`NcatBotPlugin` 持有 `config` 成员。类型为 `dict`。
-
-## 注册和访问配置项
-
-`NcatBotPlugin` 提供 `register_config` 方法, 用于注册插件配置项。
-
-```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        self.register_config("greeting", "Hello, world!")
-        self.register_config("repeat_count", 3)
-    
-    async def some_method(self):
-        greeting = self.config["greeting"]
-        count = self.config["repeat_count"]
-        for _ in range(count):
-            print(greeting)
-```
-
-## 配置项存储
-
-配置项存储在 `data/<插件名>/<插件名>.yaml` 文件中。
-
-你可以在 Bot 退出后手动修改配置项。
-
-已保存的配置项会在插件加载时自动读取，覆盖 `register_config` 注册的默认值。
-
-## 修改配置项
-
-可以使用 `SystemManager` 提供的 `set_config` 命令。
-
-`/set_config <插件名> <配置项名> <新值>` 修改配置项。
-`/cfg <插件名> <配置项名> <新值>` 别名。
-
-
----
-
-# 文件: 7. 插件系统\5. 发布你的插件.md
-
----
-title:  发布你的插件
-createTime: 2025/03/06 11:21:00
-permalink: /guide/qr8yp7sn/
----
-
-# 尚未完工
-
-[插件仓库地址](https://github.com/ncatbot/NcatBot-Plugins)
-
-## 发布你的插件
-
-提供插件一键发布脚本, 请参考[这里](https://blog.csdn.net/chengwenyang/article/details/120060010)准备一个 github token. token 需要支持 repo 权限.
-
-执行 `python -m ncatbot.scripts.publish` 并按照相关指示操作即可发布插件.
-
-如果不希望每次都输入 token, 可以将 token 保存在环境变量 `GITHUB_TOKEN` 中.
-
-## 使用插件
-
-[安装和使用插件](../1.%20快速开始/3.%20安装和使用插件.md)
-[Windows 一键安装](../1.%20快速开始/1.4%20Windows%20一键安装.md)
-
-### 插件元数据
-
-- `name`：插件名，插件唯一标识符，**必须全局唯一**。
-- `version`：插件版本，一般采用 `x.y.z` 方式。
-- `author`：可选，插件作者名。
-
-
----
-
-# 文件: 8. 高级教程\1. 统一命令注册器\1. 概览.md
-
----
-title:  概览
-createTime: 2025/09/28 10:43:51
-permalink: /guide/xjv2088o/
----
-# UnifiedRegistry 统一注册系统
-
-## 🚀 概述
-
-**UnifiedRegistry** 是 NCatBot 的现代化插件系统核心，提供统一的命令注册和过滤器管理功能。它采用声明式设计，支持现代化的命令行参数解析，让插件开发变得简单而强大。
-
-## ✨ 核心特性
-
-### 🎯 统一注册管理
-- **命令注册**: 使用装饰器轻松注册命令
-- **过滤器系统**: 灵活的权限控制和消息过滤
-- **参数处理**: 智能的参数解析和类型转换
-
-### 🔧 现代化命令行解析
-- **多种选项格式**: 支持 `-v`, `--verbose`, `--env=prod`
-- **引用字符串**: 支持 `"包含空格的参数"`
-- **非文本元素**: 智能处理图片、@用户等消息元素
-
-### 🛡️ 智能过滤器
-- **内置过滤器**: 群聊、私聊、管理员权限等
-- **自定义过滤器**: 支持自定义过滤逻辑
-- **过滤器组合**: 多个过滤器可以组合使用
-
-## 🚀 最小示例
-
-```python
-from ncatbot.plugin_system import NcatBotPlugin
-from ncatbot.plugin_system import command_registry
-from ncatbot.plugin_system import group_filter, admin_filter
-from ncatbot.plugin_system import option, param
-from ncatbot.core.event import BaseMessageEvent
-from ncatbot.utils import get_log
-LOG = get_log(__name__)
-
-class MyPlugin(NcatBotPlugin):
-    name = "MyPlugin"
-    version = "1.0.0"
-    
-    async def on_load(self):
-        pass
-
-    # 简单命令（注意：除self外的所有参数必须有类型注解）
-    @command_registry.command("hello")
-    async def hello_cmd(self, event: BaseMessageEvent):
-        await event.reply("Hello, World!")
-    
-    # 带权限的命令
-    @group_filter
-    @command_registry.command("kick")
-    async def kick_cmd(self, event: BaseMessageEvent, user_id: str):
-        await event.reply(f"踢出用户: {user_id}")
-    
-    # 复杂参数命令
-    @admin_filter
-    @command_registry.command("deploy")
-    @option(short_name="v", long_name="verbose", help="详细输出")
-    @param(name="env", default="dev", help="部署环境")
-    async def deploy_cmd(self, event: BaseMessageEvent, app_name: str, env: str = "dev", verbose: bool = False):
-        result = f"部署 {app_name} 到 {env} 环境"
-        if verbose:
-            result += " (详细模式)"
-        await event.reply(result)
-```
-
-## 结构图
-
-### 高层组件关系（Component）
+角色支持 **多层继承**：子角色会聚合所有父角色的白名单和黑名单权限。
 
 ```mermaid
-flowchart LR
-    EB[EventBus 事件] --> URP[UnifiedRegistryPlugin]
-
-    URP --> MP[MessagePreprocessor\n前缀/大小写/切分]
-    MP --> MT[MessageTokenizer\n消息混合分词]
-    MT --> ST[StringTokenizer\n字符串词法]
-    MT --> PC[ParsedCommand]
-
-    URP --> CR[CommandResolver\n命令解析]
-    CR --> REG[ModernRegistry / command_registry]
-    REG --> CG[CommandGroup]
-    REG --> SPEC[CommandSpec / OptionSpec / ParameterSpec / OptionGroupSpec]
-
-    URP --> FV[FilterValidator\n过滤器校验]
-    FV --> FR[FilterRegistry / filter_registry]
-    FR --> FE[FilterEntry + 装饰器元数据]
-
-    URP --> AB[ArgumentBinder\n参数绑定]
-    AB --> FA[FuncAnalyser\n函数签名解析]
-    AB --> SPEC
-
-    CR -->|命令已定位| AB
-    FV -->|通过| EXEC[执行插件命令函数]
-    AB -->|绑定后的参数/选项| EXEC
-
-    URP --> HS[HelpGenerator / ErrorHandler]
-    HS -.-> EXEC
+graph BT
+    MEMBER["member 角色<br/>whitelist: {basic.read}"] --> MOD["moderator 角色<br/>whitelist: {basic.write}"]
+    MOD --> ADMIN["admin 角色<br/>whitelist: {admin.manage}"]
 ```
 
-要点：
-- 事件由 `EventBus` 分发到 `UnifiedRegistryPlugin`，随后按“预处理 → 分词 → 解析 → 过滤 → 绑定 → 执行”的主链路推进。
-- 命令与过滤器均通过注册表统一管理：`command_registry` 与 `filter_registry`。
-- 帮助与错误处理贯穿各阶段，确保良好的开发与使用体验。
+上图中 `admin` 继承 `moderator`，`moderator` 继承 `member`。拥有 `admin` 角色的用户将同时获得 `admin.manage`、`basic.write`、`basic.read` 三项权限。
+
+**继承循环检测**：`set_role_inheritance` 会自动检测循环继承（如 A→B→A），检测到时抛出 `ValueError`。
 
 ---
 
-### 消息到执行的时序（Sequence）
+## 4. rbac.json 完整格式
 
-```mermaid
-sequenceDiagram
-    participant User as 用户
-    participant EventBus as EventBus
-    participant Plugin as UnifiedRegistryPlugin
-    participant Pre as MessagePreprocessor
-    participant Tok as MessageTokenizer
-    participant Res as CommandResolver
-    participant Fil as FilterValidator
-    participant Bind as ArgumentBinder
-    participant Exec as 插件命令函数
+RBAC 数据默认存储在 `data/rbac.json`，由 `save_rbac_data` / `load_rbac_data` 函数处理。完整结构如下：
 
-    User->>EventBus: 发送消息
-    EventBus->>Plugin: 分发事件
-    Plugin->>Pre: 前缀与基础预处理
-    Pre-->>Plugin: 预处理结果
-    Plugin->>Tok: 解析混合消息（文本/图片/@ 等）
-    Tok-->>Plugin: ParsedCommand
-    Plugin->>Res: 解析命令与子命令
-    Res-->>Plugin: CommandSpec / 目标处理函数
-    Plugin->>Fil: 校验过滤器（群聊/私聊/权限等）
-    Fil-->>Plugin: 通过/拒绝
-    Plugin->>Bind: 绑定参数与选项（类型转换）
-    Bind-->>Plugin: 实参列表/关键字参数
-    Plugin->>Exec: 调用目标命令函数
-    Exec-->>Plugin: 执行结果
-    Plugin-->>EventBus: 回复/后续操作
+```json
+{
+  "case_sensitive": true,
+  "default_role": null,
+  "roles": {
+    "rbac_admin": {
+      "whitelist": ["rbac.admin", "rbac.user"],
+      "blacklist": []
+    },
+    "rbac_user": {
+      "whitelist": ["rbac.user"],
+      "blacklist": []
+    }
+  },
+  "users": {
+    "3051561876": {
+      "whitelist": [],
+      "blacklist": [],
+      "roles": ["rbac_admin"]
+    }
+  },
+  "role_users": {
+    "rbac_admin": ["3051561876"],
+    "rbac_user": []
+  },
+  "role_inheritance": {
+    "rbac_admin": [],
+    "rbac_user": []
+  },
+  "permissions": {
+    "rbac": {
+      "admin": {},
+      "user": {}
+    }
+  }
+}
 ```
-### 命令注册结构（Class Diagram）
+
+**各字段说明：**
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `case_sensitive` | `bool` | 权限路径是否区分大小写 |
+| `default_role` | `str \| null` | 新用户自动分配的默认角色 |
+| `roles` | `Dict[str, {whitelist, blacklist}]` | 角色定义，每个角色包含白名单和黑名单 |
+| `users` | `Dict[str, {whitelist, blacklist, roles}]` | 用户数据，包含个人权限和角色列表 |
+| `role_users` | `Dict[str, List[str]]` | 角色到用户的反向映射 |
+| `role_inheritance` | `Dict[str, List[str]]` | 角色继承关系（值为父角色列表） |
+| `permissions` | `Dict` | 权限 Trie 树的字典序列化 |
+
+**存储机制：**
+
+存储层由 `storage.py` 中的四个函数组成：
+
+| 函数 | 说明 |
+|---|---|
+| `save_rbac_data(path: Path, data: Dict) -> None` | 将数据保存为 JSON 文件，自动创建父目录 |
+| `load_rbac_data(path: Path) -> Optional[Dict]` | 从文件加载数据，文件不存在时返回 `None` |
+| `serialize_rbac_state(...)` | 将内存中的 RBAC 状态（含 `set` 等类型）序列化为可 JSON 化的字典 |
+| `deserialize_rbac_state(data: Dict) -> Dict` | 将 JSON 数据反序列化为内存状态（`list` → `set` 等） |
+
+序列化过程中的类型转换：
+
+```text
+内存 (set)  ──serialize──>  JSON (list)  ──deserialize──>  内存 (set)
+```
+
+---
+
+## 5. 权限命名规范
+
+推荐采用 `<插件名>.<模块>.<操作>` 的层级命名：
+
+```text
+✅ 推荐
+my_plugin.admin                    # 插件管理权限
+my_plugin.user                     # 插件用户权限
+my_plugin.feature.read             # 功能级别 — 读
+my_plugin.feature.write            # 功能级别 — 写
+
+❌ 避免
+admin                              # 过于笼统，容易与其他插件冲突
+MyPlugin.Admin                     # 不建议使用大写（除非 case_sensitive=True 且有必要）
+my-plugin.admin                    # 避免使用连字符，使用下划线
+```
+
+---
+
+> **返回**：[RBAC 权限管理](README.md) · **下一篇**：[RBAC 核心模块与插件集成](2.integration.md)
+
+
+---
+
+# 文件: 7. RBAC 权限\2. 集成.md
+
+---
+title: RBAC 插件集成
+createTime: 2026/03/19 17:26:45
+permalink: /guide/t1gkufbl/
+---
+
+> EntityManager / PermissionAssigner / PermissionChecker 核心模块详解与 RBACMixin 插件集成、高级用法。
+
+---
+
+## 目录
+
+- [1. 核心模块](#1-核心模块)
+- [2. 插件集成：RBACMixin](#2-插件集成rbacmixin)
+- [3. RBACService 完整 API](#3-rbacservice-完整-api)
+- [4. 高级用法](#4-高级用法)
+
+---
+
+## 1. 核心模块
+
+NcatBot 的 RBAC 由四个核心模块组成：
 
 ```mermaid
 classDiagram
-    class ModernRegistry {
-      +register_command()
-      +get_command()
-      +get_all_aliases()
+    class RBACService {
+        +add_permission(path)
+        +add_role(role, exist_ok)
+        +add_user(user, exist_ok)
+        +grant(target_type, target, permission, mode)
+        +revoke(target_type, target, permission)
+        +check(user, permission, create_user)
+        +save(path)
     }
-    class CommandGroup {
-      +name
-      +aliases
-      +subgroups
-      +commands
+    class EntityManager {
+        +add_permission(path)
+        +remove_permission(path)
+        +add_role(role, exist_ok)
+        +remove_role(role)
+        +add_user(user, exist_ok)
+        +remove_user(user)
+        +assign_role(user, role, create_user)
+        +unassign_role(user, role)
+        +set_role_inheritance(role, parent)
     }
-    class CommandSpec {
-      +name
-      +description
-      +parameters
-      +options
-      +option_groups
-      +filters
-      +handler
+    class PermissionAssigner {
+        +grant(target_type, target, permission, mode, create_permission)
+        +revoke(target_type, target, permission)
     }
-    class ParameterSpec
-    class OptionSpec
-    class OptionGroupSpec
-
-    ModernRegistry --> CommandGroup
-    CommandGroup --> CommandSpec
-    CommandSpec --> ParameterSpec
-    CommandSpec --> OptionSpec
-    CommandSpec --> OptionGroupSpec
+    class PermissionChecker {
+        +check(user, permission, create_user)
+        +clear_cache()
+    }
+    RBACService --> EntityManager
+    RBACService --> PermissionAssigner
+    RBACService --> PermissionChecker
 ```
 
-装饰器生态（示例）：
-- `@command_registry.command("name", description=...)`
-- `@option("-v", "--verbose", help=...)`
-- `@param("target", type=..., help=...)`
+### 1.1 实体管理（EntityManager）
 
----
+```python
+# 权限管理
+entity_manager.add_permission("my_plugin.admin")
+entity_manager.permission_exists("my_plugin.admin")  # True
 
-### 过滤器系统结构（Class Diagram）
+# 角色管理
+entity_manager.add_role("admin", exist_ok=True)
+entity_manager.set_role_inheritance("admin", "user")  # admin 继承 user 的权限
+
+# 用户管理
+entity_manager.add_user("12345678")
+entity_manager.assign_role("12345678", "admin", create_user=True)
+```
+
+### 1.2 权限分配（PermissionAssigner）
+
+```python
+def grant(self, target_type, target, permission, mode="white", create_permission=True): ...
+def revoke(self, target_type, target, permission): ...
+```
+
+- `mode="white"` 授予权限；`mode="black"` 拒绝权限
+- `revoke` 同时从白名单和黑名单中移除
+
+### 1.3 权限检查（PermissionChecker）
 
 ```mermaid
-classDiagram
-    class FilterRegistry {
-      +register()
-      +validate()
-    }
-    class FilterEntry {
-      +name
-      +validator
-      +metadata
-    }
-    FilterRegistry o--> FilterEntry
+flowchart TD
+    START["check(user, permission)"] --> EXISTS{用户存在?}
+    EXISTS -->|否, create_user=True| CREATE[自动创建用户]
+    EXISTS -->|否, create_user=False| ERROR[抛出 ValueError]
+    EXISTS -->|是| COLLECT[收集有效权限集]
+    CREATE --> COLLECT
+    COLLECT --> MERGE["合并用户自身 + 所有角色<br/>(含继承) 的权限"]
+    MERGE --> BLACK{黑名单匹配?}
+    BLACK -->|是| DENY[返回 False]
+    BLACK -->|否| WHITE{白名单匹配?}
+    WHITE -->|是| ALLOW[返回 True]
+    WHITE -->|否| DENY
 ```
-
-典型过滤器：
-- 群聊限定、私聊限定、管理员权限、自定义复合过滤器等。
-
-## 📚 文档导航
-
-### 🎯 快速入门
-- **[快速开始指南](2.%20快速开始.md)** - 5分钟上手教程
-
-### 📖 功能指南
-- **[过滤器系统](./5.%20过滤器系统.md)** - 权限控制和消息过滤
-- **[命令注册系统](3.%20命令系统.md)** - 命令注册和管理
-- **[参数解析指南](4.%20参数解析.md)** - 现代化参数处理
-
-### 💡 进阶内容
-- **[最佳实践](8.%20最佳实践.md)** - 专业开发指导
-- **[实战案例](7.%20实战案例.md)** - 真实应用场景
-- **[测试指南](6.%20测试指南.md)** - 插件测试方法
-- **[常见问题](9.%20FAQ.md)** - 问题解决手册
-
-## 🎯 适用场景
-
-- ✅ **群管理机器人**: 踢人、禁言、公告等管理功能
-- ✅ **信息查询服务**: 天气、翻译、搜索等工具
-- ✅ **游戏娱乐插件**: 签到、抽奖、小游戏等
-- ✅ **数据处理工具**: 统计、分析、报表生成
-- ✅ **自动化服务**: 定时任务、监控告警等
-
-
-## 🚦 开始使用
-
-1. **阅读**: [快速开始指南](2.%20快速开始.md)
-2. **学习**: 选择相应的功能指南深入了解
-3. **实践**: 参考实战案例开发自己的插件
-4. **测试**: 使用测试指南确保插件质量
 
 ---
 
-**💡 提示**: UnifiedRegistry 设计注重简洁性和可维护性，推荐优先使用内置功能，在需要时再考虑自定义扩展。
+## 2. 插件集成：RBACMixin
 
-
----
-
-# 文件: 8. 高级教程\1. 统一命令注册器\2. 快速开始.md
-
----
-title:  快速开始
-createTime: 2025/09/28 10:43:51
-permalink: /guide/vb4nwaif/
----
-# UnifiedRegistry 快速开始指南
-
-## 🎯 5分钟上手 UnifiedRegistry
-
-本指南将帮助您快速掌握 UnifiedRegistry 的基本用法，从零开始创建一个功能完整的插件。
-
-## 🚀 第一个插件
-
-### 1. 基础设置
-
-```python
-from ncatbot.plugin_system import NcatBotPlugin
-from ncatbot.plugin_system import command_registry
-from ncatbot.plugin_system import group_filter, private_filter, admin_filter
-from ncatbot.plugin_system import option, param
-from ncatbot.core.event import BaseMessageEvent
-
-class HelloPlugin(NcatBotPlugin):
-    name = "HelloPlugin"
-    version = "1.0.0"
-    author = "你的名字"
-    description = "我的第一个 UnifiedRegistry 插件"
-    
-    async def on_load(self):
-        pass
-```
-
-**⚠️ 重要**: 命令函数的所有参数（除了 `self`）都必须有类型注解，这是 UnifiedRegistry 的严格要求。
-
-### 2. 注册简单命令
-
-这些函数应该写在插件类里面：
-
-```python
-class HelloPlugin(NcatBotPlugin):
-    # 其他代码
-
-    @command_registry.command("hello")
-    async def hello_cmd(self, event: BaseMessageEvent):
-        """简单的问候命令"""
-        await event.reply("你好！我是机器人。")
-
-    @command_registry.command("ping")
-    async def ping_cmd(self, event: BaseMessageEvent):
-        """检查机器人状态"""
-        await event.reply("pong!")
-```
-
-**使用方式**: 
-- `/hello` -> "你好！我是机器人。"
-- `/ping` -> "pong!"
-
-### 3. 带参数的命令
-
-```python
-class HelloPlugin(NcatBotPlugin):
-    # 其他代码
-
-    @command_registry.command("echo")
-    async def echo_cmd(self, event: BaseMessageEvent, text: str):
-        """回显用户输入的文本"""
-        await event.reply(f"你说的是: {text}")
-
-    @command_registry.command("add")
-    async def add_cmd(self, event: BaseMessageEvent, a: int, b: int):
-        """计算两个数的和"""
-        result = a + b
-        await event.reply(f"{a} + {b} = {result}")
-```
-
-**使用方式**:
-- `/echo 测试文本` -> "你说的是: 测试文本"
-- `/add 10 20` -> "10 + 20 = 30"
-
-### 4. 添加权限控制
-
-```python
-class HelloPlugin(NcatBotPlugin):
-    # 其他代码
-
-    # 仅群聊可用
-    @group_filter
-    @command_registry.command("groupinfo")
-    async def group_info_cmd(self, event: BaseMessageEvent):
-        """获取群聊信息"""
-        await event.reply(f"当前群聊ID: {event.group_id}")
-
-    # 仅私聊可用
-    @private_filter
-    @command_registry.command("private")
-    async def private_cmd(self, event: BaseMessageEvent):
-        """私聊专用命令"""
-        await event.reply("这是一个私聊命令")
-
-    # 仅 Bot 管理员可用
-    @admin_filter
-    @command_registry.command("admin")
-    async def admin_cmd(self, event: BaseMessageEvent):
-        """管理员专用命令"""
-        await event.reply("你是管理员！")
-```
-
-### 5. 复杂参数和选项
-
-支持一些流行的命令行风格参数指定方式。
-
-需要用 option、param、option_group 装饰器来指定参数，这些被指定的参数**必须放在函数参数表的最后面**。
-
-用修饰器声明部分参数后，可以通过 `-v`、`--verbose`、`-f`、`--force`、`--env=dev` 等指定参数值，这些语法是顺序无关的。
-
-
-```python
-class HelloPlugin(NcatBotPlugin):
-    # 其他代码
-
-    @command_registry.command("deploy", description="部署应用")
-    @option(short_name="v", long_name="verbose", help="显示详细信息")
-    @option(short_name="f", long_name="force", help="强制部署")
-    @param(name="env", default="dev", help="部署环境")
-    async def deploy_cmd(self, event: BaseMessageEvent, app_name: str, 
-                env: str = "dev", verbose: bool = False, force: bool = False):
-        """部署应用到指定环境"""
-        result = f"正在部署 {app_name} 到 {env} 环境"
-        
-        if force:
-            result += " (强制模式)"
-        
-        if verbose:
-            result += "\n详细信息: 开始部署流程..."
-            
-        await event.reply(result)
-```
-
-**使用方式**:
-- `/deploy myapp` -> "正在部署 myapp 到 dev 环境"
-- `/deploy myapp --env=prod -v` -> "正在部署 myapp 到 prod 环境\n详细信息: 开始部署流程..."
-- `/deploy myapp --force` -> "正在部署 myapp 到 dev 环境 (强制模式)"
-- `/deploy --force myapp` -> "正在部署 myapp 到 dev 环境 (强制模式)"
-
-### 6. 命令别名
-
-别名更常用于快速访问指令组的命令。
-
-```python
-class HelloPlugin(NcatBotPlugin):
-    # 其他代码
-
-    @command_registry.command("status", aliases=["stat", "st"], description="查看状态")
-    async def status_cmd(self, event: BaseMessageEvent):
-        """查看机器人状态（支持多个别名）"""
-        await event.reply("机器人运行正常")
-```
-
-**使用方式**: `/status`, `/stat`, `/st` 都可以触发同一个命令
-
-### 7. 纯过滤器功能
-
-只要收到的消息能够通过过滤器，那么这个函数就会被调用。
-
-```python
-from ncatbot.plugin_system import group_filter
-
-class HelloPlugin(NcatBotPlugin):
-    # 其他代码
-    @group_filter
-    async def status_cmd(self, event: BaseMessageEvent):
-        await event.reply("收到一条群聊消息")
-```
-
-## 🎯 完整插件示例
-
-```python
-from ncatbot.plugin_system import NcatBotPlugin
-from ncatbot.plugin_system import command_registry
-from ncatbot.plugin_system import group_filter, admin_filter
-from ncatbot.plugin_system import option, param
-from ncatbot.core.event import BaseMessageEvent
-
-class MyFirstPlugin(NcatBotPlugin):
-    name = "MyFirstPlugin"
-    version = "1.0.0"
-    author = "你的名字"
-    description = "完整的示例插件"
-    
-    async def on_load(self):
-        pass
-    
-    # 简单问候
-    @command_registry.command("hello", aliases=["hi"], description="问候命令")
-    async def hello_cmd(self, event: BaseMessageEvent):
-        await event.reply(f"你好！用户 {event.user_id}")
-    
-    # 计算器
-    @command_registry.command("calc", description="简单计算器")
-    async def calc_cmd(self, event: BaseMessageEvent, a: int, op: str, b: int):
-        if op == "add":
-            await event.reply(f"{a} + {b} = {a + b}")
-        elif op == "sub":
-            await event.reply(f"{a} - {b} = {a - b}")
-        elif op == "mul":
-            await event.reply(f"{a} * {b} = {a * b}")
-        elif op == "div":
-            if b == 0:
-                await event.reply("错误：除数不能为0")
-            else:
-                await event.reply(f"{a} / {b} = {a / b}")
-        else:
-            await event.reply("支持的操作: add, sub, mul, div")
-    
-    # 群聊管理
-    @group_filter
-    @admin_filter
-    @command_registry.command("announce", description="发布公告")
-    @option(short_name="a", long_name="all", help="发送给所有群员")
-    async def announce_cmd(self, event: BaseMessageEvent, message: str, all: bool = False):
-        result = f"公告: {message}"
-        if all:
-            result += " [发送给所有群员]"
-        await event.reply(result)
-    
-    # 带默认值的命令
-    @command_registry.command("greet", description="个性化问候")
-    @param(name="name", default="朋友", help="要问候的名字")
-    async def greet_cmd(self, event: BaseMessageEvent, name: str = "朋友"):
-        await event.reply(f"你好，{name}！欢迎使用机器人。")
-```
-
-## 💡 额外示例：普通函数注册 (Bonus)
-
-除了在插件类中注册命令，您也可以在插件类外定义普通函数：
-
-```python
-from ncatbot.core.event import BaseMessageEvent
-
-# 在插件类外定义命令函数
-@command_registry.command("outside")
-async def outside_command(event: BaseMessageEvent):
-    """插件类外的命令函数"""
-    await event.reply("这是在插件类外定义的命令")
-
-@admin_filter
-@command_registry.command("external_admin")
-async def external_admin_cmd(event: BaseMessageEvent, action: str):
-    """外部的管理员命令"""
-    await event.reply(f"执行管理员操作: {action}")
-
-class MyPlugin(NcatBotPlugin):
-    name = "MyPlugin"
-    version = "1.0.0"
-    
-    async def on_load(self):
-        pass
-
-    # 类内的命令
-    @command_registry.command("inside")
-    async def inside_cmd(self, event: BaseMessageEvent):
-        await event.reply("这是类内的命令")
-```
-
-**注意**: 普通函数没有 `self` 参数，所以无法访问插件实例的属性和方法。推荐使用插件类成员方法。
-
-## 🚦 下一步
-
-现在您已经掌握了 UnifiedRegistry 的基础用法！接下来可以：
-
-1. **深入学习**: 阅读 [过滤器系统指南](./5.%20过滤器系统.md) 了解更多权限控制
-2. **探索功能**: 查看 [命令注册系统](./3.%20命令系统.md) 学习高级命令功能
-3. **参数解析**: 学习 [参数解析指南](./4.%20参数解析.md) 掌握复杂参数处理
-4. **实战练习**: 参考 [实战案例](./7.%20实战案例.md) 开发实用插件
-
-## ⚠️ 常见注意事项
-
-1. **类型注解必须**: 除 `self` 外的所有参数都必须有类型注解
-2. **装饰器顺序**: 过滤器装饰器要在 `@command_registry.command()` 之前
-3. **参数顺序**: `@option` 和 `@param` 装饰器要在命令装饰器之前
-4. **回复方式**: 命令函数应为 `async def` 且通常无返回值，请使用 `await event.reply(...)` 异步回复
+> 详见 [guide/plugin/5b.rbac-schedule-event.md](../plugin/5b.rbac-schedule-event.md) 了解 RBACMixin 在插件中的基础用法。
 
 ---
 
-**🎉 恭喜**: 您已经掌握了 UnifiedRegistry 的基础用法！开始创建您的第一个插件吧！
+## 3. RBACService 完整 API
+
+### 3.1 服务生命周期
+
+`RBACService` 继承自 `BaseService`，作为内置服务由 `ServiceManager` 管理。启动时从 `data/rbac.json` 加载数据，关闭时自动保存。
+
+### 3.2 完整接口表
+
+> 完整方法签名见 [reference/services/1_rbac_service.md](../../reference/services/1_rbac_service.md)
+
+**权限路径管理**：`add_permission` / `remove_permission` / `permission_exists`
+
+**角色管理**：`add_role` / `remove_role` / `role_exists` / `set_role_inheritance`
+
+**用户管理**：`add_user` / `remove_user` / `user_exists` / `user_has_role` / `assign_role` / `unassign_role`
+
+**权限分配**：`grant` / `revoke`
+
+**权限检查**：`check`
+
+**持久化**：`save`
+
+---
+
+## 4. 高级用法
+
+### 4.1 层级权限设计
+
+利用角色继承实现层级权限体系：
+
+```python
+async def on_load(self):
+    self.add_permission("shop.browse")
+    self.add_permission("shop.buy")
+    self.add_permission("shop.manage")
+    self.add_permission("shop.admin")
+
+    self.add_role("shop_guest")
+    self.add_role("shop_member")
+    self.add_role("shop_manager")
+    self.add_role("shop_admin")
+
+    if self.rbac:
+        self.rbac.grant("role", "shop_guest", "shop.browse")
+        self.rbac.grant("role", "shop_member", "shop.buy")
+        self.rbac.grant("role", "shop_manager", "shop.manage")
+        self.rbac.grant("role", "shop_admin", "shop.admin")
+
+        # 继承链: admin > manager > member > guest
+        self.rbac.set_role_inheritance("shop_member", "shop_guest")
+        self.rbac.set_role_inheritance("shop_manager", "shop_member")
+        self.rbac.set_role_inheritance("shop_admin", "shop_manager")
+```
+
+### 4.2 默认权限策略
+
+**默认角色**：通过 `default_role` 参数，新用户自动获得基础权限。
+
+**白名单模式（推荐）**：默认拒绝，仅通过授权开放。
+
+**黑名单排除**：`mode="black"` 拒绝特定用户，黑名单优先级高于白名单。
+
+---
+
+## 下一步
+
+- [权限模型](1_model.md) — 权限路径、Trie 树、匹配规则
+- [RBAC 服务参考](../../reference/services/1_rbac_service.md) — 完整 API 签名
 
 
 ---
 
-# 文件: 8. 高级教程\1. 统一命令注册器\3. 命令系统.md
+# 文件: 7. RBAC 权限\README.md
 
 ---
-title:  命令系统
-createTime: 2025/09/28 10:43:51
-permalink: /guide/tlpfrkhg/
+title: RBAC 权限管理
+createTime: 2026/03/19 17:26:45
+permalink: /guide/ofkjsvyt/
 ---
-# UnifiedRegistry 命令注册系统指南
 
-## 📋 命令系统概述
+> NcatBot 内置基于角色的访问控制（RBAC）服务，为插件提供细粒度的权限管理能力。
 
-UnifiedRegistry 的命令系统提供了现代化的命令注册和管理功能。它支持声明式的命令定义、灵活的参数处理、智能的别名系统和完善的错误处理机制。
+---
 
-## 🎯 核心概念
+## Quick Reference
 
-### 命令注册流程
+3 步为插件添加权限控制：**注册权限 → 配置角色 → 检查权限**。
 
-1. **声明式注册**: 使用装饰器声明命令
-2. **自动发现**: 系统自动发现并注册命令
-3. **类型分析**: 自动分析函数签名和参数类型（除了 `self` 外的所有参数都必须有类型注解）
-4. **冲突检测**: 智能检测命令名称和别名冲突
+### RBACMixin 方法
 
-### 关键组件
+| 方法 | 说明 |
+|------|------|
+| `add_permission(path)` | 注册权限路径（如 `"my_plugin.admin"`） |
+| `remove_permission(path)` | 移除权限路径 |
+| `check_permission(user, permission)` | 检查用户是否有权限 → `bool` |
+| `add_role(role, exist_ok=True)` | 创建角色 |
+| `user_has_role(user, role)` | 检查用户角色归属 |
+| `self.rbac` | 访问底层 `RBACService` 实例 |
 
-- **命令注册器** (`command_registry`): 全局命令管理器
-- **命令组** (`CommandGroup`): 支持命令分组组织
-- **装饰器系统**: 提供丰富的配置选项
-- **参数分析器**: 自动处理函数签名
+### RBACService 底层操作
 
-## 🔧 基础命令注册
+| 方法 | 说明 |
+|------|------|
+| `rbac.grant("role", role_name, permission)` | 给角色授权 |
+| `rbac.revoke("role", role_name, permission)` | 撤销角色权限 |
+| `rbac.grant("user", user_id, role=role_name)` | 给用户分配角色 |
+| `rbac.check(user_id, permission)` | 检查权限 |
 
-### 1. 简单命令注册
+### 权限路径格式
 
-```python
-from ncatbot.plugin_system import command_registry
-from ncatbot.core.event import BaseMessageEvent
+- 使用点分层级：`"plugin_name.action"`，如 `"weather.query"`、`"admin.ban"`
+- 通配符 `"*"` 匹配同级所有权限
+- 基于 Trie 树实现，层级路径自动继承
 
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("hello")
-    async def hello_cmd(self, event: BaseMessageEvent):
-        """简单的问候命令"""
-        await event.reply("Hello, World!")
-    
-    @command_registry.command("ping")
-    async def ping_cmd(self, event: BaseMessageEvent):
-        """检查机器人状态"""
-        await event.reply("pong!")
-```
-
-**⚠️ 重要提醒**: 除 `self` 外的所有参数都必须有类型注解。
-
-### 2. 带描述的命令
+### 典型流程
 
 ```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-    
-    @command_registry.command("info", description="获取机器人信息")
-    async def info_cmd(self, event: BaseMessageEvent):
-        await event.reply("这是一个示例机器人")
-    
-    @command_registry.command("version", description="查看版本信息")
-    async def version_cmd(self, event: BaseMessageEvent):
-        await event.reply(f"插件版本: {self.version}")
+async def on_load(self):
+    self.add_permission("my_plugin.admin")
+    self.add_role("my_plugin_admin")
+    self.rbac.grant("role", "my_plugin_admin", "my_plugin.admin")
+
+@registrar.on_group_command("管理命令")
+async def on_admin_cmd(self, event: GroupMessageEvent):
+    if self.check_permission(str(event.user_id), "my_plugin.admin"):
+        await event.reply(text="执行成功")
 ```
 
-### 3. 命令别名
+---
+
+## 本目录索引
+
+| 文档 | 内容 |
+|------|------|
+| [RBAC 模型详解](1_model.md) | 三层模型、权限路径、Trie 树、通配符、rbac.json 格式、角色继承 |
+| [RBAC 插件集成](2.integration.md) | RBACMixin API、RBACService 底层操作、层级权限与默认策略 |
+
+
+---
+
+# 文件: 8. 命令行工具\1. 命令.md
+
+---
+title: CLI 实战教程
+createTime: 2026/03/19 17:26:45
+permalink: /guide/actioaxc/
+---
+
+> 通过真实场景学习 `ncatbot` 命令行工具的使用。完整命令签名速查请见 [CLI 命令参考](../../reference/cli.md)。
+
+---
+
+## 场景一：从零创建并运行一个 Bot
+
+### 第 1 步 — 初始化项目
+
+```bash
+mkdir my-bot && cd my-bot
+ncatbot init
+```
+
+按提示输入机器人 QQ 号和管理员 QQ 号，完成后目录结构如下：
+
+```text
+my-bot/
+├── config.yaml            # 自动生成的配置文件
+├── plugins/               # 插件目录
+└── plugins/{username}/    # 自动生成的模板插件
+    ├── manifest.toml
+    └── plugin.py
+```
+
+> 💡 也可以用 `ncatbot init --dir ./my-bot` 在当前目录外创建。
+
+### 第 2 步 — 以开发模式启动
+
+```bash
+ncatbot dev
+```
+
+将以 `debug=True` + 热重载启动 Bot。修改插件代码后无需重启。
+
+### 第 3 步 — 切换到生产模式
+
+```bash
+ncatbot run
+```
+
+关闭 debug 日志并保持热重载。如需禁用热重载：
+
+```bash
+ncatbot run --no-hot-reload
+```
+
+---
+
+## 场景二：创建、调试并管理插件
+
+### 创建一个新插件
+
+```bash
+ncatbot plugin create weather_bot
+```
+
+自动在 `plugins/weather_bot/` 下生成 `__init__.py`、`manifest.toml`、`plugin.py`、`README.md` 标准脚手架。
+
+### 查看插件详情
+
+```bash
+ncatbot plugin list               # 列出所有已安装插件
+ncatbot plugin info weather_bot   # 查看 weather_bot 的版本、作者等元信息
+```
+
+### 临时禁用 / 重新启用
+
+```bash
+ncatbot plugin disable weather_bot   # 禁用（加入黑名单）
+ncatbot plugin enable weather_bot    # 启用（移出黑名单）
+```
+
+全局开关：
+
+```bash
+ncatbot plugin off    # 全局关闭插件加载
+ncatbot plugin on     # 全局开启插件加载
+```
+
+### 删除插件
+
+```bash
+ncatbot plugin remove weather_bot   # 删除目录及黑白名单记录（需确认）
+```
+
+---
+
+## 场景三：配置调优与安全检查
+
+### 查看与修改配置
+
+```bash
+ncatbot config show                                       # 查看全部 YAML 配置
+ncatbot config get napcat.ws_uri                          # 查看某一项
+ncatbot config set napcat.ws_uri "ws://localhost:3001"    # 修改值（自动类型转换）
+```
+
+类型转换规则：`true`/`yes` → `bool`，纯数字 → `int`，`[...]` JSON → `list`。
+
+### 安全检查
+
+```bash
+ncatbot config check
+```
+
+自动检查弱密码/Token、必填项缺失等安全问题，输出修复建议。
+
+---
+
+## 场景四：NapCat 连接诊断
+
+Bot 连接不上 NapCat？用诊断命令一键排查：
+
+```bash
+ncatbot napcat diagnose            # 完整诊断（WebSocket + WebUI）
+ncatbot napcat diagnose ws         # 仅检测 WebSocket 连接
+ncatbot napcat diagnose webui      # 仅检测 WebUI 状态
+```
+
+可临时覆盖配置中的地址：
+
+```bash
+ncatbot napcat diagnose ws --uri ws://192.168.1.100:3001 --token mytoken
+```
+
+---
+
+## 场景五：交互式操作（REPL）
+
+直接运行 `ncatbot`（不带子命令）进入交互式 Shell，适合探索性操作：
+
+```bash
+$ ncatbot
+ncatbot [123456789]> config show
+ncatbot [123456789]> plugin list
+ncatbot [123456789]> config set debug true
+ncatbot [123456789]> exit
+```
+
+REPL 内支持所有子命令，输入 `help` 查看可用命令。
+
+---
+
+## 延伸阅读
+
+- [CLI 命令参考](../../reference/cli.md) — 全部命令签名、选项、参数速查
+- [配置管理指南](../configuration/) — config.yaml 字段详解
+- [插件开发指南](../plugin/) — 插件开发完整教程
+
+
+---
+
+# 文件: 8. 命令行工具\README.md
+
+---
+title: CLI 工具 — 命令行管理 NcatBot
+createTime: 2026/03/19 17:26:45
+permalink: /guide/txmbm7xd/
+---
+
+> 通过 `ncatbot` 命令完成项目初始化、启动、插件管理、配置管理和 NapCat 诊断。
+
+## Quick Reference
+
+安装 NcatBot 后即可使用 `ncatbot` 命令。
+
+### 命令一览
+
+| 命令 | 参数 | 说明 |
+|------|------|------|
+| `ncatbot init` | `[--force]` | 初始化项目（生成 config.yaml + plugins/ + 模板插件） |
+| `ncatbot run` | `[--config PATH]` | 启动 Bot |
+| `ncatbot dev` | `[--config PATH]` | 开发模式启动（debug + 热重载） |
+| `ncatbot` | — | 进入交互模式（REPL） |
+| `ncatbot config get <key>` | | 读取配置值 |
+| `ncatbot config set <key> <value>` | | 设置配置值 |
+| `ncatbot plugin list` | | 列出已安装插件 |
+| `ncatbot plugin install <name>` | | 安装插件 |
+| `ncatbot plugin remove <name>` | | 卸载插件 |
+
+## 本目录索引
+
+| 文件 | 说明 | 难度 |
+|------|------|------|
+| [1.commands.md](1.commands.md) | 命令详解（初始化 / 启动 / 插件与配置管理） | ⭐ |
+
+## 推荐阅读顺序
+
+1. 先读 [命令详解](1.commands.md) — 从零创建并运行 Bot，管理插件和配置
+
+
+---
+
+# 文件: 9. 测试指南\1. 快速开始.md
+
+---
+title: 快速入门：插件测试
+createTime: 2026/03/19 17:26:45
+permalink: /guide/aec0t56x/
+---
+
+> 5 分钟为你的插件编写第一个自动化测试
+
+---
+
+## 目录
+
+1. [前置条件](#1-前置条件)
+2. [测试目录结构](#2-测试目录结构)
+3. [第一个测试](#3-第一个测试)
+4. [事件工厂基础](#4-事件工厂基础)
+5. [运行测试](#5-运行测试)
+6. [关键概念速查](#6-关键概念速查)
+7. [下一步](#7-下一步)
+
+---
+
+## 1. 前置条件
+
+安装测试依赖：
+
+```bash
+uv pip install ncatbot55[test]
+```
+
+这会安装 `pytest`、`pytest-asyncio`、`pytest-cov` 等工具。
+
+在项目根目录的 `pyproject.toml` 中添加配置：
+
+```toml
+[tool.pytest.ini_options]
+asyncio_mode = "strict"
+testpaths = ["tests"]
+```
+
+> `asyncio_mode = "strict"` 要求所有异步测试显式标记 `@pytest.mark.asyncio` 或使用全局 `pytestmark`。
+
+---
+
+## 2. 测试目录结构
+
+推荐的项目结构：
 
 ```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-    
-    @command_registry.command("status", aliases=["stat", "st"], description="查看状态")
-    async def status_cmd(self, event: BaseMessageEvent):
-        """支持多个别名的命令"""
-        await event.reply("机器人运行正常")
-    
-    @command_registry.command("help", aliases=["h", "?"], description="帮助信息")
-    async def help_cmd(self, event: BaseMessageEvent):
-        await event.reply("可用命令: status, help, ping")
+my-bot/
+├── plugins/
+│   └── my_plugin/
+│       ├── manifest.toml
+│       └── main.py
+├── tests/
+│   ├── conftest.py          # 共享 fixtures
+│   └── test_my_plugin.py    # 插件测试
+├── main.py
+└── pyproject.toml
 ```
 
-### 4. 类外命令
+`conftest.py` 可以放共享的 fixture：
 
 ```python
-from ncatbot.core.event import BaseMessageEvent
+import pytest
+from pathlib import Path
 
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-# 
-@command_registry.command("status", aliases=["stat", "st"], description="查看状态")
-async def status_cmd(event: BaseMessageEvent):
-    """支持多个别名的命令"""
-    await event.reply("机器人运行正常")
+@pytest.fixture
+def plugin_dir():
+    return Path(__file__).resolve().parent.parent / "plugins"
 ```
 
-**使用方式**: `/status`, `/stat`, `/st` 都会触发同一个命令
-**注意**: 类外命令没有 `self` 参数，所以无法访问插件实例的属性和方法。推荐使用插件类成员方法。
+---
 
-## 📝 参数处理
+## 3. 第一个测试
 
-### 1. 基础参数类型
+创建 `tests/test_my_plugin.py`：
 
 ```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-    
-    @command_registry.command("echo")
-    async def echo_cmd(self, event: BaseMessageEvent, text: str):
-        """字符串参数"""
-        await event.reply(f"你说的是: {text}")
-    
-    @command_registry.command("add")
-    async def add_cmd(self, event: BaseMessageEvent, a: int, b: int):
-            """整数参数"""
-            await event.reply(f"{a} + {b} = {a + b}")
-        
-    @command_registry.command("calculate")
-    async def calc_cmd(self, event: BaseMessageEvent, x: float, y: float):
-        """浮点数参数"""
-        await event.reply(f"{x} * {y} = {x * y}")
-    
-    @command_registry.command("toggle")
-    async def toggle_cmd(self, event: BaseMessageEvent, enabled: bool):
-        """布尔参数"""
-        status = "开启" if enabled else "关闭"
-        await event.reply(f"功能已{status}")
+"""my_plugin 插件测试"""
+
+import pytest
+from pathlib import Path
+from ncatbot.testing import PluginTestHarness, group_message
+
+pytestmark = pytest.mark.asyncio
+
+PLUGIN_NAME = "my_plugin"
+
+
+@pytest.fixture
+def plugin_dir():
+    return Path(__file__).resolve().parent.parent / "plugins"
+
+
+async def test_plugin_loads(plugin_dir):
+    """插件可以正常加载"""
+    async with PluginTestHarness(
+        plugin_names=[PLUGIN_NAME],
+        plugin_dir=plugin_dir,
+    ) as h:
+        assert PLUGIN_NAME in h.loaded_plugins
+
+
+async def test_hello_command(plugin_dir):
+    """群里发 'hello' → 回复消息"""
+    async with PluginTestHarness(
+        plugin_names=[PLUGIN_NAME],
+        plugin_dir=plugin_dir,
+    ) as h:
+        # 1. 注入群消息事件
+        await h.inject(group_message("hello", group_id="100", user_id="99"))
+
+        # 2. 等待 handler 处理
+        await h.settle()
+
+        # 3. 断言 API 被调用
+        assert h.api_called("send_group_msg")
 ```
 
-**使用示例**:
-- `/echo 测试文本` → "你说的是: 测试文本"
-- `/add 10 20` → "10 + 20 = 30"
-- `/calculate 3.14 2.0` → "3.14 * 2.0 = 6.28"
-- `/toggle true` → "功能已开启"
+### 测试三件套
 
-### 2. 可选参数和默认值
+所有测试都遵循同一模式：
+
+```text
+inject → settle → assert
+```
+
+1. **inject** — 注入一个事件（模拟用户发消息 / 入群 / 加好友等）
+2. **settle** — 等待 handler 完成处理
+3. **assert** — 检查 MockAPI 是否收到了预期的调用
+
+---
+
+## 4. 事件工厂基础
+
+`ncatbot.testing` 提供 8 个工厂函数，快速构造测试事件：
 
 ```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-    
-    @command_registry.command("greet")
-        async def greet_cmd(self, event: BaseMessageEvent, name: str = "朋友"):
-            """带默认值的参数"""
-            await event.reply(f"你好，{name}！")
-        
-    @command_registry.command("repeat")
-    async def repeat_cmd(self, event: BaseMessageEvent, text: str, count: int = 1):
-        """多个参数，部分有默认值"""
-        await event.reply("\n".join([text] * count))
+from ncatbot.testing import group_message, private_message
+
+# 群消息 — 最常用
+event = group_message("hello", group_id="123", user_id="456")
+
+# 私聊消息
+event = private_message("hi", user_id="456")
 ```
 
-**使用示例**:
-- `/greet` → "你好，朋友！"
-- `/greet 小明` → "你好，小明！"
-- `/repeat Hello` → "Hello"
-- `/repeat Hello 3` → "Hello\nHello\nHello"
+所有工厂函数返回经过 `model_validate` 验证的合法数据模型，可直接注入 Harness。
 
-## 🎛️ 选项和命名参数
-
-通过使用选项和命名参数修饰器，可以更灵活地定义命令参数。能够接受现代化命令行的传参风格。
-
-### 1. 选项装饰器 (@option)
+自定义参数通过关键字参数传入，未指定的使用默认值：
 
 ```python
-from ncatbot.plugin_system import option
+# 使用默认值（group_id="100200", user_id="99999"）
+event = group_message("test")
 
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("deploy", description="部署应用")
-    @option(short_name="v", long_name="verbose", help="显示详细信息")
-    @option(short_name="f", long_name="force", help="强制部署")
-    async def deploy_cmd(self, event: BaseMessageEvent, app_name: str, 
-                    verbose: bool = False, force: bool = False):
-        result = f"部署应用: {app_name}"
-        if force:
-            result += " (强制模式)"
-        if verbose:
-            result += "\n详细信息: 开始部署流程..."
-        await event.reply(result)
+# 自定义发送者信息
+event = group_message(
+    "test",
+    group_id="888",
+    user_id="777",
+    nickname="自定义昵称",
+)
 ```
 
-**使用方式**:
-- `/deploy myapp` → "部署应用: myapp"
-- `/deploy myapp -v` → "部署应用: myapp\n详细信息: 开始部署流程..."
-- `/deploy myapp --verbose --force` → "部署应用: myapp (强制模式)\n详细信息: 开始部署流程..."
+---
 
-### 2. 命名参数 (@param)
+## 5. 运行测试
+
+```bash
+# 运行所有测试
+python -m pytest tests/ -v
+
+# 运行单个文件
+python -m pytest tests/test_my_plugin.py -v
+
+# 带覆盖率报告
+python -m pytest tests/ --cov=plugins --cov-report=term-missing
+```
+
+VSCode 中也可使用 Debug 配置运行测试（参见 [开发环境搭建](../../contributing/development_setup/1_advanced.md)）。
+
+---
+
+## 6. 关键概念速查
+
+| 概念 | 说明 |
+|------|------|
+| `PluginTestHarness` | 插件测试编排器，选择性加载指定插件，提供事件注入和 API 断言 |
+| `TestHarness` | 基础编排器（不加载插件），PluginTestHarness 的父类 |
+| `group_message()` | 事件工厂函数，构造群消息事件 |
+| `private_message()` | 事件工厂函数，构造私聊消息事件 |
+| `inject(event)` | 向 Harness 注入一个事件 |
+| `settle(delay)` | 等待 handler 处理完成（默认 0.05 秒） |
+| `api_called(action)` | 检查某个 API 是否被调用过 |
+| `api_call_count(action)` | 获取某个 API 的调用次数 |
+| `reset_api()` | 清空 API 调用记录（多步测试必备） |
+
+### API action 名称速查
+
+| action | 说明 |
+|--------|------|
+| `"send_group_msg"` | 发送群消息 |
+| `"send_private_msg"` | 发送私聊消息 |
+| `"delete_msg"` | 撤回消息 |
+| `"set_group_kick"` | 踢出群成员 |
+| `"set_group_ban"` | 群禁言 |
+
+> 完整列表参见 [MockBotAPI 参考](../../reference/testing/2_factory_scenario_mock.md)。
+
+---
+
+## 7. 下一步
+
+| 我想… | 去看 |
+|-------|------|
+| 深入了解 Harness 能力 | [Harness 详解](2.harness.md) |
+| 学习 Scenario 链式测试 | [工厂与场景](3.factory-scenario.md) |
+| 查完整 API 签名 | [测试 API 参考](../../reference/testing/) |
+
+
+---
+
+# 文件: 9. 测试指南\2. 测试工具.md
+
+---
+title: Harness 详解
+createTime: 2026/03/19 17:26:45
+permalink: /guide/lp4pyty0/
+---
+
+> TestHarness 与 PluginTestHarness 的完整使用指南
+
+---
+
+## 目录
+
+1. [TestHarness 生命周期](#1-testharness-生命周期)
+2. [事件注入](#2-事件注入)
+3. [API 断言](#3-api-断言)
+4. [Mock 响应配置](#4-mock-响应配置)
+5. [PluginTestHarness](#5-plugintestharness)
+6. [对比表](#6-对比表)
+7. [常见模式与陷阱](#7-常见模式与陷阱)
+
+---
+
+## 1. TestHarness 生命周期
+
+TestHarness 在后台启动一个完整的 `BotClient`（使用 `MockAdapter`），无需连接 NapCat。
+
+### async with（推荐）
 
 ```python
-from ncatbot.plugin_system import param
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("config", description="配置设置")
-    @param(name="env", default="dev", help="运行环境")
-    @param(name="port", default=8080, help="端口号")
-    async def config_cmd(self, event: BaseMessageEvent, env: str = "dev", port: int = 8080):
-        await event.reply(f"配置: 环境={env}, 端口={port}")
+async with TestHarness() as h:
+    # h.bot, h.adapter, h.mock_api, h.dispatcher 可用
+    await h.inject(group_message("hi"))
+    await h.settle()
+# 自动 stop
 ```
 
-**使用方式**:
-- `/config` → "配置: 环境=dev, 端口=8080"
-- `/config --env=prod` → "配置: 环境=prod, 端口=8080"
-- `/config --env=prod --port=9000` → "配置: 环境=prod, 端口=9000"
-
-### 3. 选项组 (@option_group)
+### 手动管理
 
 ```python
-from ncatbot.plugin_system import option_group
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("export", description="导出数据")
-    @option_group(choices=["json", "csv", "xml"], name="format", default="json", help="输出格式")
-    async def export_cmd(self, event: BaseMessageEvent, data_type: str, format: str = "json"):
-        await event.reply(f"导出 {data_type} 数据为 {format} 格式")
+h = TestHarness()
+await h.start()    # 启动 BotClient
+try:
+    # ... 测试逻辑 ...
+finally:
+    await h.stop()  # 停止 BotClient
 ```
 
-**使用方式**:
-- `/export users` → "导出 users 数据为 json 格式"
-- `/export users --csv` → "导出 users 数据为 csv 格式"
-- `/export users --xml` → "导出 users 数据为 xml 格式"
+### 内部做了什么
 
-## 🏗️ 命令组织
+- `start()` → 调用 `BotClient.run_async()`，启动 MockAdapter + Dispatcher + HandlerDispatcher
+- `stop()` → 调用 `BotClient.shutdown()`，停止所有后台任务
+- MockAdapter 替代了真实的 NapCat 连接，所有 API 调用被 `MockBotAPI` 记录
 
-### 1. 命令分组
+---
+
+## 2. 事件注入
+
+### 注入单个事件
 
 ```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    # 创建用户管理命令组
-    user_group = command_registry.group("user", description="用户管理命令")
-    
-    @user_group.command("list", description="列出所有用户")
-    async def user_list_cmd(self, event: BaseMessageEvent):
-        await event.reply("用户列表: user1, user2, user3")
-    
-    @user_group.command("info", description="查看用户信息")
-    async def user_info_cmd(self, event: BaseMessageEvent, user_id: str):
-        await event.reply(f"用户 {user_id} 的信息")
-    
-    # 创建系统管理命令组
-    system_group = command_registry.group("system", description="系统管理")
-    
-    @system_group.command("status", description="系统状态")
-    async def system_status_cmd(self, event: BaseMessageEvent):
-        await event.reply("系统运行正常")
+await h.inject(group_message("hello"))
 ```
 
-**使用方式**:
-- `/user list` → "用户列表: user1, user2, user3"
-- `/user info 123` → "用户 123 的信息"
-- `/system status` → "系统运行正常"
-
-### 2. 嵌套命令组
+### 注入多个事件
 
 ```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    # 创建主命令组（类属性）
-    admin_group = command_registry.group("admin", description="管理功能")
-    # 创建子命令组（类属性）
-    user_admin = admin_group.group("user", description="用户管理")
-    
-    @user_admin.command("ban", description="封禁用户")
-    async def ban_user_cmd(self, event: BaseMessageEvent, user_id: str):
-        await event.reply(f"已封禁用户: {user_id}")
-    
-    @user_admin.command("unban", description="解封用户")
-    async def unban_user_cmd(self, event: BaseMessageEvent, user_id: str):
-        await event.reply(f"已解封用户: {user_id}")
+await h.inject_many([
+    group_message("a"),
+    private_message("b"),
+    group_message("c"),
+])
 ```
 
-**使用方式**:
-- `/admin user ban 123` → "已封禁用户: 123"
-- `/admin user unban 123` → "已解封用户: 123"
+### settle — 等待处理
 
-### 3. 组命令别名（端点别名直达）
-
-命令组中的“端点命令”可以声明 `aliases`。这些别名会被提升为“根级别别名”，从而允许你绕过冗长的组前缀，直接触发端点命令。
+`settle()` 给 handler 一点时间执行（默认 50ms）：
 
 ```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    # 创建用户组
-    user_group = command_registry.group("user", description="用户管理命令")
-
-    @user_group.command("list", aliases=["ul"], description="列出所有用户")
-    async def user_list_cmd(self, event: BaseMessageEvent):
-        await event.reply("用户列表: user1, user2, user3")
-
-    @user_group.command("info", aliases=["ui"], description="查看用户信息")
-    async def user_info_cmd(self, event: BaseMessageEvent, user_id: str):
-        await event.reply(f"用户 {user_id} 的信息")
-
-    # 嵌套组：admin -> user
-    admin_group = command_registry.group("admin", description="管理功能")
-    user_admin = admin_group.group("user", description="用户管理")
-
-    @user_admin.command("ban", aliases=["aub"], description="封禁用户")
-    async def ban_user_cmd(self, event: BaseMessageEvent, user_id: str):
-        await event.reply(f"已封禁用户: {user_id}")
-
-    @user_admin.command("unban", aliases=["aun"], description="解封用户")
-    async def unban_user_cmd(self, event: BaseMessageEvent, user_id: str):
-        await event.reply(f"已解封用户: {user_id}")
+await h.settle()        # 默认 0.05 秒
+await h.settle(0.2)     # 复杂 handler 可增大
 ```
 
-**使用方式**:
-- 组路径调用：`/user list`、`/user info 123`、`/admin user ban 123`、`/admin user unban 123`
-- 别名直达：`/ul`、`/ui 123`、`/aub 123`、`/aun 123`
+> **何时增大 settle？** handler 中有 `asyncio.sleep()`、`self.wait_event()` 或多步对话时。
 
-## 🔧 高级功能
-
-### 1. 复杂参数组合
+### wait_event — 等待特定事件
 
 ```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-    
-    @command_registry.command("backup", description="数据备份")
-    @option(short_name="c", long_name="compress", help="压缩备份")
-    @option(short_name="e", long_name="encrypt", help="加密备份")
-    @param(name="path", default="/backup", help="备份路径")
-    @param(name="exclude", default="", help="排除文件")
-    async def backup_cmd(self, event: BaseMessageEvent, database: str,
-                    path: str = "/backup", exclude: str = "",
-                    compress: bool = False, encrypt: bool = False):
-        result = f"备份数据库 {database} 到 {path}"
-        
-        features = []
-        if compress:
-            features.append("压缩")
-        if encrypt:
-            features.append("加密")
-        if exclude:
-            features.append(f"排除: {exclude}")
-        
-        if features:
-            result += f" ({', '.join(features)})"
-        
-        await event.reply(result)
+event = await h.wait_event(
+    predicate=lambda e: e.type == "message.group",
+    timeout=2.0,
+)
 ```
 
-**使用方式**:
-- `/backup mydb` → "备份数据库 mydb 到 /backup"
-- `/backup mydb --path=/data/backup -c -e` → "备份数据库 mydb 到 /data/backup (压缩, 加密)"
-- `/backup mydb --exclude=logs` → "备份数据库 mydb 到 /backup (排除: logs)"
+---
 
-### 2. 条件参数
+## 3. API 断言
+
+所有 API 调用都被 `MockBotAPI` 记录为 `APICall(action, args, kwargs)`。
+
+### 基础断言
 
 ```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-    
-    @command_registry.command("send", description="发送消息")
-    @option(short_name="a", long_name="all", help="发送给所有人")
-    async def send_cmd(self, event: BaseMessageEvent, message: str, 
-                    target: str = "", all: bool = False):
-        if all:
-            await event.reply(f"广播消息: {message}")
-        elif target:
-            await event.reply(f"发送给 {target}: {message}")
-        else:
-            await event.reply(f"发送消息: {message} (默认发送给当前用户)")
+# 检查是否被调用
+assert h.api_called("send_group_msg")
+
+# 检查调用次数
+assert h.api_call_count("send_group_msg") == 1
+
+# 检查未被调用
+assert not h.api_called("set_group_kick")
 ```
 
-### 3. 自定义前缀
-
-可以通过 `command_registry.get_registry(prefixes=["!", "/"])` 来设置自定义前缀。
-
-通过该接口直接或间接注册的命令均会受到自定义前缀的影响。
+### 检查调用参数
 
 ```python
-from ncatbot.plugin_system import command_registry
+# 获取最近一次调用
+call = h.last_api_call("send_group_msg")
+print(call.action)   # "send_group_msg"
+print(call.args)     # (group_id, message)
+print(call.kwargs)   # 额外关键字参数
 
-my_registry = command_registry.get_registry(prefixes=["", "!"]) # 无前缀触发或者 ! 触发
-
-my_group = my_registry.group("my_group", description="无前缀组")
-
-@my_registry.command("non_prefix_hello")
-async def non_prefix_hello_cmd(event: BaseMessageEvent):
-    await event.reply("Hello, World!")
-
-@my_group.command("my_group_hello")
-async def my_group_hello_cmd(event: BaseMessageEvent):
-    await event.reply("Hello, Group World!")
+# 获取所有调用
+calls = h.get_api_calls("send_group_msg")
+for c in calls:
+    print(c.args, c.kwargs)
 ```
 
-- 使用方式: `non_prefix_hello`, `!my_group my_group_hello`
+### 重置调用记录
 
-## 📋 装饰器使用最佳实践
-
-### 1. 装饰器顺序
+多步测试中，用 `reset_api()` 隔离每步的断言：
 
 ```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
+await h.inject(group_message("step1"))
+await h.settle()
+assert h.api_called("send_group_msg")
 
-    # ✅ 正确的装饰器顺序
-    @admin_filter                    # 过滤器在最上面
-    @command_registry.command("admin")  # 命令注册器其次
-    @option("v", "verbose")        # 参数装饰器在最后
-    @param("level", default=1)
-    async def admin_cmd(self, event: BaseMessageEvent, level: int = 1, verbose: bool = False):
-        await event.reply(f"管理员命令，级别: {level}")
-    
-    # ❌ 错误的顺序（会导致错误）
-    # @command_registry.command("wrong")
-    # @admin_filter  # 过滤器装饰器应该在命令装饰器之前
+h.reset_api()  # 清空记录
+
+await h.inject(group_message("step2"))
+await h.settle()
+assert h.api_call_count("send_group_msg") == 1  # 只计 step2
 ```
 
-### 2. 参数命名规范
+---
+
+## 4. Mock 响应配置
+
+如果 handler 依赖 API 返回值，可预配置 Mock 响应：
 
 ```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        # ✅ 清晰的参数命名
-        pass
-    
-    @command_registry.command("create_user")
-    @param("role", default="user", help="用户角色")
-    @option("s", "send_email", help="发送欢迎邮件")
-    async def create_user_cmd(self, event: BaseMessageEvent, username: str, 
-                        role: str = "user", send_email: bool = False):
-        result = f"创建用户: {username}, 角色: {role}"
-        if send_email:
-            result += " (已发送欢迎邮件)"
-        await event.reply(result)
+# 配置 get_group_member_info 的返回值
+h.mock_api.set_response("get_group_member_info", {
+    "user_id": "99",
+    "nickname": "测试用户",
+    "role": "member",
+})
+
+# handler 中 await self.api.get_group_member_info(...) 会收到上面的 dict
 ```
 
-## 🔍 错误处理和调试
+未配置的 API 调用返回空 `{}`。
 
-### 1. 参数验证
+---
+
+## 5. PluginTestHarness
+
+`PluginTestHarness` 继承 `TestHarness`，增加了插件选择性加载和查询能力。
+
+### 构造参数
 
 ```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("divide")
-    async def divide_cmd(self, event: BaseMessageEvent, a: float, b: float):
-        """除法命令，包含错误处理"""
-        if b == 0:
-            await event.reply("错误: 除数不能为0")
-            return
-        
-        result = a / b
-        await event.reply(f"{a} ÷ {b} = {result}")
-    
-    @command_registry.command("age")
-    async def age_cmd(self, event: BaseMessageEvent, age: int):
-        """年龄验证"""
-        if age < 0 or age > 150:
-            await event.reply("错误: 请输入有效的年龄 (0-150)")
-            return
-        
-        await event.reply(f"您的年龄是: {age}")
+async with PluginTestHarness(
+    plugin_names=["hello_world"],       # 要加载的插件名
+    plugin_dir=Path("examples/qq/01_hello_world"),  # 插件根目录
+    skip_builtin=True,                  # 不加载内置插件（默认）
+    skip_pip=True,                      # 不安装 pip 依赖（默认）
+) as h:
+    ...
 ```
 
-### 2. 调试信息
+> **plugin_dir** 是包含插件文件夹的**父目录**。例如插件在 `examples/qq/01_hello_world/hello_world/` 下，则 `plugin_dir` 应为 `examples/qq/01_hello_world`。
+
+### 查询已加载的插件
 
 ```python
-from ncatbot.utils import get_log
+# 列出所有已加载的插件名
+print(h.loaded_plugins)  # ["hello_world"]
 
-LOG = get_log(__name__)
+# 获取插件实例
+plugin = h.get_plugin("hello_world")
 
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("debug")
-    async def debug_cmd(self, event: BaseMessageEvent, action: str):
-        """带调试信息的命令"""
-        LOG.debug(f"用户 {event.user_id} 执行调试命令: {action}")
-        
-        if action == "info":
-            await event.reply(f"调试信息: 用户ID={event.user_id}, 时间={event.time}")
-        elif action == "status":
-            await event.reply("调试状态: 正常")
-        else:
-            LOG.warning(f"未知的调试动作: {action}")
-            await event.reply("未知的调试动作")
+# 获取插件配置/数据
+config = h.plugin_config("hello_world")
+data = h.plugin_data("hello_world")
 ```
 
-## 📊 命令注册总结
+### 热重载
 
-### 支持的功能
+```python
+success = await h.reload_plugin("hello_world")
+assert success
+```
 
-| 功能 | 装饰器 | 示例 |
+### 传递依赖
+
+如果目标插件在 `manifest.toml` 中声明了 `[dependencies]`，`PluginTestHarness` 会自动解析并加载传递依赖。
+
+---
+
+## 6. 对比表
+
+| 能力 | TestHarness | PluginTestHarness |
+|------|:-----------:|:-----------------:|
+| 事件注入 | ✓ | ✓ |
+| API 断言 | ✓ | ✓ |
+| Mock 响应 | ✓ | ✓ |
+| 选择性加载插件 | ✗ | ✓ |
+| 插件状态查询 | ✗ | ✓ |
+| 热重载 | ✗ | ✓ |
+| skip_builtin / skip_pip | — | ✓ |
+
+> **插件开发者请始终使用 `PluginTestHarness`。** `TestHarness` 主要用于框架内部测试。
+
+---
+
+## 7. 常见模式与陷阱
+
+### ✅ 多步对话测试
+
+```python
+async with PluginTestHarness(...) as h:
+    await h.inject(group_message("注册", group_id="100", user_id="99"))
+    await h.settle(0.1)
+    assert h.api_called("send_group_msg")
+
+    h.reset_api()  # 关键：隔离每步断言
+    await h.inject(group_message("张三", group_id="100", user_id="99"))
+    await h.settle(0.1)
+    assert h.api_called("send_group_msg")
+```
+
+### ⚠️ settle 时间不足
+
+默认 `settle(0.05)` 对简单 handler 足够。如果断言失败，先尝试增大 settle：
+
+```python
+await h.settle(0.2)  # 复杂 handler
+await h.settle(0.5)  # 含 wait_event 的多步对话
+```
+
+### ⚠️ plugin_dir 路径错误
+
+```python
+# ✗ 错误：指向插件本身
+PluginTestHarness(plugin_names=["hello"], plugin_dir=Path("plugins/hello/"))
+
+# ✓ 正确：指向插件的父目录
+PluginTestHarness(plugin_names=["hello"], plugin_dir=Path("plugins/"))
+```
+
+### ⚠️ 同一测试中测试多个命令
+
+每个命令测试前用 `reset_api()` 清空记录，避免断言受之前调用的干扰。
+
+
+---
+
+# 文件: 9. 测试指南\3. 工厂与场景.md
+
+---
+title: 事件工厂与场景构建器
+createTime: 2026/03/19 17:26:45
+permalink: /guide/7hj5h6v3/
+---
+
+> 构造测试事件和声明式场景测试
+
+---
+
+## 目录
+
+1. [事件工厂](#1-事件工厂)
+2. [Scenario 构建器](#2-scenario-构建器)
+3. [组合场景示例](#3-组合场景示例)
+4. [自动冒烟测试](#4-自动冒烟测试)
+5. [NapCat E2E 简介](#5-napcat-e2e-简介)
+
+---
+
+## 1. 事件工厂
+
+`ncatbot.testing` 提供 8 个工厂函数，覆盖消息、请求、通知三大类事件。
+
+### 消息事件
+
+```python
+from ncatbot.testing import group_message, private_message
+
+# 群消息
+event = group_message("hello")
+event = group_message("hello", group_id="888", user_id="777", nickname="小明")
+
+# 私聊消息
+event = private_message("hi")
+event = private_message("hi", user_id="777")
+```
+
+### 请求事件
+
+```python
+from ncatbot.testing import friend_request, group_request
+
+# 好友请求
+event = friend_request(user_id="777", comment="我是小明")
+
+# 加群请求
+event = group_request(user_id="777", group_id="888", sub_type="add")
+```
+
+### 通知事件
+
+```python
+from ncatbot.testing import group_increase, group_decrease, group_ban, poke
+
+# 群成员增加
+event = group_increase(user_id="777", group_id="888")
+
+# 群成员减少（被踢）
+event = group_decrease(user_id="777", group_id="888", sub_type="kick")
+
+# 群禁言（10 分钟）
+event = group_ban(user_id="777", group_id="888", duration=600)
+
+# 戳一戳
+event = poke(user_id="777", target_id="10001", group_id="888")
+```
+
+### 默认值一览
+
+| 参数 | 默认值 | 说明 |
 |------|--------|------|
-| 基础命令 | `@command_registry.command()` | `@command_registry.command("hello")` |
-| 命令别名 | `aliases=[]` | `@command_registry.command("hi", aliases=["hello"])` |
-| 短选项 | `@option(short_name="")` | `@option("v", help="详细模式")` |
-| 长选项 | `@option(long_name="")` | `@option(long_name="verbose")` |
-| 命名参数 | `@param()` | `@param("env", default="dev")` |
-| 选项组 | `@option_group()` | `@option_group(choices=["a", "b"])` |
-| 命令组 | `command_registry.group()` | `user_group = command_registry.group("user")` |
+| `text` | `"hello"` | 仅消息事件 |
+| `group_id` | `"100200"` | 群号 |
+| `user_id` | `"99999"` | 发送者 QQ |
+| `self_id` | `"10001"` | Bot QQ |
+| `nickname` | `"测试用户"` | 仅消息事件 |
+| `message_id` | 自增 | 自动递增，无需手动指定 |
 
-### 参数类型支持
+### 自定义消息结构
 
-- ✅ `str` - 字符串
-- ✅ `int` - 整数  
-- ✅ `float` - 浮点数
-- ✅ `bool` - 布尔值
-- ✅ 默认值支持
-- ✅ 可选参数
+默认情况下，`group_message("hello")` 会生成纯文本消息段。如果需要自定义消息结构：
 
-## 🚦 下一步
+```python
+# 自定义 message 段（at + 文本）
+event = group_message(
+    "hello",
+    message=[
+        {"type": "at", "data": {"qq": "10001"}},
+        {"type": "text", "data": {"text": " hello"}},
+    ],
+    raw_message="[CQ:at,qq=10001] hello",
+)
+```
 
-现在您已经掌握了命令系统的使用！接下来可以：
+### **extra 扩展
 
-1. **学习参数解析**: 查看 [参数解析指南](./4.%20参数解析.md) 了解更多高级语法
-2. **查看实际应用**: 参考 [实战案例](./7.%20实战案例.md) 学习实用技巧
-3. **掌握最佳实践**: 阅读 [最佳实践](./8.%20最佳实践.md) 提升代码质量
+所有工厂函数支持 `**extra` 传入额外字段：
+
+```python
+event = group_message("hello", custom_field="value")
+```
+
+---
+
+## 2. Scenario 构建器
+
+`Scenario` 提供声明式链式 API，将「注入 → 等待 → 断言」流程写为可读的测试场景。
+
+### 基础用法
+
+```python
+from ncatbot.testing import Scenario, group_message
+
+await (
+    Scenario("群消息回复")
+    .inject(group_message("hello"))
+    .settle()
+    .assert_api_called("send_group_msg")
+    .run(harness)
+)
+```
+
+### 方法链一览
+
+| 方法 | 说明 |
+|------|------|
+| `.inject(event)` | 注入一个事件 |
+| `.inject_many(events)` | 注入多个事件 |
+| `.settle(delay=0.05)` | 等待 handler 处理 |
+| `.assert_api_called(action, **match)` | 断言 API 被调用，可选参数匹配 |
+| `.assert_api_not_called(action)` | 断言 API 未被调用 |
+| `.assert_api_count(action, count)` | 断言调用次数 |
+| `.assert_that(predicate, desc)` | 自定义断言（接收 harness） |
+| `.reset_api()` | 清空调用记录 |
+| `.run(harness)` | 执行场景（async） |
+
+### assert_api_called 参数匹配
+
+```python
+.assert_api_called("send_group_msg", group_id="888")
+```
+
+这会在所有 `send_group_msg` 调用中查找 `kwargs` 包含 `group_id="888"` 的调用。
+
+### 自定义断言
+
+```python
+def check_message_content(h):
+    call = h.last_api_call("send_group_msg")
+    assert "hello" in str(call.args)
+
+await (
+    Scenario("检查消息内容")
+    .inject(group_message("hello"))
+    .settle()
+    .assert_that(check_message_content, "回复中包含 hello")
+    .run(harness)
+)
+```
 
 ---
 
-**💡 提示**: 命令系统设计强调类型安全和声明式配置，充分利用 Python 的类型注解和装饰器特性。
+## 3. 组合场景示例
+
+### 多步对话
+
+```python
+await (
+    Scenario("注册流程")
+    .inject(group_message("注册", group_id="100", user_id="99"))
+    .settle(0.1)
+    .assert_api_called("send_group_msg")
+    .reset_api()
+    .inject(group_message("张三", group_id="100", user_id="99"))
+    .settle(0.1)
+    .assert_api_called("send_group_msg")
+    .run(harness)
+)
+```
+
+### 权限拦截
+
+```python
+await (
+    Scenario("非管理员被拦截")
+    .inject(group_message("/ban 777", group_id="100", user_id="99"))
+    .settle()
+    .assert_api_not_called("set_group_ban")
+    .run(harness)
+)
+```
+
+### 批量事件
+
+```python
+from ncatbot.testing import group_message, private_message
+
+await (
+    Scenario("多类型事件")
+    .inject_many([
+        group_message("a"),
+        private_message("b"),
+        group_message("c"),
+    ])
+    .settle(0.1)
+    .assert_api_count("send_group_msg", 2)
+    .assert_api_count("send_private_msg", 1)
+    .run(harness)
+)
+```
+
+---
+
+## 4. 自动冒烟测试
+
+`ncatbot.testing` 提供插件自动发现和冒烟测试代码生成。
+
+### discover_testable_plugins
+
+```python
+from ncatbot.testing import discover_testable_plugins
+
+manifests = discover_testable_plugins(Path("examples/"))
+for m in manifests:
+    print(m.name, m.version)
+```
+
+扫描目录下所有包含 `manifest.toml` 的子文件夹，返回 `PluginManifest` 列表。
+
+### generate_smoke_tests
+
+```python
+from ncatbot.testing import generate_smoke_tests
+
+code = generate_smoke_tests(manifests)
+Path("tests/test_smoke.py").write_text(code)
+```
+
+生成的冒烟测试为每个插件验证：
+- 加载成功
+- 卸载成功
+- 收到基础群消息不崩溃
+
+### pytest 插件集成
+
+在 `conftest.py` 中注册 pytest 插件，可使用 `--plugin-dir` 和 `@pytest.mark.plugin`：
+
+```python
+# conftest.py
+from ncatbot.testing import *  # noqa
+```
+
+```bash
+python -m pytest --plugin-dir=examples/ -v
+```
+
+---
+
+## 5. NapCat E2E 简介
+
+除了 Mock 环境下的离线测试，NcatBot 还支持连接真实 NapCat 的端到端测试。
+
+E2E 测试位于 `tests/e2e/napcat/run.py`，需要：
+
+- 运行中的 NapCat 实例
+- 配置环境变量：`NAPCAT_TEST_GROUP`、`NAPCAT_TEST_USER`
+
+```bash
+$env:NAPCAT_TEST_GROUP="123456"
+$env:NAPCAT_TEST_USER="654321"
+python tests/e2e/napcat/run.py
+```
+
+> NapCat E2E 测试主要用于框架开发者验证真实协议兼容性，插件开发者通常使用 Mock 测试即可。
+
+---
+
+## 相关资源
+
+| 资源 | 链接 |
+|------|------|
+| Harness 详解 | [2.harness.md](2.harness.md) |
+| 测试 API 参考 | [reference/testing/](../../reference/testing/) |
+| Factory + Mock 完整签名 | [reference/testing/2_factory_scenario_mock.md](../../reference/testing/2_factory_scenario_mock.md) |
 
 
 ---
 
-# 文件: 8. 高级教程\1. 统一命令注册器\4. 参数解析.md
+# 文件: 9. 测试指南\README.md
 
 ---
-title:  参数解析
-createTime: 2025/09/28 10:43:51
-permalink: /guide/pr65mq1x/
+title: 插件测试指南
+createTime: 2026/03/19 17:26:45
+permalink: /guide/2kgrpw5d/
 ---
-# UnifiedRegistry 参数解析指南
 
-## 🔧 参数解析系统概述
+> 为你的 NcatBot 插件编写自动化测试。
 
-UnifiedRegistry 的参数解析系统是一个强大的现代化命令行参数处理引擎，支持复杂的命令行语法、智能的类型转换和灵活的非文本元素处理。
+---
 
-## 🎯 核心特性
-
-### 支持的语法格式
-
-- **短选项**: `-v`, `-xvf` (组合选项)
-- **长选项**: `--verbose`, `--help`
-- **参数赋值**: `-p=1234`, `--env=prod`
-- **引用字符串**: `"包含空 格的文本"`
-- **转义序列**: `\"`, `\\`, `\n`, `\t`
-- **非文本元素**: 图片、@用户、表情等消息元素
+## Quick Reference
 
 ### 核心组件
 
-- **词法分析器** (`StringTokenizer`): 解析字符串为Token序列
-- **消息分词器** (`MessageTokenizer`): 处理混合消息元素
-- **参数绑定器** (`ArgumentBinder`): 将解析结果绑定到函数参数
-- **类型转换器**: 自动进行类型转换和验证
-
-## 📝 基础语法示例
-
-### 1. 简单参数
-
-```python
-from ncatbot.plugin_system import command_registry
-from ncatbot.core.event import BaseMessageEvent
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-    
-    @command_registry.command("echo")
-    async def echo_cmd(self, event: BaseMessageEvent, text: str):
-        await event.reply(f"你说的是: {text}")
-```
-
-**使用示例**:
-- `/echo hello` → "你说的是: hello"
-- `/echo 这是一段文本` → "你说的是: 这是一段文本"
-
-### 2. 多个参数
-
-```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-    
-    @command_registry.command("calc")
-    async def calc_cmd(self, event: BaseMessageEvent, a: int, op: str, b: int):
-        if op == "add":
-            await event.reply(f"{a} + {b} = {a + b}")
-        elif op == "sub":
-            await event.reply(f"{a} - {b} = {a - b}")
-        else:
-            await event.reply("支持的操作: add, sub")
-```
-
-**使用示例**:
-- `/calc 10 add 20` → "10 + 20 = 30"
-- `/calc 100 sub 50` → "100 - 50 = 50"
-
-### 3. 引用字符串
-
-```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("say")
-    async def say_cmd(self, event: BaseMessageEvent, message: str):
-        await event.reply(f"机器人说: {message}")
-```
-
-**使用示例**:
-- `/say "hello world"` → "机器人说: hello world"
-- `/say "包含 空格 的 消息"` → "机器人说: 包含 空格 的 消息"
-
-## 🎛️ 选项和参数语法
-
-### 1. 短选项
-
-```python
-from ncatbot.plugin_system import option
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("list")
-    @option(short_name="l", help="长格式显示")
-    @option(short_name="a", help="显示隐藏文件")
-    @option(short_name="h", help="人类可读格式")
-    async def list_cmd(self, event: BaseMessageEvent, path: str = ".", 
-                    l: bool = False, a: bool = False, h: bool = False):
-        result = f"列出目录: {path}"
-        
-        options = []
-        if l:
-            options.append("长格式")
-        if a:
-            options.append("显示隐藏")
-        if h:
-            options.append("人类可读")
-        
-        if options:
-            result += f" ({', '.join(options)})"
-        
-        await event.reply(result)
-```
-
-**使用示例**:
-- `/list` → "列出目录: ."
-- `/list -l` → "列出目录: . (长格式)"
-- `/list -la` → "列出目录: . (长格式, 显示隐藏)"
-- `/list -lah /home` → "列出目录: /home (长格式, 显示隐藏, 人类可读)"（这里 /home 是一个位置参数，传递给 path 参数）
-
-### 2. 长选项
-
-```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("backup")
-    @option(long_name="compress", help="压缩备份文件")
-    @option(long_name="encrypt", help="加密备份文件")
-    @option(long_name="verify", help="验证备份完整性")
-    async def backup_cmd(self, event: BaseMessageEvent, source: str,
-                    compress: bool = False, encrypt: bool = False, verify: bool = False):
-        result = f"备份 {source}"
-        
-        features = []
-        if compress:
-            features.append("压缩")
-        if encrypt:
-            features.append("加密")
-        if verify:
-            features.append("验证")
-        
-        if features:
-            result += f" [{', '.join(features)}]"
-        
-        await event.reply(result)
-```
-
-**使用示例**:
-- `/backup /data` → "备份 /data"
-- `/backup /data --compress` → "备份 /data [压缩]"
-- `/backup /data --compress --encrypt` → "备份 /data [压缩, 加密]"
-
-### 3. 参数赋值
-
-```python
-from ncatbot.plugin_system import param
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("deploy")
-    @param(name="env", default="dev", help="部署环境")
-    @param(name="port", default=8080, help="端口号")
-    @param(name="workers", default=4, help="工作进程数")
-    async def deploy_cmd(self, event: BaseMessageEvent, app: str,
-                    env: str = "dev", port: int = 8080, workers: int = 4):
-        await event.reply(f"部署 {app}: 环境={env}, 端口={port}, 进程={workers}")
-```
-
-**使用示例**:
-- `/deploy myapp` → "部署 myapp: 环境=dev, 端口=8080, 进程=4"
-- `/deploy myapp --env=prod` → "部署 myapp: 环境=prod, 端口=8080, 进程=4"
-- `/deploy myapp --env=prod --port=9000 --workers=8` → "部署 myapp: 环境=prod, 端口=9000, 进程=8"
-
-### 4. 复杂组合语法
-
-```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("process")
-    @option(short_name="v", long_name="verbose", help="详细输出")
-    @option(short_name="f", long_name="force", help="强制执行")
-    @param(name="output", default="result.txt", help="输出文件")
-    @param(name="format", default="json", help="输出格式")
-    async def process_cmd(self, event: BaseMessageEvent, input_file: str,
-                    output: str = "result.txt", format: str = "json",
-                    verbose: bool = False, force: bool = False):
-        result = f"处理文件: {input_file} → {output} ({format}格式)"
-        
-        if verbose:
-            result += " [详细模式]"
-        if force:
-            result += " [强制模式]"
-        
-        await event.reply(result)
-```
-
-**使用示例**:
-- `/process data.csv` → "处理文件: data.csv → result.txt (json格式)"
-- `/process data.csv -v --output=output.xml --format=xml` → "处理文件: data.csv → output.xml (xml格式) [详细模式]"
-- `/process "my file.txt" --force -v` → "处理文件: my file.txt → result.txt (json格式) [详细模式] [强制模式]"
-
-## 🔄 类型转换系统
-
-### 1. 自动类型转换
-
-```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("math")
-    async def math_cmd(self, event: BaseMessageEvent, a: int, b: float, c: bool):
-        """演示不同类型的自动转换"""
-        result = f"整数: {a} (类型: {type(a).__name__})\n"
-        result += f"浮点数: {b} (类型: {type(b).__name__})\n"
-        result += f"布尔值: {c} (类型: {type(c).__name__})"
-        await event.reply(result)
-```
-
-**使用示例**:
-- `/math 42 3.14 true` → "整数: 42 (类型: int)\n浮点数: 3.14 (类型: float)\n布尔值: True (类型: bool)"
-- `/math 100 2.5 false` → "整数: 100 (类型: int)\n浮点数: 2.5 (类型: float)\n布尔值: False (类型: bool)"
-
-### 2. 布尔值处理
-
-```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("toggle")
-    async def toggle_cmd(self, event: BaseMessageEvent, feature: str, enabled: bool):
-        status = "启用" if enabled else "禁用"
-        await event.reply(f"功能 '{feature}' 已{status}")
-```
-
-**布尔值识别规则**:
-- **True**: any other value
-- **False**: `false`, `False`, `0`
-
-**使用示例**:
-- `/toggle logging true` → "功能 'logging' 已启用"
-- `/toggle debug false` → "功能 'debug' 已禁用"
-- `/toggle cache 1` → "功能 'cache' 已启用"
-
-### 3. 错误处理
-
-```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("divide")
-    async def divide_cmd(self, event: BaseMessageEvent, a: float, b: float):
-        """带错误处理的数学运算"""
-        try:
-            if b == 0:
-                await event.reply("❌ 错误: 除数不能为0")
-                return
-            result = a / b
-            await event.reply(f"✅ {a} ÷ {b} = {result}")
-        except Exception as e:
-            await event.reply(f"❌ 计算错误: {e}")
-```
-
-## 🖼️ 非文本元素处理
-
-### 1. 图片参数
-
-```python
-from ncatbot.core.event.message_segment import Image
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("analyze")
-    async def analyze_cmd(self, event: BaseMessageEvent, description: str, image: Image):
-        """分析图片（示例，实际需要图片处理逻辑）"""
-        await event.reply(f"分析图片: {description}\n图片信息: {image.file}")
-```
-
-**使用方式**: `/analyze "这是一张风景图" [图片]`
-
-### 2. @用户参数
-
-```python
-from ncatbot.core.event.message_segment import At
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("mention")
-    async def mention_cmd(self, event: BaseMessageEvent, message: str, user: At):
-        """提及用户"""
-        await event.reply(f"发送消息给 @{user.qq}: {message}")
-```
-
-**使用方式**: `/mention "你好" @某用户`
-
-## 🔧 高级语法特性
-
-### 1. 转义字符支持
-
-```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("format")
-    async def format_cmd(self, event: BaseMessageEvent, text: str):
-        """支持转义字符的格式化"""
-        # 处理常见转义字符
-        formatted = text.replace('\\n', '\n').replace('\\t', '\t')
-        await event.reply(f"格式化结果:\n{formatted}")
-```
-
-**使用示例**:
-- `/format "第一行\n第二行"`
-- `/format "名称\t值"`
-
-### 2. 引号嵌套
-
-TODO: 支持性存疑
-
-```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("quote")
-    async def quote_cmd(self, event: BaseMessageEvent, text: str):
-        """处理引号嵌套"""
-        await event.reply(f"引用内容: {text}")
-```
-
-**使用示例**:
-- `/quote "他说: \"你好\""` → "引用内容: 他说: "你好""
-- `/quote "包含\"双引号\"的文本"` → "引用内容: 包含"双引号"的文本"
-
-### 3. 复杂命令行
-
-```python
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("build")
-    @option(short_name="v", long_name="verbose")
-    @option(short_name="c", long_name="clean")
-    @param(name="output", default="dist")
-    @param(name="target", default="all")
-    async def build_cmd(self, event: BaseMessageEvent, project: str,
-                  output: str = "dist", target: str = "all",
-                  verbose: bool = False, clean: bool = False):
-        """复杂的构建命令"""
-        result = f"构建项目: {project}"
-        result += f"\n目标: {target}"
-        result += f"\n输出: {output}"
-        
-        if clean:
-            result += "\n🧹 执行清理"
-        if verbose:
-            result += "\n📝 详细输出模式"
-        
-        await event.reply(result)
-```
-
-**使用示例**:
-- `/build myproject` → 基础构建
-- `/build myproject --output="build/release" --target=production -vc` → 完整构建
-- `/build "My Project" --clean -v --output="/path/to/build"` → 带引号的项目名
-
-## 📊 语法总结表
-
-| 语法类型 | 格式 | 示例 | 说明 |
-|----------|------|------|------|
-| 短选项 | `-x` | `-v`, `-f` | 单字符选项 |
-| 组合短选项 | `-xyz` | `-vfq` | 多个短选项组合 |
-| 长选项 | `--option` | `--verbose` | 完整单词选项 |
-| 短选项赋值 | `-x=value` | `-p=8080` | 短选项带值 |
-| 长选项赋值 | `--option=value` | `--env=prod` | 长选项带值 |
-| 双引号字符串 | `"text"` | `"hello world"` | 包含空格的文本 |
-| 转义字符 | `\"`, `\\` | `"say \"hi\""` | 转义特殊字符 |
-| 非文本元素 | `[图片]`, `@用户` | `analyze [图片]` | 消息中的媒体元素 |
-
-## 🔍 未来期望特性
-
-- 通过类型注解而非装饰器来定义参数
-- 支持可变参数和额外命名参数
-
-## 🚦 下一步
-
-掌握参数解析系统后，您可以：
-
-1. **应用实践**: 查看 [实战案例](./7.%20实战案例.md) 学习复杂应用
-2. **提升质量**: 阅读 [最佳实践](./8.%20最佳实践.md) 优化代码
-3. **测试验证**: 参考 [测试指南](./6.%20测试指南.md) 确保功能正确
-
----
-
-**💡 提示**: 参数解析系统的强大之处在于它能够处理复杂的命令行语法，同时保持代码的简洁性。充分利用类型注解可以获得更好的开发体验。
-
-
----
-
-# 文件: 8. 高级教程\1. 统一命令注册器\5. 过滤器系统.md
-
----
-title:  过滤器系统
-createTime: 2025/09/28 10:43:51
-permalink: /guide/sq2aivrw/
----
-# UnifiedRegistry 过滤器系统指南
-
-## 🛡️ 过滤器系统概述
-
-过滤器系统是 UnifiedRegistry 的核心安全和权限控制机制。它允许您在命令执行前进行各种检查，如权限验证、消息类型过滤、自定义条件判断等。
-
-过滤器系统也可以用来定义**非命令的功能**，如果一个函数没有被 `@command_registry.command` 装饰，但是有装饰器装饰。当消息事件发生时，只要能通过过滤器，那么这个函数就会被调用。
-
-## 🎯 核心概念
-
-### 过滤器工作原理
-
-1. **拦截机制**: 过滤器在命令执行前运行
-2. **链式验证**: 多个过滤器按顺序执行，全部通过才允许命令执行
-3. **早期返回**: 任何一个过滤器失败，命令立即被拦截
-4. **无副作用**: 过滤器只做检查，不修改数据
-
-### 过滤器类型
-
-- **内置过滤器**: 系统提供的常用过滤器
-- **装饰器过滤器**: 使用装饰器语法的便捷过滤器
-- **自定义过滤器**: 您可以创建的自定义过滤逻辑
-
-## 🔧 内置过滤器详解
-
-### 1. GroupFilter/PrivateFilter - 群聊过滤器/私聊过滤器
-
-```python
-from ncatbot.plugin_system.builtin_plugin.unified_registry.filter_system import GroupFilter
-from ncatbot.plugin_system import group_filter
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    # 可以在插件类中定义
-    @group_filter
-    async def group_message(self, event: BaseMessageEvent):
-        await event.reply("收到一条群聊消息")
-    
-# 也可以在插件类外定义
-@private_filter
-async def private_message(event: BaseMessageEvent):
-    await event.reply("收到一条私聊消息")
-        
-```
-
-**功能**: 只允许在群聊中使用的命令
-**使用场景**: 群管理、群游戏、群公告等
-
-
-### 2. AdminFilter - 管理员过滤器
-
-只允许 **Bot管理员** 使用的命令。
-
-```python
-from ncatbot.plugin_system import admin_filter
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    # 可以和 command 组合使用，作为额外的判断条件
-    @admin_filter
-    @command_registry.command("ban")
-    async def ban_command(self, event: BaseMessageEvent, user_id: str):
-        await event.reply(f"已封禁用户: {user_id}")
-    
-    # 也可以单独使用，消息只要满足过滤器就触发回调
-    @admin_filter
-    async def admin_message(self, event: BaseMessageEvent):
-        await event.reply("收到一条管理员消息")
-```
-
-**功能**: 只允许管理员使用的命令
-**前置条件**: 需要配置权限管理系统
-**使用场景**: 系统管理、用户管理、配置修改等
-
-### 3. RootFilter - Root权限过滤器
-
-只允许 **Root用户** 使用的命令。（root 用户只能在代码里指定）
-
-```python
-from ncatbot.plugin_system import root_filter
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @root_filter
-    @command_registry.command("shutdown")
-    async def shutdown_command(self, event: BaseMessageEvent):
-        await event.reply("正在关闭机器人...")
-    
-```
-
-**功能**: 只允许 Root 用户使用的命令
-**使用场景**: 系统级操作、调试功能、危险操作等
-
-### 4. TrueFilter - 消息专用过滤器
-
-用于在发送消息时回调一个指定的函数。
-
-```python
-from ncatbot.plugin_system import on_message
-
-@on_message
-async def on_message_callback(event: BaseMessageEvent):
-    await event.reply("收到一条消息")
-```
-
-### 5. EventTypeFilters - 事件类型过滤器
-
-用于过滤特定的事件。
-
-包括以下几个过滤器：
-
-- `@on_request` - 请求事件
-- `@on_notice` - 通知事件
-- `@on_group_poke` - 群戳一戳
-- `@on_group_at` - 机器人被@
-- `@on_group_increase` - 群成员入群
-- `@on_group_request` - 群请求事件
-
-## 🔗 过滤器组合使用
-
-### 组合装饰器
-
-```python
-from ncatbot.plugin_system import (
-    group_filter, admin_filter, private_filter, admin_group_filter, admin_private_filter
-)
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    # 管理员 + 群聊
-    @admin_group_filter  # 等同于 @admin_filter + @group_filter
-    @command_registry.command("grouppromote")
-    async def group_promote_command(self, event: BaseMessageEvent, user_id: str):
-        await event.reply(f"在群聊中提升用户权限: {user_id}")
-    
-    # 管理员 + 私聊
-    @admin_private_filter  # 等同于 @admin_filter + @private_filter
-    @command_registry.command("adminpanel")
-    async def admin_panel_command(self, event: BaseMessageEvent):
-        await event.reply("管理员私聊面板")
-    
-    # 手动组合多个过滤器
-    @admin_filter
-    @group_filter
-    async def group_admin_command(self, event: BaseMessageEvent):
-        await event.reply("收到一条管理员发送的群聊消息")
-        
-```
-
-### 一次性注册多个过滤器
-
-```python
-from ncatbot.plugin_system.builtin_plugin.unified_registry.filter_system import filter_registry
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    # 过滤器按从上到下的顺序执行
-    @filter_registry.filters("admin_filter", "group_filter")
-    @command_registry.command("order")
-    async def order_command(self, event: BaseMessageEvent):
-        """执行顺序: group_filter -> admin_filter -> 命令函数"""
-        await event.reply("多重过滤器命令")
-```
-
-## 🛠️ 自定义过滤器
-
-### 1. 使用 CustomFilter
-
-自定义过滤器时，过滤器函数**只接受一个 `BaseMessageEvent` 基类型对象作为参数**。返回 `bool` 类型，表示是否通过过滤器。
-
-实际类型可以是 `GroupMessageEvent`、`PrivateMessageEvent`。
-
-查看[有关数据结构](../../4.%20数据结构介绍/2.%20BaseEventData.md#BaseMessageEvent（消息事件基类）)了解更多。
-
-
-```python
-from ncatbot.plugin_system.builtin_plugin.unified_registry.filter_system import CustomFilter
-from ncatbot.plugin_system.builtin_plugin.unified_registry.filter_system import filter_registry
-
-@filter_registry.register("time_filter")
-def time_filter(event: BaseMessageEvent) -> bool:
-    import datetime
-    current_hour = datetime.datetime.now().hour
-    return 9 <= current_hour <= 22  # 只在9:00-22:00之间可用
-
-@filter_registry.register("keyword_filter")
-def keyword_filter(event: BaseMessageEvent) -> bool:
-    return "机器人" in (event.raw_message or "")
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-
-@filter_registry.filters("time_filter")
-async def time_filter_command(event: BaseMessageEvent):
-    await event.reply("当前时间允许使用此命令")
-
-# 插件类外，除了装饰器，还可以使用函数添加自定义过滤器
-filter_registry.add_filter_to_function(
-    time_check_command, 
-    "keyword_filter"
-)
-```
-
-### 2. 注册过滤器函数
-
-```python
-from ncatbot.plugin_system.builtin_plugin.unified_registry.filter_system import filter_registry
-
-# 注册过滤器函数，注意一般不能在类中注册，过滤器函数不接受 self 参数
-@filter_registry.register("vip_filter")
-def vip_filter(event: BaseMessageEvent) -> bool:
-    # 检查用户是否为VIP（这里只是示例）
-    vip_users = ["123456", "789012"]
-    return event.user_id in vip_users
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-        
-    # 使用注册的过滤器
-    @command_registry.command("vip")
-    async def vip_command(self, event: BaseMessageEvent):
-        await event.reply("VIP专属功能")
-        
-    # 通过名称添加过滤器
-    filter_registry.add_filter_to_function(vip_command, "vip_filter")
-```
-
-### 3. 创建过滤器类
-
-```python
-from ncatbot.plugin_system.builtin_plugin.unified_registry.filter_system import BaseFilter
-
-class LevelFilter(BaseFilter):
-    """用户等级过滤器"""
-    
-    def __init__(self, min_level: int):
-        super().__init__(f"level_{min_level}")
-        self.min_level = min_level
-    
-    def check(self, event: BaseMessageEvent) -> bool:
-        # 这里应该从数据库或其他地方获取用户等级
-        user_level = self.get_user_level(event.user_id)
-        return user_level >= self.min_level
-    
-    def get_user_level(self, user_id: str) -> int:
-        # 模拟获取用户等级
-        return 1  # 实际应用中从数据库获取
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    # 过滤器类可以直接作为装饰器使用
-    @LevelFilter(min_level=5)
-    async def high_level_command(self, event: BaseMessageEvent):
-        await event.reply("收到一条高等级用户的消息")
-        
-```
-
-## 📚 常用过滤器模式
-
-### 1. 冷却时间控制
-
-```python
-from ncatbot.core import BaseMessageEvent
-from ncatbot.plugin_system import NcatBotPlugin, command_registry
-from ncatbot.plugin_system.builtin_plugin.unified_registry import BaseFilter
-
-class CooldownFilter(BaseFilter):
-    """冷却时间过滤器"""
-    def __init__(self, cd: float):
-        super().__init__()
-        self.cd = cd  # 记录冷却时间
-        self.last_use = {}  # 记录上次使用时间
-
-    def check(self, event: BaseMessageEvent) -> bool:
-        import time
-        user_id = event.user_id
-        current_time = time.time()
-
-        if user_id in self.last_use:
-            if current_time - self.last_use[user_id] < self.cd:
-                return False  # 还在冷却中
-
-        self.last_use[user_id] = current_time
-        return True
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @CooldownFilter(60)  # 冷却时间设置为60秒
-    @command_registry.command("limited")
-    async def limited_command(self, event: BaseMessageEvent):
-        await event.reply("有冷却限制的命令")
-```
-
-## 🚦 下一步
-
-掌握过滤器系统后，您可以：
-
-1. **学习命令系统**: 查看 [命令注册系统指南](3.%20命令系统.md)
-2. **了解参数处理**: 阅读 [参数解析指南](4.%20参数解析.md)
-3. **查看实际应用**: 参考 [实战案例](7.%20实战案例.md)
-
----
-
-**💡 提示**: 过滤器是 UnifiedRegistry 的强大功能，合理使用可以大大提升插件的安全性和用户体验。
-
-
----
-
-# 文件: 8. 高级教程\1. 统一命令注册器\6. 测试指南.md
-
----
-title:  测试指南
-createTime: 2025/09/28 10:43:51
-permalink: /guide/lgtouqko/
----
-# UnifiedRegistry 测试指南
-
-## 🚀 快速开始
-
-### 基础测试模板
-
-```python
-import asyncio
-from ncatbot.utils.testing import TestClient, TestHelper
-from ncatbot.plugin_system import command_registry
-from ncatbot.core.event import BaseMessageEvent
-
-async def test_plugin():
-    # 1. 创建测试环境
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    
-    # 2. 注册插件
-    client.register_plugin(YourPlugin)
-    
-    # 3. 发送测试命令
-    await helper.send_private_message("/hello")
-    
-    # 4. 验证结果
-    reply = helper.get_latest_reply()
-    assert reply is not None, "应该收到回复"
-    
-    text = extract_text(reply["message"])
-    assert "你好" in text, "回复应包含问候语"
-    
-    print("✅ 测试通过")
-
-def extract_text(message_segments):
-    """提取消息文本"""
-    return "".join(seg.get("data", {}).get("text", "") 
-                   for seg in message_segments 
-                   if seg.get("type") == "text")
-
-if __name__ == "__main__":
-    asyncio.run(test_plugin())
-```
-
-## 📋 核心测试场景
-
-### 1. 命令功能测试
-
-```python
-# 测试插件示例
-class TestPlugin(NcatBotPlugin):
-    name = "TestPlugin"
-    version = "1.0.0"
-    
-    async def on_load(self):
-        pass
-
-    @command_registry.command("hello")
-    async def hello_cmd(self, event: BaseMessageEvent):
-        await event.reply("你好！")
-    
-    @command_registry.command("echo")
-    async def echo_cmd(self, event: BaseMessageEvent, text: str):
-        await event.reply(f"回声: {text}")
-    
-    @command_registry.command("calc")
-    async def calc_cmd(self, event: BaseMessageEvent, a: int, b: int, op: str = "add"):
-        if op == "add":
-            await event.reply(f"结果: {a + b}")
-        else:
-            await event.reply(f"不支持的操作: {op}")
-
-async def test_commands():
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    client.register_plugin(TestPlugin)
-    
-    # 测试基础命令
-    await helper.send_private_message("/hello")
-    assert_reply_contains(helper, "你好")
-    
-    # 测试带参数命令
-    await helper.send_private_message("/echo 测试文本")
-    assert_reply_contains(helper, "测试文本")
-    
-    # 测试复杂参数
-    await helper.send_private_message("/calc 5 3")
-    assert_reply_contains(helper, "8")
-    
-    print("✅ 命令测试通过")
-
-def assert_reply_contains(helper, expected_text):
-    """断言回复包含指定文本"""
-    reply = helper.get_latest_reply()
-    assert reply is not None, "应该收到回复"
-    text = extract_text(reply["message"])
-    assert expected_text in text, f"期望包含: '{expected_text}', 实际: '{text}'"
-    helper.clear_history()
-```
-
-### 2. 过滤器测试
-
-```python
-from ncatbot.plugin_system import group_filter, admin_filter
-
-class FilterTestPlugin(NcatBotPlugin):
-    name = "FilterTestPlugin"
-    version = "1.0.0"
-    
-    async def on_load(self):
-        @group_filter
-        @command_registry.command("group_cmd")
-        async def group_cmd(self, event: BaseMessageEvent):
-            await event.reply("这是群聊命令")
-        
-        @admin_filter
-        @command_registry.command("admin_cmd")
-        async def admin_cmd(self, event: BaseMessageEvent):
-            await event.reply("管理员命令")
-
-async def test_filters():
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    client.register_plugin(FilterTestPlugin)
-    
-    # 测试群聊过滤器 - 私聊中应该被拒绝
-    await helper.send_private_message("/group_cmd")
-    reply = helper.get_latest_reply()
-    assert reply is None, "群聊命令在私聊中应该被过滤"
-    
-    # 测试群聊过滤器 - 群聊中应该通过
-    await helper.send_group_message("/group_cmd", group_id="test_group")
-    reply = helper.get_latest_reply()
-    assert reply is not None, "群聊命令在群聊中应该有回复"
-    
-    print("✅ 过滤器测试通过")
-```
-
-### 3. 错误处理测试
-
-```python
-async def test_error_handling():
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    client.register_plugin(TestPlugin)
-    
-    # 测试参数不足
-    await helper.send_private_message("/calc 5")  # 缺少参数
-    reply = helper.get_latest_reply()
-    assert reply is not None, "应该返回错误提示"
-    text = extract_text(reply["message"])
-    assert "错误" in text or "参数" in text, "应该包含错误信息"
-    
-    # 测试类型错误
-    await helper.send_private_message("/calc abc def")  # 类型错误
-    reply = helper.get_latest_reply()
-    assert reply is not None, "应该返回类型错误提示"
-    
-    print("✅ 错误处理测试通过")
-```
-
-## 🔧 实用工具函数
-
-```python
-# 通用测试辅助函数
-async def test_command_with_assertion(helper, command, expected_response):
-    """通用命令测试"""
-    await helper.send_private_message(command)
-    assert_reply_contains(helper, expected_response)
-
-def assert_no_reply(helper):
-    """断言没有回复"""
-    reply = helper.get_latest_reply()
-    assert reply is None, "不应该有回复"
-
-async def test_multiple_commands(helper, test_cases):
-    """批量测试命令"""
-    for command, expected in test_cases:
-        await test_command_with_assertion(helper, command, expected)
-    print(f"✅ 批量测试通过 ({len(test_cases)} 个用例)")
-
-# 使用示例
-async def batch_test():
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    client.register_plugin(TestPlugin)
-    
-    test_cases = [
-        ("/hello", "你好"),
-        ("/echo 测试", "测试"),
-        ("/calc 2 3", "5"),
-    ]
-    
-    await test_multiple_commands(helper, test_cases)
-```
-
-## 📊 测试组织
-
-### 完整测试套件
-
-```python
-class PluginTestSuite:
-    def __init__(self, plugin_class):
-        self.plugin_class = plugin_class
-        self.results = {"passed": 0, "failed": 0, "errors": []}
-    
-    async def run_all_tests(self):
-        """运行所有测试"""
-        tests = [
-            ("基础命令", self.test_basic_commands),
-            ("参数处理", self.test_parameters),
-            ("过滤器", self.test_filters),
-            ("错误处理", self.test_error_handling),
-        ]
-        
-        for test_name, test_func in tests:
-            try:
-                await test_func()
-                self.results["passed"] += 1
-                print(f"✅ {test_name} 通过")
-            except Exception as e:
-                self.results["failed"] += 1
-                self.results["errors"].append(f"{test_name}: {e}")
-                print(f"❌ {test_name} 失败: {e}")
-        
-        self.print_summary()
-    
-    async def test_basic_commands(self):
-        """基础命令测试"""
-        client = TestClient()
-        helper = TestHelper(client)
-        client.start()
-        client.register_plugin(self.plugin_class)
-        
-        # 在这里添加具体测试逻辑
-        await helper.send_private_message("/hello")
-        assert helper.get_latest_reply() is not None
-    
-    async def test_parameters(self):
-        """参数测试"""
-        # 实现参数相关测试
-        pass
-    
-    async def test_filters(self):
-        """过滤器测试"""
-        # 实现过滤器相关测试
-        pass
-    
-    async def test_error_handling(self):
-        """错误处理测试"""
-        # 实现错误处理相关测试
-        pass
-    
-    def print_summary(self):
-        """打印测试摘要"""
-        total = self.results["passed"] + self.results["failed"]
-        print(f"\n📊 测试摘要: {self.results['passed']}/{total} 通过")
-        if self.results["errors"]:
-            print("❌ 失败详情:")
-            for error in self.results["errors"]:
-                print(f"  - {error}")
-
-# 使用测试套件
-async def run_test_suite():
-    suite = PluginTestSuite(TestPlugin)
-    await suite.run_all_tests()
-
-if __name__ == "__main__":
-    asyncio.run(run_test_suite())
-```
-
-## 🎯 测试最佳实践
-
-### 1. 测试隔离
-```python
-async def isolated_test():
-    """每个测试使用独立环境"""
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    
-    try:
-        client.register_plugin(TestPlugin)
-        # 执行测试
-        await helper.send_private_message("/test")
-        # 断言结果
-    finally:
-        helper.clear_history()  # 清理历史
-```
-
-### 2. 数据驱动测试
-```python
-async def data_driven_test():
-    """使用测试数据驱动"""
-    test_data = [
-        {"input": "/calc 1 2", "expected": "3"},
-        {"input": "/calc 10 5", "expected": "15"},
-        {"input": "/hello", "expected": "你好"},
-    ]
-    
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    client.register_plugin(TestPlugin)
-    
-    for case in test_data:
-        await helper.send_private_message(case["input"])
-        assert_reply_contains(helper, case["expected"])
-```
-
-### 3. 测试装饰器
-```python
-from functools import wraps
-
-def plugin_test(plugin_class):
-    """测试装饰器"""
-    def decorator(test_func):
-        @wraps(test_func)
-        async def wrapper():
-            client = TestClient()
-            helper = TestHelper(client)
-            client.start()
-            client.register_plugin(plugin_class)
-            
-            try:
-                await test_func(client, helper)
-                print(f"✅ {test_func.__name__} 通过")
-            except Exception as e:
-                print(f"❌ {test_func.__name__} 失败: {e}")
-                raise
-        return wrapper
-    return decorator
-
-@plugin_test(TestPlugin)
-async def test_with_decorator(client, helper):
-    """使用装饰器的测试"""
-    await helper.send_private_message("/hello")
-    assert helper.get_latest_reply() is not None
-```
-
-## 📝 调试技巧
-
-### 1. 交互式测试
-```python
-async def interactive_debug():
-    """交互式调试"""
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    client.register_plugin(TestPlugin)
-    
-    print("输入命令测试，输入 'exit' 退出")
-    while True:
-        cmd = input("> ")
-        if cmd == 'exit':
-            break
-        
-        helper.clear_history()
-        await helper.send_private_message(cmd)
-        
-        reply = helper.get_latest_reply()
-        if reply:
-            print(f"回复: {extract_text(reply['message'])}")
-        else:
-            print("无回复")
-```
-
-### 2. 详细日志
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
-
-async def debug_test():
-    """带详细日志的测试"""
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    client.register_plugin(TestPlugin)
-    
-    await helper.send_private_message("/debug_cmd")
-    
-    # 查看 API 调用
-    for endpoint, data in helper.get_api_calls():
-        print(f"API: {endpoint} -> {data}")
-```
-
-## 💡 关键要点
-
-1. **测试三要素**: 创建环境 → 执行操作 → 验证结果
-2. **必备清理**: 使用 `helper.clear_history()` 避免测试间干扰
-3. **断言明确**: 提供清晰的错误信息，便于调试
-4. **隔离测试**: 每个测试使用独立的插件实例
-5. **辅助函数**: 封装常用操作，提高测试代码复用性
-
----
-
-**🎯 下一步**: 
-- 查看 [实战案例](./7.%20实战案例.md) 了解复杂场景
-- 参考 [最佳实践](./8.%20最佳实践.md) 提升代码质量
-
-
----
-
-# 文件: 8. 高级教程\1. 统一命令注册器\7. 实战案例.md
-
----
-title:  实战案例
-createTime: 2025/09/28 10:43:51
-permalink: /guide/lwvdpzqm/
----
-# UnifiedRegistry 实战案例
-
-## 🎯 概述
-
-本文档提供了 UnifiedRegistry 的实际应用案例，从简单的功能插件到复杂的管理系统，帮助您了解如何在真实场景中使用 UnifiedRegistry。
-
-## 🚀 基础应用案例
-
-### 1. 简单问答机器人
-
-```python
-from ncatbot.plugin_system import NcatBotPlugin
-from ncatbot.plugin_system import command_registry
-from ncatbot.plugin_system import option, param
-from ncatbot.core.event import BaseMessageEvent
-from ncatbot.utils import get_log
-
-LOG = get_log(__name__)
-
-class QABotPlugin(NcatBotPlugin):
-    name = "QABotPlugin"
-    version = "1.0.0"
-    author = "示例作者"
-    description = "简单的问答机器人"
-    
-    async def on_load(self):
-        # 预设问答库
-        self.qa_database = {
-            "你好": "你好！我是问答机器人，有什么可以帮助你的吗？",
-            "天气": "抱歉，我还不能查询天气。请使用天气应用或网站。",
-            "时间": "请检查你的设备时间，或者使用 /time 命令。",
-            "帮助": "可用命令：/ask <问题>、/add_qa <问题> <答案>、/list_qa"
-        }
-
-    @command_registry.command("ask", description="询问问题")
-    async def ask_cmd(self, event: BaseMessageEvent, question: str):
-        """询问问题"""
-        # 简单的关键词匹配
-        for keyword, answer in self.qa_database.items():
-            if keyword in question:
-                LOG.info(f"用户 {event.user_id} 询问: {question}")
-                await event.reply(f"💡 {answer}")
-                return
-        
-        await event.reply("❓ 抱歉，我不知道这个问题的答案。你可以使用 /add_qa 添加新的问答。")
-    
-    @command_registry.command("add_qa", description="添加问答")
-    async def add_qa_cmd(self, event: BaseMessageEvent, question: str, answer: str):
-        """添加新的问答"""
-        if len(question) > 100 or len(answer) > 500:
-            await event.reply("❌ 问题或答案太长了")
-            return
-        
-        self.qa_database[question] = answer
-        LOG.info(f"用户 {event.user_id} 添加问答: {question} -> {answer}")
-        await event.reply(f"✅ 已添加问答：\n❓ {question}\n💡 {answer}")
-    
-    @command_registry.command("list_qa", description="列出所有问答")
-    async def list_qa_cmd(self, event: BaseMessageEvent):
-        """列出所有问答"""
-        if not self.qa_database:
-            await event.reply("📝 问答库为空")
-            return
-        
-        qa_list = []
-        for i, (q, a) in enumerate(self.qa_database.items(), 1):
-            qa_list.append(f"{i}. ❓ {q}\n   💡 {a[:50]}{'...' if len(a) > 50 else ''}")
-        
-        await event.reply("📚 问答库：\n" + "\n\n".join(qa_list))
-    
-    @command_registry.command("time", description="获取当前时间")
-    async def time_cmd(self, event: BaseMessageEvent):
-        """获取当前时间"""
-        import datetime
-        now = datetime.datetime.now()
-        await event.reply(f"🕐 当前时间：{now.strftime('%Y-%m-%d %H:%M:%S')}")
-```
-
-### 2. 群管理功能插件
-
-```python
-from ncatbot.plugin_system import group_filter, admin_filter
-
-class GroupManagementPlugin(NcatBotPlugin):
-    name = "GroupManagementPlugin"
-    version = "1.0.0"
-    description = "群聊管理功能"
-
-    async def on_load(self):
-        self.muted_users = set()
-        self.group_settings = {
-            "g1": {
-                "mute_users": set(),
-                "settings": {}
-            }
-        }
-
-    @group_filter
-    @admin_filter
-    @command_registry.command("mute", description="禁言用户")
-    @param(name="duration", default=60, help="禁言时长（秒）")
-    async def mute_cmd(self, event: BaseMessageEvent, user_id: str, duration: int = 60):
-        """禁言指定用户"""
-        if duration < 1 or duration > 86400:  # 最多24小时
-            await event.reply("❌ 禁言时长必须在1秒到24小时之间")
-            return
-        
-        self.muted_users.add(user_id)
-        LOG.info(f"管理员 {event.user_id} 禁言用户 {user_id} {duration}秒")
-        
-        # 这里应该调用真实的禁言API
-        await event.reply(f"🔇 已禁言用户 {user_id}，时长 {duration} 秒")
-    
-    @group_filter
-    @admin_filter
-    @command_registry.command("unmute", description="解除禁言")
-    async def unmute_cmd(self, event: BaseMessageEvent, user_id: str):
-        """解除用户禁言"""
-        if user_id in self.muted_users:
-            self.muted_users.remove(user_id)
-            LOG.info(f"管理员 {event.user_id} 解除用户 {user_id} 禁言")
-            await event.reply(f"🔊 已解除用户 {user_id} 的禁言")
-        else:
-            await event.reply("❌ 该用户未被禁言")
-    
-    @group_filter
-    @admin_filter
-    @command_registry.command("kick", description="踢出用户")
-    @option(short_name="b", long_name="ban", help="同时拉黑用户")
-    async def kick_cmd(self, event: BaseMessageEvent, user_id: str, ban: bool = False):
-        """踢出群成员"""
-        action = "踢出并拉黑" if ban else "踢出"
-        LOG.info(f"管理员 {event.user_id} {action}用户 {user_id}")
-        
-        # 这里应该调用真实的踢人API
-        await event.reply(f"👢 已{action}用户 {user_id}")
-    
-    @group_filter
-    @command_registry.command("group_info", description="查看群信息")
-    async def group_info_cmd(self, event: BaseMessageEvent):
-        """查看群信息"""
-        group_id = event.group_id
-        settings = self.group_settings.get(group_id, {})
-        
-        info = f"📊 群信息 (ID: {group_id})\n"
-        info += f"🔇 禁言用户数: {len(self.muted_users)}\n"
-        info += f"⚙️ 特殊设置: {len(settings)} 项"
-        
-        await event.reply(info)
-```
-
-### 3. 信息查询插件
-
-```python
-import json
-import aiohttp
-
-class InfoQueryPlugin(NcatBotPlugin):
-    name = "InfoQueryPlugin"
-    version = "1.0.0"
-    description = "信息查询服务"
-    
-    async def on_load(self):
-        self.cache = {}
-
-    @command_registry.command("weather", description="查询天气")
-    @param(name="units", default="metric", help="温度单位")
-    async def weather_cmd(self, event: BaseMessageEvent, city: str, units: str = "metric"):
-        """查询城市天气（模拟）"""
-        # 检查缓存
-        cache_key = f"weather_{city}_{units}"
-        if cache_key in self.cache:
-            await event.reply(f"🌤️ {city} 天气：{self.cache[cache_key]} (来自缓存)")
-            return
-        
-        # 模拟天气数据
-        weather_data = {
-            "北京": "晴天，25°C",
-            "上海": "多云，22°C", 
-            "广州": "小雨，28°C",
-            "深圳": "晴天，30°C"
-        }
-        
-        result = weather_data.get(city, "暂无该城市天气数据")
-        
-        # 存入缓存
-        self.cache[cache_key] = result
-        
-        await event.reply(f"🌤️ {city} 天气：{result}")
-    
-    @command_registry.command("translate", description="翻译文本")
-    @param(name="target", default="en", help="目标语言")
-    async def translate_cmd(self, event: BaseMessageEvent, text: str, target: str = "en"):
-        """翻译文本（模拟）"""
-        # 简单的翻译映射
-        translations = {
-            "en": {
-                "你好": "Hello",
-                "谢谢": "Thank you",
-                "再见": "Goodbye"
-            },
-            "ja": {
-                "你好": "こんにちは",
-                "谢谢": "ありがとう",
-                "再见": "さようなら"
-            }
-        }
-        
-        if target not in translations:
-            await event.reply(f"❌ 不支持的目标语言: {target}\n支持的语言: en, ja")
-            return
-        
-        translated = translations[target].get(text, f"[无法翻译: {text}]")
-        await event.reply(f"🌐 翻译结果：\n原文: {text}\n{target.upper()}: {translated}")
-    
-    @command_registry.command("search", description="搜索信息")
-    @option(short_name="l", long_name="limit", help="限制结果数量")
-    async def search_cmd(self, event: BaseMessageEvent, query: str, limit: bool = False):
-        """搜索信息（模拟）"""
-        # 模拟搜索结果
-        search_results = [
-            f"📄 关于 '{query}' 的搜索结果1",
-            f"📄 关于 '{query}' 的搜索结果2", 
-            f"📄 关于 '{query}' 的搜索结果3",
-            f"📄 关于 '{query}' 的搜索结果4",
-            f"📄 关于 '{query}' 的搜索结果5"
-        ]
-        
-        if limit:
-            search_results = search_results[:3]
-        
-        await event.reply(f"🔍 搜索 '{query}' 的结果：\n" + "\n".join(search_results))
-```
-
-## 🎮 复杂应用案例
-
-### 1. 数据处理插件
-
-```python
-class DataProcessingPlugin(NcatBotPlugin):
-    name = "DataProcessingPlugin"
-    version = "1.0.0"
-    description = "数据处理和分析工具"
-    
-    async def on_load(self):
-        self.datasets = {}
-    
-    @command_registry.command("text_stats", description="文本统计")
-    async def text_stats_cmd(self, event: BaseMessageEvent, text: str):
-        """统计文本信息"""
-        import re
-        
-        char_count = len(text)
-        word_count = len(text.split())
-        line_count = len(text.split('\n'))
-        sentence_count = len(re.findall(r'[.!?]+', text))
-        
-        stats = f"📝 文本统计:\n"
-        stats += f"🔤 字符数: {char_count}\n"
-        stats += f"📝 单词数: {word_count}\n"
-        stats += f"📄 行数: {line_count}\n"
-        stats += f"📋 句子数: {sentence_count}"
-        
-        await event.reply(stats)
-```
-
-## 🔗 简单外部API集成
-
-### Web API 集成示例
-
-```python
-import aiohttp
-import asyncio
-
-class WebAPIPlugin(NcatBotPlugin):
-    name = "WebAPIPlugin"
-    version = "1.0.0"
-    description = "Web API集成示例"
-    
-    async def on_load(self):
-        self.cache = {}
-
-    @command_registry.command("random_quote", description="获取随机名言")
-    async def random_quote_cmd(self, event: BaseMessageEvent):
-        """获取随机名言（模拟API调用）"""
-        # 模拟API响应
-        quotes = [
-            "生活就像一盒巧克力，你永远不知道下一颗是什么味道。",
-            "做你自己，因为其他人都已经被占用了。",
-            "昨天是历史，明天是谜团，今天是礼物。",
-            "不要因为结束而哭泣，要因为发生过而微笑。"
-        ]
-        
-        import random
-        quote = random.choice(quotes)
-        await event.reply(f"💭 今日名言：\n{quote}")
-    
-    @command_registry.command("mock_api", description="模拟API调用")
-    @param(name="endpoint", default="users", help="API端点")
-    async def mock_api_cmd(self, event: BaseMessageEvent, endpoint: str = "users"):
-        """模拟API调用"""
-        # 模拟不同的API响应
-        mock_responses = {
-            "users": {"total": 100, "active": 85},
-            "posts": {"total": 500, "today": 12},
-            "stats": {"cpu": "45%", "memory": "60%"}
-        }
-        
-        if endpoint not in mock_responses:
-            await event.reply(f"❌ 未知的API端点: {endpoint}\n可用端点: {', '.join(mock_responses.keys())}")
-            return
-        
-        data = mock_responses[endpoint]
-        await event.reply(f"🌐 API响应 ({endpoint}):\n" + "\n".join([f"{k}: {v}" for k, v in data.items()]))
-```
-
-## 🚦 下一步
-
-现在您已经看到了 UnifiedRegistry 的实际应用！接下来可以：
-
-1. **学习测试**: 查看 [测试指南](./6.%20测试指南.md) 确保代码质量
-2. **解决问题**: 参考 [常见问题](./9.%20FAQ.md) 处理开发疑问
-3. **改进代码**: 回顾 [最佳实践](./8.%20最佳实践.md) 优化实现
-
----
-
-**💡 提示**: 这些案例展示了 UnifiedRegistry 的灵活性和强大功能。您可以根据自己的需求组合和修改这些模式。
-
-
----
-
-# 文件: 8. 高级教程\1. 统一命令注册器\8. 最佳实践.md
-
----
-title:  最佳实践
-createTime: 2025/09/28 10:43:51
-permalink: /guide/tv0xs6xc/
----
-# UnifiedRegistry 最佳实践指南
-
-## 🎯 概述
-
-本指南汇集了 UnifiedRegistry 开发中的最佳实践和经验技巧，帮助您编写高质量、可维护的插件代码。
-
-## 🏗️ 代码组织最佳实践
-
-### 1. 插件结构设计
-
-#### ✅ 推荐的插件结构
-
-```python
-from ncatbot.plugin_system import NcatBotPlugin
-from ncatbot.plugin_system import command_registry
-from ncatbot.plugin_system import group_filter, admin_filter
-from ncatbot.plugin_system import option, param
-from ncatbot.core.event import BaseMessageEvent
-from ncatbot.utils import get_log
-
-LOG = get_log(__name__)
-
-class WellOrganizedPlugin(NcatBotPlugin):
-    name = "WellOrganizedPlugin"
-    version = "1.0.0"
-    author = "你的名字"
-    description = "结构良好的插件示例"
-    
-    async def on_load(self):
-        """插件加载保持轻量"""
-        # 初始化插件状态
-        self.stats = {"command_count": 0}
-        self.config = {"max_users": 100}
-        LOG.info(f"正在加载 {self.name} v{self.version}")
-        LOG.info(f"{self.name} 加载完成")
-    
-    @command_registry.command("hello", description="基础问候命令")
-    async def hello_cmd(self, event: BaseMessageEvent):
-        self.stats["command_count"] += 1
-        await event.reply("你好！")
-    
-    @admin_filter
-    @command_registry.command("stats", description="查看统计信息")
-    async def stats_cmd(self, event: BaseMessageEvent):
-        await event.reply(f"命令使用次数: {self.stats['command_count']}")
-    
-    @command_registry.command("calc", description="简单计算器")
-    async def calc_cmd(self, event: BaseMessageEvent, a: int, b: int):
-        await event.reply(f"结果: {a + b}")
-```
-
-#### ❌ 避免的组织方式
-
-```python
-# 不推荐：所有代码挤在 on_load 中
-class PoorlyOrganizedPlugin(NcatBotPlugin):
-    async def on_load(self):
-        
-        @command_registry.command("cmd1")
-        def cmd1(self, event: BaseMessageEvent):
-            # 复杂逻辑直接写在这里
-            pass
-        
-        @command_registry.command("cmd2") 
-        def cmd2(self, event: BaseMessageEvent):
-            # 更多复杂逻辑
-            pass
-        
-        # ... 50个命令都挤在这里
-```
-
-### 2. 命令命名规范
-
-#### ✅ 清晰的命名方式
-
-```python
-class NamingBestPractices(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    # 动词+名词格式，语义清晰
-    @command_registry.command("create_user", description="创建新用户")
-    async def create_user_cmd(self, event: BaseMessageEvent, username: str):
-        await event.reply(f"创建用户: {username}")
-    
-    @command_registry.command("delete_user", description="删除用户")
-    async def delete_user_cmd(self, event: BaseMessageEvent, username: str):
-        await event.reply(f"删除用户: {username}")
-    
-    @command_registry.command("list_users", description="列出所有用户")
-    async def list_users_cmd(self, event: BaseMessageEvent):
-        await event.reply("用户列表: ...")
-    
-    # 使用别名提供简短版本
-    @command_registry.command("get_info", aliases=["info", "i"], description="获取信息")
-    async def get_info_cmd(self, event: BaseMessageEvent):
-        await event.reply("系统信息: ...")
-```
-
-#### ❌ 避免的命名方式
-
-```python
-# 不推荐：模糊、缩写、无意义的命名
-@command_registry.command("usr")  # 不清楚是什么操作
-@command_registry.command("do_something")  # 太泛泛
-@command_registry.command("cmd1")  # 无意义
-```
-
-### 3. 过滤器复用策略
-
-#### ✅ 智能的过滤器组合
-
-```python
-class FilterReuseExample(NcatBotPlugin):
-    async def on_load(self):
-        # 为相关命令使用相同的过滤器组合
-        self._register_user_management()
-        self._register_system_management()
-    
-    def _register_user_management(self):
-        # 注意这里的命令属于类外命令，无法进行 self 传参
-        """用户管理命令（管理员+群聊）"""
-        @admin_filter
-        @group_filter
-        @command_registry.command("ban_user")
-        async def ban_user_cmd(event: BaseMessageEvent, user_id: str):
-            await event.reply(f"封禁用户: {user_id}")
-            
-        
-        @admin_filter
-        @group_filter
-        @command_registry.command("unban_user")
-        async def unban_user_cmd(event: BaseMessageEvent, user_id: str):
-            await event.reply(f"解封用户: {user_id}")
-    
-    def _register_system_management(self):
-        """系统管理命令（仅管理员）"""
-        @admin_filter
-        @command_registry.command("system_status")
-        async def system_status_cmd(event: BaseMessageEvent):
-            await event.reply("系统状态正常")
-        
-        @admin_filter
-        @command_registry.command("restart_service")
-        async def restart_service_cmd(event: BaseMessageEvent, service: str):
-            await event.reply(f"重启服务: {service}")
-```
-
-## 📝 代码质量提升
-
-### 1. 函数设计原则
-
-#### ✅ 单一职责原则
-
-```python
-class SingleResponsibilityExample(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    @command_registry.command("user_info")
-    async def user_info_cmd(self, event: BaseMessageEvent, user_id: str):
-        """获取用户信息（职责单一）"""
-        user_data = self._get_user_data(user_id)
-        if not user_data:
-            await event.reply("❌ 用户不存在")
-        
-        formatted_info = self._format_user_info(user_data)
-        await event.reply(formatted_info)
-    
-    def _get_user_data(self, user_id: str) -> dict:
-        """获取用户数据（单一职责）"""
-        # 只负责数据获取
-        return {"id": user_id, "name": "测试用户", "level": 5}
-    
-    def _format_user_info(self, user_data: dict) -> str:
-        """格式化用户信息（单一职责）"""
-        # 只负责格式化显示
-        return f"用户信息:\n👤 ID: {user_data['id']}\n📝 名称: {user_data['name']}\n⭐ 等级: {user_data['level']}"
-```
-
-### 2. 状态管理
-
-#### ✅ 良好的状态管理
-
-```python
-class StateManagementExample(NcatBotPlugin):
-        
-    
-    async def on_load(self):
-        self.user_sessions = {}
-        self.command_stats = {}
-        self.config = {
-            "max_session_time": 3600,
-            "rate_limit": 10
-        }
-
-    @command_registry.command("start_session")
-    async def start_session_cmd(self, event: BaseMessageEvent):
-        """开始用户会话"""
-        user_id = event.user_id
-        
-        # 检查现有会话
-        if user_id in self.user_sessions:
-            await event.reply("❌ 您已有活跃会话，请先结束当前会话")
-        
-        # 创建新会话
-        import time
-        self.user_sessions[user_id] = {
-            "start_time": time.time(),
-            "operations": 0
-        }
-        
-        await event.reply("✅ 会话已开始")
-    
-    @command_registry.command("end_session")
-    async def end_session_cmd(self, event: BaseMessageEvent):
-        """结束用户会话"""
-        user_id = event.user_id
-        
-        if user_id not in self.user_sessions:
-            await event.reply("❌ 您没有活跃的会话")
-        
-        # 清理会话
-        session = self.user_sessions.pop(user_id)
-        import time
-        duration = time.time() - session["start_time"]
-        
-        await event.reply(f"✅ 会话已结束\n⏱️ 持续时间: {duration:.1f}秒\n📊 操作次数: {session['operations']}")
-```
-
-## 📋 装饰器使用规范
-
-### 1. 装饰器顺序
-
-#### ✅ 正确的装饰器顺序
-
-```python
-class DecoratorOrderExample(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    # 正确顺序：过滤器 → 命令注册 → 参数装饰器
-    @admin_filter                           # 1. 过滤器在最上面
-    @group_filter                          # 2. 多个过滤器可以堆叠
-    @command_registry.command("deploy")  # 3. 命令注册器
-    @option("v", "verbose")              # 4. 选项装饰器
-    @param("env", default="dev")         # 5. 参数装饰器
-    def deploy_cmd(self, event: BaseMessageEvent, app: str, 
-                    env: str = "dev", verbose: bool = False):
-        await event.reply(f"部署 {app} 到 {env}")
-```
-
-### 2. 参数命名一致性
-
-#### ✅ 一致的参数命名
-
-```python
-class ConsistentNamingExample(NcatBotPlugin):
-    async def on_load(self):
-        pass
-
-    # 在整个插件中保持一致的参数命名，否则会报错
-    @command_registry.command("create_item")
-    @param("category", default="default", help="物品分类")
-    async def create_item_cmd(self, event: BaseMessageEvent, name: str, category: str = "default"):
-        await event.reply(f"创建物品: {name} (分类: {category})")
-    
-    @command_registry.command("delete_item")
-    @param("category", default="default", help="物品分类")  # 相同参数使用相同名称
-    async def delete_item_cmd(self, event: BaseMessageEvent, name: str, category: str = "default"):
-        await event.reply(f"删除物品: {name} (分类: {category})")
-```
-
-## 🚦 下一步
-
-掌握最佳实践后，您可以：
-
-1. **查看实例**: 阅读 [实战案例](./7.%20实战案例.md) 看到这些实践的应用
-2. **测试代码**: 参考 [测试指南](./6.%20测试指南.md) 确保代码质量
-3. **解决问题**: 查看 [常见问题](./9.%20FAQ.md) 处理开发中的疑问
-
----
-
-**💡 总结**: 好的代码不仅要功能正确，还要易读、易维护、易扩展。遵循这些最佳实践可以显著提升代码质量和开发效率。
-
-
----
-
-# 文件: 8. 高级教程\1. 统一命令注册器\9. FAQ.md
-
----
-title:  FAQ
-createTime: 2025/09/28 10:43:51
-permalink: /guide/sfgeqbl0/
----
-# UnifiedRegistry 常见问题解答
-
-## ❓ 基础使用问题
-
-### Q1: 为什么我的命令函数参数必须有类型注解？
-
-**A:** UnifiedRegistry 的命令系统依赖类型注解来进行自动类型转换和参数验证。除了 `self` 参数外，所有其他参数都必须有类型注解。命令函数推荐为 `async def`，且通过 `await event.reply(...)` 进行异步回复，不再通过 return 返回文本。
-
-```python
-# ❌ 错误：缺少类型注解
-
-@command_registry.command("bad")
-async def bad_cmd(self, event, text):  # 缺少类型注解
-    await event.reply(text)
-
-# ✅ 正确：完整的类型注解，并使用异步回复
-@command_registry.command("good")
-async def good_cmd(self, event: BaseMessageEvent, text: str):
-    await event.reply(text)
-```
-
-### Q2: 装饰器的顺序有什么要求？
-
-**A:** 装饰器必须按特定顺序使用：
-
-1. 过滤器装饰器（如 `@admin_filter`, `@group_filter`）
-2. 命令注册装饰器（`@command_registry.command()`）
-3. 参数装饰器（`@option`, `@param`）
-4. 函数体内通过 `await event.reply(...)` 进行异步回复
-
-```python
-# ✅ 正确的顺序
-@admin_filter                    # 1. 过滤器
-@command_registry.command("deploy")  # 2. 命令注册
-@option("v", "verbose")        # 3. 参数装饰器
-async def deploy_cmd(self, event: BaseMessageEvent, verbose: bool = False):
-    await event.reply("部署完成")
-
-# ❌ 错误的顺序
-@command_registry.command("wrong")
-@admin_filter  # 过滤器应该在命令注册之前
-async def wrong_cmd(self, event: BaseMessageEvent):
-    await event.reply("错误")
-```
-
-### Q3: 如何在命令中访问插件的属性和方法？
-
-**A:** 功能函数被定义为类方法时，使用 `self` 参数可以访问插件实例的所有属性和方法：
-
-```python
-class MyPlugin(NcatBotPlugin):
-    def __init__(self):
-        super().__init__()
-        self.counter = 0
-        self.config = {"max_users": 100}
-    
-    async def on_load(self):
-        pass
-
-    @command_registry.command("count")
-    async def count_cmd(self, event: BaseMessageEvent):
-        self.counter += 1  # 访问插件属性
-        await event.reply(f"计数: {self.counter}")
-    
-    @command_registry.command("reset")
-    async def reset_cmd(self, event: BaseMessageEvent):
-        self._reset_counter()  # 调用插件方法
-        await event.reply("计数已重置")
-    
-    def _reset_counter(self):
-        """插件的私有方法"""
-        self.counter = 0
-```
-
-## 🔧 命令注册问题
-
-### Q4: 为什么我的命令没有被注册？
-
-**A:** 检查以下几个常见原因：
-
-1. **插件没有正确加载**：确保注册命令的代码被执行，一般来说，注册代码会在定义函数时执行。
-```python
-async def on_load(self):
-    # 保持轻量
-    pass
-
-@command_registry.command("hello")
-def hello_cmd(self, event: BaseMessageEvent):
-    return "Hello"
-```
-
-2. **命令名称冲突**：检查是否有重复的命令名或别名，报错信息往往会给出提示。
-
-### Q5: 如何处理命令参数的默认值？
-
-**A:** 在函数签名中直接设置默认值：
-
-```python
-@command_registry.command("greet")
-async def greet_cmd(self, event: BaseMessageEvent, name: str = "朋友"):
-    await event.reply(f"你好，{name}！")
-
-# 使用方式：
-# /greet          -> "你好，朋友！"
-# /greet 小明     -> "你好，小明！"
-```
-
-对于命名参数，使用 `@param` 装饰器：
-
-```python
-@command_registry.command("deploy")
-@param(name="env", default="dev", help="部署环境")
-async def deploy_cmd(self, event: BaseMessageEvent, app: str, env: str = "dev"):
-    await event.reply(f"部署 {app} 到 {env} 环境")
-
-# 使用方式：
-# /deploy myapp              -> "部署 myapp 到 dev 环境"
-# /deploy myapp --env=prod   -> "部署 myapp 到 prod 环境"
-```
-
-### Q6: 命令别名不工作怎么办？
-
-**A:** 确保别名格式正确：
-
-```python
-# ✅ 正确的别名设置
-@command_registry.command("status", aliases=["stat", "st"])
-async def status_cmd(self, event: BaseMessageEvent):
-    await event.reply("状态正常")
-
-# ❌ 常见错误
-@command_registry.command("status", aliases="stat")  # 应该是列表
-```
-
-## 🛡️ 过滤器问题
-
-### Q7: 过滤器不生效怎么办？
-
-**A:** 检查以下几点：
-
-1. **装饰器顺序**：过滤器装饰器必须在命令装饰器之前
-2. **权限配置**：确保权限管理系统已正确配置
-3. **过滤器逻辑**：检查自定义过滤器的返回值
-
-```python
-# 调试过滤器
-def debug_filter(event: BaseMessageEvent) -> bool:
-    result = your_filter_logic(event)
-    LOG.debug(f"过滤器结果: {result} for user {event.user_id}")
-    return result
-```
-
-## 🔄 参数解析问题
-
-### Q8: 参数类型转换失败怎么办？
-
-**A:** 提供错误处理和用户友好的提示：
-
-```python
-@command_registry.command("safe_calc")
-async def safe_calc_cmd(self, event: BaseMessageEvent, a: str, b: str):
-    """安全的计算命令，手动处理类型转换"""
-    try:
-        num_a = float(a)
-        num_b = float(b)
-        result = num_a + num_b
-        await event.reply(f"结果: {result}")
-    except ValueError:
-        await event.reply(f"❌ 参数错误: '{a}' 或 '{b}' 不是有效数字\n💡 请输入数字，例如: /safe_calc 1.5 2.3")
-```
-
-### Q9: 如何处理包含空格的参数？
-
-**A:** 使用引号包围参数：
-
-```python
-@command_registry.command("say")
-async def say_cmd(self, event: BaseMessageEvent, message: str):
-    await event.reply(f"机器人说: {message}")
-
-# 使用方式：
-# /say "hello world"           -> "机器人说: hello world"
-# /say "包含 空格 的 消息"      -> "机器人说: 包含 空格 的 消息"
-```
-
-### Q10: 选项和参数的区别是什么？
-
-**A:** 
-
-- **选项** (`@option`): 布尔标志，开启或关闭某个功能
-- **参数** (`@param`): 有具体值的配置项
-
-```python
-@command_registry.command("backup")
-@option(short_name="v", long_name="verbose", help="详细输出")  # 布尔选项
-@param(name="path", default="/backup", help="备份路径")        # 有值的参数
-async def backup_cmd(self, event: BaseMessageEvent, 
-               path: str = "/backup", verbose: bool = False):
-    result = f"备份到 {path}"
-    if verbose:
-        result += " (详细模式)"
-    await event.reply(result)
-
-# 使用方式：
-# /backup                      -> "备份到 /backup"
-# /backup --verbose            -> "备份到 /backup (详细模式)"
-# /backup --path=/data         -> "备份到 /data"
-# /backup --path=/data -v      -> "备份到 /data (详细模式)"
-```
-
-## 🐛 错误处理问题
-
-### Q11: 如何提供用户友好的错误信息？
-
-**A:** 使用清晰的错误格式和建议：
-
-```python
-@command_registry.command("divide")
-async def divide_cmd(self, event: BaseMessageEvent, a: float, b: float):
-    # 参数验证
-    if b == 0:
-        await event.reply("❌ 错误: 除数不能为0\n💡 请确保第二个数字不是0")
-    
-    try:
-        result = a / b
-        await event.reply(f"✅ {a} ÷ {b} = {result}")
-    except Exception as e:
-        await event.reply(f"❌ 计算失败\n🔧 详细错误: {e}\n💡 请检查输入的数字格式")
-```
-
-### Q12: 如何记录和调试错误？
-
-**A:** 使用日志系统记录详细信息：
-
-```python
-from ncatbot.utils import get_log
-LOG = get_log(__name__)
-
-@command_registry.command("complex_operation")
-async def complex_operation_cmd(self, event: BaseMessageEvent, data: str):
-    user_id = event.user_id
-    LOG.info(f"用户 {user_id} 开始复杂操作: {data}")
-    
-    try:
-        result = self.process_complex_data(data)
-        LOG.info(f"用户 {user_id} 操作成功: {result}")
-        await event.reply(f"✅ 操作完成: {result}")
-    
-    except ValueError as e:
-        LOG.warning(f"用户 {user_id} 输入错误: {e}")
-        await event.reply(f"❌ 输入错误: {e}\n💡 请检查输入格式")
-    
-    except Exception as e:
-        LOG.error(f"用户 {user_id} 操作失败: {e}", exc_info=True)
-        await event.reply("❌ 系统错误，请稍后重试")
-```
-
-## ⚠️ 常见陷阱
-
-### Q13: 为什么修改代码后命令没有更新？
-
-**A:** 不支持热重载，需要重启机器人或重新加载插件。
-
-## 🆘 获取更多帮助
-
-如果您的问题没有在此FAQ中找到答案：
-
-1. **检查日志**: 查看机器人的日志输出，通常包含有用的错误信息
-2. **参考文档**: 回顾相关的指南文档
-3. **简化测试**: 创建最小的测试案例来重现问题
-4. **社区支持**: 在项目的GitHub或社区论坛寻求帮助
-
-**💡 记住**: 大多数问题都与装饰器顺序、类型注解或权限配置有关。仔细检查这些基础设置通常能解决问题。
-
-
----
-
-# 文件: 8. 高级教程\2. 测试\1. 概览.md
-
----
-title:  概览
-createTime: 2025/09/28 10:43:51
-permalink: /guide/g7ef36bj/
----
-# NcatBot 测试框架完整指南
-
-## 概述
-
-NcatBot 提供了一套完整的测试框架，位于 `ncatbot.utils.testing` 模块中。该框架允许您在不启动真实 QQ 客户端的情况下测试插件功能。
-
-## 核心组件
-
-### 1. TestClient - 测试客户端
-
-`TestClient` 是专门为测试设计的客户端，继承自 `BotClient` 并添加了测试功能。
-
-**⚠️ 注意：一次运行只允许启动一次 TestClient，插件加载也必须在最开始进行，测试过程中禁止重新启动 TestClient 或操作插件**
-
-```python
-from ncatbot.utils.testing import TestClient
-
-# 创建测试客户端
-client = TestClient(load_plugin=False)  # 默认不加载任何插件
-
-# 启动客户端（Mock 模式默认开启）
-client.start()
-
-# 注册需要测试的插件
-from my_plugin import MyPlugin
-client.register_plugin(MyPlugin)
-
-# 获取已注册的插件
-plugins = client.get_registered_plugins()
-
-# 卸载插件
-plugin_instance = plugins[0]
-client.unregister_plugin(plugin_instance)
-```
-
-#### 主要特性：
-
-- 自动启用 Mock 模式，跳过 WebSocket 连接
-- 支持按需加载插件
-- 提供插件管理功能
-
-#### 错误示例
-
-```python
-from ncatbot.utils.testing import TestClient
-from my_plugin import MyPlugin
-
-def test_1():
-    client = TestClient()
-    client.start()
-    client.register_plugin(MyPlugin)
-    # Do something 1
-
-def test_2():
-    client = TestClient()
-    client.start()
-    client.register_plugin(MyPlugin)
-    # Do something 2
-
-if __name__ == "__main__":
-    test_1()
-    test_2()
-```
-
-一次运行中，进行了两次 TestClient 的启动，两次注册了插件，违反了 TestClient 的单例原则。
-
-### 2. TestHelper - 测试辅助类
-
-`TestHelper` 简化了测试中的常见操作。
-
-```python
-from ncatbot.utils.testing import TestHelper
-
-# 创建辅助类实例
-helper = TestHelper(client)
-
-# 发送消息
-await helper.send_private_message("你好", user_id="123456")
-await helper.send_group_message("大家好", group_id="789012", user_id="123456")
-
-# 获取回复
-latest_reply = helper.get_latest_reply()  # 获取最新回复
-second_reply = helper.get_latest_reply(-2)  # 获取倒数第二个回复
-
-# 断言方法
-helper.assert_reply_sent("期望的文本")  # 断言发送了包含指定文本的回复
-helper.assert_no_reply()  # 断言没有发送任何回复
-
-# 清理历史记录
-helper.clear_history()
-
-# 设置 API 响应
-helper.set_api_response("/get_group_info", {
-    "retcode": 0,
-    "data": {
-        "group_id": "789012",
-        "group_name": "测试群",
-        "member_count": 100
-    }
-})
-```
-
-### 3. EventFactory - 事件工厂
-
-`EventFactory` 用于创建标准化的测试事件。
-
-```python
-from ncatbot.utils.testing import EventFactory
-from ncatbot.core.event.message_segment import MessageArray, Text, At, Image
-
-# 创建纯文本消息事件
-event = EventFactory.create_group_message(
-    message="Hello World",
-    group_id="123456789",
-    user_id="987654321",
-    nickname="TestUser",
-    role="member"  # member, admin, owner
-)
-
-# 创建复杂消息事件
-msg_array = MessageArray(
-    Text("你好 "),
-    At("123456"),
-    Text(" 这是一张图片："),
-    Image("http://example.com/image.jpg")
-)
-event = EventFactory.create_group_message(message=msg_array)
-
-# 创建私聊消息事件
-event = EventFactory.create_private_message(
-    message="私聊消息",
-    user_id="123456",
-    sub_type="friend"  # friend, group, other
-)
-
-# 创建通知事件
-event = EventFactory.create_notice_event(
-    notice_type="group_increase",
-    user_id="123456",
-    group_id="789012",
-    sub_type="approve"
-)
-
-# 创建请求事件
-event = EventFactory.create_request_event(
-    request_type="friend",
-    user_id="123456",
-    flag="unique_flag",
-    comment="请加我为好友"
-)
-```
-
-### 4. MockAPIAdapter - API 模拟器
-
-`MockAPIAdapter` 拦截并模拟 API 调用。
-
-```python
-# 通过 helper 访问 mock_api
-mock_api = helper.mock_api
-
-# 获取 API 调用历史
-all_calls = mock_api.get_call_history()
-group_msg_calls = mock_api.get_calls_for_endpoint("/send_group_msg")
-
-# 断言 API 调用
-mock_api.assert_called_with("/send_private_msg", {
-    "user_id": "123456",
-    "message": [{"type": "text", "data": {"text": "Hello"}}]
-})
-
-# 获取调用次数
-count = mock_api.get_call_count("/send_group_msg")
-
-# 设置自定义响应
-mock_api.set_response("/custom_api", {
-    "retcode": 0,
-    "data": {"custom": "response"}
-})
-
-# 设置动态响应
-def dynamic_response(endpoint, data):
-    if data.get("user_id") == "123456":
-        return {"retcode": 0, "data": {"vip": True}}
-    return {"retcode": 0, "data": {"vip": False}}
-
-mock_api.set_response("/get_user_info", dynamic_response)
-```
-
-## 高级用法
-
-### 1. 测试事件处理器
-
-```python
-async def test_event_handlers():
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    
-    # 注册自定义事件处理器
-    handled_events = []
-    
-    @client.on_group_message()
-    async def handle_group_msg(event):
-        handled_events.append(event)
-        # 提取纯文本
-        text = ''.join(seg.text for seg in event.message.filter_text())
-        if "ping" in text:
-            await event.reply("pong")
-    
-    # 发送测试消息
-    await helper.send_group_message("ping")
-    
-    # 验证处理器被调用
-    assert len(handled_events) == 1
-    assert handled_events[0].message.filter_text()[0].text == "ping"
-    
-    # 验证回复
-    reply = helper.get_latest_reply()
-    assert reply is not None
-    assert "pong" in str(reply["message"])
-```
-
-### 2. 测试权限系统
-
-```python
-from ncatbot.plugin_system import admin_filter
-
-async def test_permissions():
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    
-    # 创建需要权限的插件
-    class AdminPlugin(BasePlugin):
-        name = "AdminPlugin"
-        version = "1.0.0"
-        
-        async def on_load(self):
-            pass
-
-        @admin_filter
-        async def admin_cmd(self, event: BaseMessageEvent):
-            await event.reply("管理员命令执行成功")
-    
-    client.register_plugin(AdminPlugin)
-    
-    # 普通用户测试
-    await helper.send_private_message("admin_cmd", user_id="normal_user")
-    helper.assert_no_reply()  # 应该没有回复
-    
-    # 设置管理员权限
-    rbac = client.plugin_loader.rbac_manager
-    rbac.assign_role_to_user("admin_user", "admin")
-    
-    # 管理员测试
-    helper.clear_history()
-    await helper.send_private_message("admin_cmd", user_id="admin_user")
-    helper.assert_reply_sent("管理员命令执行成功")
-```
-
-### 3. 测试插件间交互
-
-```python
-async def test_plugin_interaction():
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    
-    # 插件 A：提供服务
-    class PluginA(NcatBotPlugin):
-        name = "PluginA"
-        version = "1.0.0"
-        
-        async def on_load(self):
-            self.data = {"key": "value"}
-            
-        def get_data(self):
-            return self.data
-    
-    # 插件 B：使用服务
-    class PluginB(NcatBotPlugin):
-        name = "PluginB"
-        version = "1.0.0"
-        dependencies = {"PluginA": ">=1.0.0"}
-        
-        async def on_load(self):
-            pass
-
-        @self.on_command("get_data")
-        async def get_data_cmd(event):
-            plugin_a = self.get_plugin("PluginA")
-            if plugin_a:
-                data = plugin_a.get_data()
-                return f"获取到数据：{data}"
-            return "PluginA 未找到"
-    
-    # 注册插件
-    client.register_plugin(PluginA)
-    client.register_plugin(PluginB)
-    
-    # 测试交互
-    await helper.send_private_message("/get_data")
-    helper.assert_reply_sent("获取到数据：{'key': 'value'}")
-```
-
-## 最佳实践
-
-1. **隔离测试**: 每个测试应该独立运行，使用 `helper.clear_history()` 清理状态
-2. **Mock 外部依赖**: 使用 `MockAPIAdapter` 模拟外部 API 调用
-3. **异步测试**: 确保正确处理异步操作
-4. **资源清理**: 测试结束后清理注册的插件和事件处理器
-5. **有意义的断言**: 不仅检查是否有回复，还要验证回复内容
-
-## 调试技巧
-
-1. **查看日志输出**
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
-```
-
-2. **检查 API 调用**
-```python
-# 打印所有 API 调用
-for endpoint, data in helper.get_api_calls():
-    print(f"API: {endpoint}")
-    print(f"Data: {data}")
-```
-
-3. **调试事件内容**
-```python
-# 使用 client 的事件历史
-for event_type, event_data in client.event_history:
-    print(f"Event: {event_type}")
-    print(f"Data: {event_data}")
-```
-
-## 下一步
-
-- 查看[标准化测试最佳实践](./5.%20集成测试最佳实践.md)了解如何使用 unittest 框架
-- 查看[简单函数式测试最佳实践](./4.%20函数式测试最佳实践.md)了解快速测试方法
-- 查看[API 参考文档](./3.%20API%20参考.md)了解所有可用的测试 API
-
-
----
-
-# 文件: 8. 高级教程\2. 测试\2. 快速开始.md
-
----
-title:  快速开始
-createTime: 2025/09/28 10:43:51
-permalink: /guide/rapboelv/
----
-# NcatBot 测试快速上手指南
-
-本指南将帮助您快速了解如何为 NcatBot 插件编写测试。
-
-## 环境准备
-
-```python
-# 导入必要的测试工具
-from ncatbot.utils.testing import TestClient, TestHelper, EventFactory
-from ncatbot.plugin_system import BasePlugin
-from ncatbot.plugin_system import command_registry, param, option
-import asyncio
-```
-
-## 最简单的测试示例
-
-### 1. 创建一个简单插件
-
-```python
-"""
-HelloPlugin - 用于测试文档验证的简单插件
-"""
-from ncatbot.plugin_system.builtin_mixin.ncatbot_plugin import NcatBotPlugin
-from ncatbot.core.event import BaseMessageEvent
-from ncatbot.plugin_system import command_registry, param, option
-
-
-class HelloPlugin(NcatBotPlugin):
-    """用于演示的简单插件"""
-    name = "HelloPlugin"
-    version = "1.0.0"
-    description = "用于演示测试的简单插件"
-        
-    async def on_load(self):
-        pass
-
-    @command_registry.command("hello", aliases=["hi"], description="问候")
-    async def hello_command(self, event: BaseMessageEvent):
-        await event.reply("你好！这是来自 HelloPlugin 的问候。")
-
-    @command_registry.command("echo", description="回显文本")
-    @param(name="lang", default="zh", help="语言", choices=["zh","en"])
-    @option(short_name="v", long_name="verbose", help="详细输出")
-    async def echo_command(self, event: BaseMessageEvent, text: str, lang: str = "zh", verbose: bool = False):
-        await event.reply(f"[{lang}] 你说的是：{text}" + (" (verbose)" if verbose else ""))
-
-```
-
-### 2. 编写测试代码
-
-```python
-async def test_hello_plugin():
-    """测试 HelloPlugin 的基本功能"""
-    
-    # 1. 创建测试客户端
-    client = TestClient()
-    helper = TestHelper(client)
-    
-    # 2. 启动客户端（Mock 模式默认开启）
-    client.start()
-    
-    # 3. 注册要测试的插件
-    client.register_plugin(HelloPlugin)
-    
-    # 4. 测试 hello 命令
-    await helper.send_private_message("/hello", user_id="test_user")
-    
-    # 5. 验证回复
-    reply = helper.get_latest_reply()
-    assert reply is not None, "应该收到回复"
-    
-    # 提取消息文本
-    message_text = ""
-    for seg in reply["message"]:
-        if seg["type"] == "text":
-            message_text += seg["data"]["text"]
-    
-    assert "你好！这是来自 HelloPlugin 的问候。" in message_text
-    print("✅ hello 命令测试通过")
-    
-    # 6. 清理历史记录，准备下一个测试
-    helper.clear_history()
-    
-    # 7. 测试命令别名
-    await helper.send_private_message("/hi", user_id="test_user")
-    reply = helper.get_latest_reply()
-    assert reply is not None, "别名命令应该有回复"
-    print("✅ 命令别名测试通过")
-    
-    helper.clear_history()
-    
-    # 8. 测试带参数/选项/命名参数
-    await helper.send_private_message("/echo 测试文本 --lang=zh -v", user_id="test_user")
-    reply = helper.get_latest_reply()
-    assert reply is not None
-    
-    message_text = ""
-    for seg in reply["message"]:
-        if seg["type"] == "text":
-            message_text += seg["data"]["text"]
-    
-    assert "你说的是：测试文本" in message_text
-    print("✅ echo 命令测试通过")
-    
-    print("\n🎉 所有测试通过！")
-
-# 运行测试
-if __name__ == "__main__":
-    asyncio.run(test_hello_plugin())
-```
-
-## 核心概念解释
-
-1. **TestClient**: 测试专用的客户端，自动启用 Mock 模式
-   - `register_plugin()`: 注册需要测试的插件
-   - `start()`: 启动客户端，跳过真实连接
-
-2. **TestHelper**: 简化测试操作的辅助类
-   - `send_private_message()`: 模拟发送私聊消息
-   - `send_group_message()`: 模拟发送群消息
-   - `get_latest_reply()`: 获取最新的回复
-   - `clear_history()`: 清理历史记录
-
-3. **EventFactory**: 创建标准化的测试事件（上例中由 helper 内部使用）
-
-## 测试文档目录
-
-- [完整测试指南](./1.%20概览.md) - 详细了解测试框架的所有功能
-- [标准化测试最佳实践](./5.%20集成测试最佳实践.md) - 使用 unittest 框架的规范测试
-- [简单函数式测试最佳实践](./4.%20函数式测试最佳实践.md) - 快速编写测试函数
-- [API 参考文档](./3.%20API%20参考.md) - 所有测试相关 API 的详细说明
-
-
----
-
-# 文件: 8. 高级教程\2. 测试\3. API 参考.md
-
----
-title:  API 参考
-createTime: 2025/09/28 10:43:51
-permalink: /guide/usfsv06o/
----
-# NcatBot 测试框架 API 参考
-
-本文档提供 `ncatbot.utils.testing` 模块中所有测试相关类和方法的详细参考。
-
-## TestClient
-
-测试专用客户端，继承自 `BotClient` 和 `ClientMixin`。
-
-### 类定义
-
-```python
-class TestClient(ClientMixin, BotClient):
-    def __init__(self, load_plugin: bool = False, *args, **kwargs)
-```
-
-### 构造函数参数
-
-- `load_plugin` (bool, 可选): 是否自动加载插件，默认为 `False`
-- `*args, **kwargs`: 传递给父类的其他参数
-
-### 方法
-
-#### `start(mock_mode: bool = True)`
-
-启动测试客户端。
-
-**参数:**
-- `mock_mode` (bool): 是否使用 Mock 模式，默认为 `True`
-
-**示例:**
-```python
-client = TestClient()
-client.start()
-```
-
-#### `register_plugin(plugin_class: Type[BasePlugin])`
-
-注册插件到测试客户端。
-
-**参数:**
-- `plugin_class` (Type[BasePlugin]): 插件类（不是实例）
-
-**示例:**
-```python
-from my_plugin import MyPlugin
-client.register_plugin(MyPlugin)
-```
-
-#### `get_registered_plugins() -> List[BasePlugin]`
-
-获取所有已注册的插件实例列表。
-
-**返回:**
-- List[BasePlugin]: 插件实例列表
-
-**示例:**
-```python
-plugins = client.get_registered_plugins()
-for plugin in plugins:
-    print(f"插件: {plugin.name} v{plugin.version}")
-```
-
-#### `get_plugin(type: Type[T]) -> T`
-
-获取已注册的插件实例。
-
-**参数:**
-- `type` (Type[T]): 插件类型
-
-**返回:**
-- T: 插件实例（有类型注解）
-
-**示例:**
-```python
-plugin = client.get_plugin(CalculatorPlugin)
-```
-
-#### `unregister_plugin(plugin: BasePlugin)`
-
-从测试客户端卸载插件。（**通过装饰器等注册的命令无法被卸载**）
-
-**参数:**
-- `plugin` (BasePlugin): 要卸载的插件实例
-
-**示例:**
-```python
-plugin = client.get_registered_plugins()[0]
-client.unregister_plugin(plugin)
-```
-
-## TestHelper
-
-测试辅助类，提供便捷的测试操作方法。
-
-### 类定义
-
-```python
-class TestHelper:
-    def __init__(self, client_with_mixin)
-```
-
-### 构造函数参数
-
-- `client_with_mixin`: 带有 ClientMixin 的客户端实例（通常是 TestClient）
-
-### 方法
-
-#### `async send_private_message(...)`
-
-发送私聊消息事件。
-
-**参数:**
-- `message` (str): 消息内容
-- `user_id` (str, 可选): 发送者 ID，默认 "987654321"
-- `nickname` (str, 可选): 发送者昵称，默认 "TestUser"
-- `**kwargs`: 其他事件参数
-
-**示例:**
-```python
-await helper.send_private_message(
-    "/hello",
-    user_id="123456",
-    nickname="测试用户"
-)
-```
-
-#### `async send_group_message(...)`
-
-发送群聊消息事件。
-
-**参数:**
-- `message` (str): 消息内容
-- `group_id` (str, 可选): 群组 ID，默认 "123456789"
-- `user_id` (str, 可选): 发送者 ID，默认 "987654321"
-- `nickname` (str, 可选): 发送者昵称，默认 "TestUser"
-- `**kwargs`: 其他事件参数
-
-**示例:**
-```python
-await helper.send_group_message(
-    "大家好",
-    group_id="888888",
-    user_id="123456",
-    nickname="测试用户",
-    role="member"
-)
-```
-
-#### `get_latest_reply(index: int = -1) -> Optional[Dict]`
-
-获取最新的回复消息。
-
-**参数:**
-- `index` (int, 可选): 回复索引，默认 -1（最新的）
-
-**返回:**
-- Optional[Dict]: 回复数据字典，如果没有回复则返回 None
-
-**示例:**
-```python
-# 获取最新回复
-latest = helper.get_latest_reply()
-
-# 获取倒数第二个回复
-second_last = helper.get_latest_reply(-2)
-```
-
-#### `assert_reply_sent(expected_text: Optional[str] = None)`
-
-断言发送了回复（可选：包含特定文本）。
-
-**参数:**
-- `expected_text` (str, 可选): 期望包含的文本
-
-**抛出:**
-- AssertionError: 如果没有回复或文本不匹配
-
-**示例:**
-```python
-helper.assert_reply_sent("操作成功")
-```
-
-#### `assert_no_reply()`
-
-断言没有发送任何回复。
-
-**抛出:**
-- AssertionError: 如果有回复
-
-**示例:**
-```python
-helper.assert_no_reply()
-```
-
-#### `get_api_calls() -> List[Tuple[str, Dict]]`
-
-获取所有 API 调用记录。
-
-**返回:**
-- List[Tuple[str, Dict]]: (endpoint, data) 元组列表
-
-**示例:**
-```python
-calls = helper.get_api_calls()
-for endpoint, data in calls:
-    print(f"API: {endpoint}")
-```
-
-#### `clear_history()`
-
-清空所有历史记录（事件和 API 调用）。
-
-**示例:**
-```python
-helper.clear_history()
-```
-
-#### `set_api_response(endpoint: str, response: Dict)`
-
-设置特定 API 端点的响应。
-
-**参数:**
-- `endpoint` (str): API 端点路径
-- `response` (Dict): 响应数据
-
-**示例:**
-```python
-helper.set_api_response("/get_user_info", {
-    "retcode": 0,
-    "data": {
-        "user_id": "123456",
-        "nickname": "测试用户",
-        "level": 10
-    }
-})
-```
-
-## EventFactory
-
-事件工厂类，用于创建标准化的测试事件。
-
-### 静态方法
-
-#### `create_group_message(...) -> GroupMessageEvent`
-
-创建群聊消息事件。
-
-**参数:**
-- `message` (Union[str, MessageArray]): 消息内容
-- `group_id` (str, 可选): 群组 ID，默认 "123456789"
-- `user_id` (str, 可选): 发送者 ID，默认 "987654321"
-- `nickname` (str, 可选): 发送者昵称，默认 "TestUser"
-- `card` (str, 可选): 群名片
-- `role` (str, 可选): 群角色 ("member", "admin", "owner")，默认 "member"
-- `self_id` (str, 可选): 机器人 ID，默认 "123456789"
-- `message_id` (str, 可选): 消息 ID，自动生成
-- `**kwargs`: 其他事件数据
-
-**返回:**
-- GroupMessageEvent: 群消息事件实例
-
-**示例:**
-```python
-# 纯文本消息
-event = EventFactory.create_group_message("Hello")
-
-# 复杂消息
-from ncatbot.core.event.message_segment import MessageArray, Text, At
-msg = MessageArray(Text("你好 "), At("123456"))
-event = EventFactory.create_group_message(msg, role="admin")
-```
-
-#### `create_private_message(...) -> PrivateMessageEvent`
-
-创建私聊消息事件。
-
-**参数:**
-- `message` (Union[str, MessageArray]): 消息内容
-- `user_id` (str, 可选): 发送者 ID，默认 "987654321"
-- `nickname` (str, 可选): 发送者昵称，默认 "TestUser"
-- `self_id` (str, 可选): 机器人 ID，默认 "123456789"
-- `message_id` (str, 可选): 消息 ID，自动生成
-- `sub_type` (str, 可选): 子类型 ("friend", "group", "other")，默认 "friend"
-- `**kwargs`: 其他事件数据
-
-**返回:**
-- PrivateMessageEvent: 私聊消息事件实例
-
-#### `create_notice_event(...) -> NoticeEvent`
-
-创建通知事件。
-
-**参数:**
-- `notice_type` (str): 通知类型
-- `user_id` (str, 可选): 用户 ID，默认 "987654321"
-- `group_id` (str, 可选): 群组 ID
-- `self_id` (str, 可选): 机器人 ID，默认 "123456789"
-- `sub_type` (str, 可选): 子类型
-- `**kwargs`: 其他事件数据
-
-**返回:**
-- NoticeEvent: 通知事件实例
-
-**示例:**
-```python
-# 群成员增加通知
-event = EventFactory.create_notice_event(
-    notice_type="group_increase",
-    user_id="123456",
-    group_id="789012",
-    sub_type="approve"
-)
-```
-
-#### `create_request_event(...) -> RequestEvent`
-
-创建请求事件。
-
-**参数:**
-- `request_type` (str): 请求类型
-- `user_id` (str, 可选): 用户 ID，默认 "987654321"
-- `flag` (str, 可选): 请求标志，默认 "test_flag"
-- `self_id` (str, 可选): 机器人 ID，默认 "123456789"
-- `sub_type` (str, 可选): 子类型
-- `**kwargs`: 其他事件数据
-
-**返回:**
-- RequestEvent: 请求事件实例
-
-## MockAPIAdapter
-
-模拟 API 适配器，用于拦截和模拟 API 调用。
-
-### 类定义
-
-```python
-class MockAPIAdapter:
-    def __init__(self)
-```
-
-### 方法
-
-#### `async mock_callback(endpoint: str, data: Dict) -> Dict`
-
-模拟 API 回调（内部使用）。
-
-#### `set_response(endpoint: str, response: Union[Dict, Callable])`
-
-设置特定端点的响应。
-
-**参数:**
-- `endpoint` (str): API 端点
-- `response` (Union[Dict, Callable]): 响应数据或生成响应的函数
-
-**示例:**
-```python
-# 静态响应
-mock_api.set_response("/get_status", {
-    "retcode": 0,
-    "data": {"status": "online"}
-})
-
-# 动态响应
-def dynamic_response(endpoint, data):
-    user_id = data.get("user_id")
-    return {
-        "retcode": 0,
-        "data": {"vip": user_id == "123456"}
-    }
-
-mock_api.set_response("/check_vip", dynamic_response)
-```
-
-#### `get_call_history() -> List[Tuple[str, Dict]]`
-
-获取所有调用历史。
-
-**返回:**
-- List[Tuple[str, Dict]]: (endpoint, data) 元组列表
-
-#### `get_calls_for_endpoint(endpoint: str) -> List[Dict]`
-
-获取特定端点的调用记录。
-
-**参数:**
-- `endpoint` (str): API 端点
-
-**返回:**
-- List[Dict]: 调用数据列表
-
-#### `clear_call_history()`
-
-清空调用历史。
-
-#### `assert_called_with(endpoint: str, expected_data: Dict)`
-
-断言特定端点被调用且数据匹配。
-
-**参数:**
-- `endpoint` (str): API 端点
-- `expected_data` (Dict): 期望的调用数据
-
-**抛出:**
-- AssertionError: 如果端点未被调用或数据不匹配
-
-#### `get_call_count(endpoint: str) -> int`
-
-获取特定端点的调用次数。
-
-**参数:**
-- `endpoint` (str): API 端点
-
-**返回:**
-- int: 调用次数
-
-## ClientMixin
-
-为 BotClient 添加测试功能的混入类。
-
-### 方法
-
-#### `enable_mock_mode()`
-
-启用 Mock 模式。
-
-#### `disable_mock_mode()`
-
-禁用 Mock 模式。
-
-#### `mock_start()`
-
-Mock 模式下的启动方法（跳过真实连接）。
-
-#### `async inject_event(event: BaseEventData)`
-
-注入事件到事件处理系统。
-
-**参数:**
-- `event` (BaseEventData): 要注入的事件
-
-**示例:**
-```python
-event = EventFactory.create_private_message("测试消息")
-await client.inject_event(event)
-```
-
-#### `clear_event_history()`
-
-清空事件历史记录。
-
-## 常用模式示例
-
-### 完整测试流程
-
-```python
-from ncatbot.utils.testing import TestClient, TestHelper, EventFactory
-from my_plugin import MyPlugin
-import asyncio
-
-async def complete_test_example():
-    # 1. 初始化
-    client = TestClient()
-    helper = TestHelper(client)
-    
-    # 2. 启动客户端
-    client.start()
-    
-    # 3. 注册插件
-    client.register_plugin(MyPlugin)
-    
-    # 4. 设置 Mock 响应
-    helper.set_api_response("/get_user_info", {
-        "retcode": 0,
-        "data": {"nickname": "测试用户", "level": 10}
-    })
-    
-    # 5. 发送测试消息
-    await helper.send_private_message("/info")
-    
-    # 6. 验证回复
-    reply = helper.get_latest_reply()
-    assert reply is not None
-    
-    # 7. 检查 API 调用
-    api_calls = helper.mock_api.get_calls_for_endpoint("/get_user_info")
-    assert len(api_calls) == 1
-    
-    # 8. 清理
-    helper.clear_history()
-    
-    print("✅ 测试完成")
-
-asyncio.run(complete_test_example())
-```
-
-### 提取消息文本的辅助函数
-
-```python
-def extract_text(message_segments):
-    """从消息段列表中提取纯文本"""
-    text = ""
-    for seg in message_segments:
-        if isinstance(seg, dict) and seg.get("type") == "text":
-            text += seg.get("data", {}).get("text", "")
-    return text
-
-# 使用示例
-reply = helper.get_latest_reply()
-if reply:
-    text = extract_text(reply["message"])
-    print(f"回复文本: {text}")
-```
-
-
----
-
-# 文件: 8. 高级教程\2. 测试\4. 函数式测试最佳实践.md
-
----
-title:  函数式测试最佳实践
-createTime: 2025/09/28 10:43:51
-permalink: /guide/97fh7bjl/
----
-# 简单函数式测试最佳实践
-
-本文档介绍如何使用简单的函数方式快速编写 NcatBot 插件测试，适合快速验证、调试和原型开发。
-
-## 基本模式
-
-### 1. 最简单的测试函数
-
-```python
-from ncatbot.utils.testing import TestClient, TestHelper
-from my_plugin import MyPlugin
-import asyncio
-
-async def test_hello():
-    """测试 hello 命令"""
-    # 创建客户端和辅助器
-    client = TestClient()
-    helper = TestHelper(client)
-    
-    # 启动并注册插件
-    client.start()
-    client.register_plugin(MyPlugin)
-    
-    # 发送测试消息
-    await helper.send_private_message("/hello")
-    
-    # 验证回复
-    reply = helper.get_latest_reply()
-    if reply:
-        print("✅ 测试通过：收到回复")
-        print(f"回复内容：{reply['message']}")
-    else:
-        print("❌ 测试失败：没有收到回复")
-
-# 运行测试
-if __name__ == "__main__":
-    asyncio.run(test_hello())
-```
-
-### 2. 带断言的测试函数
-
-```python
-async def test_with_assertions():
-    """带断言的测试"""
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    client.register_plugin(MyPlugin)
-    
-    # 测试正常情况
-    await helper.send_private_message("/echo 测试文本")
-    reply = helper.get_latest_reply()
-    assert reply is not None, "应该收到回复"
-    
-    # 提取文本内容
-    text = ""
-    for seg in reply["message"]:
-        if seg["type"] == "text":
-            text += seg["data"]["text"]
-    
-    assert "测试文本" in text, f"回复应包含输入文本，实际：{text}"
-    print("✅ Echo 命令测试通过")
-    
-    # 测试错误情况
-    helper.clear_history()
-    await helper.send_private_message("/echo")  # 没有参数
-    reply = helper.get_latest_reply()
-    assert reply is not None, "应该收到错误提示"
-    print("✅ 错误处理测试通过")
-
-asyncio.run(test_with_assertions())
-```
-
-## 实用测试模式
-
-### 1. 批量测试函数
-
-```python
-async def run_all_tests():
-    """运行所有测试"""
-    # 共享的测试环境
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    client.register_plugin(MyPlugin)
-    
-    # 测试结果统计
-    results = {"passed": 0, "failed": 0, "errors": []}
-    
-    # 测试1：基本命令
-    try:
-        helper.clear_history()
-        await helper.send_private_message("/status")
-        reply = helper.get_latest_reply()
-        assert reply is not None
-        results["passed"] += 1
-        print("✅ 状态命令测试通过")
-    except AssertionError as e:
-        results["failed"] += 1
-        results["errors"].append(f"状态命令测试失败: {e}")
-    
-    # 测试2：带参数命令
-    try:
-        helper.clear_history()
-        await helper.send_private_message("/calc 1 + 1")
-        reply = helper.get_latest_reply()
-        assert reply is not None
-        text = extract_text(reply["message"])
-        assert "2" in text
-        results["passed"] += 1
-        print("✅ 计算命令测试通过")
-    except AssertionError as e:
-        results["failed"] += 1
-        results["errors"].append(f"计算命令测试失败: {e}")
-    
-    # 打印测试报告
-    print("\n" + "="*50)
-    print(f"测试完成: {results['passed']} 通过, {results['failed']} 失败")
-    if results["errors"]:
-        print("\n失败详情:")
-        for error in results["errors"]:
-            print(f"  - {error}")
-    print("="*50)
-
-def extract_text(message_segments):
-    """辅助函数：提取消息文本"""
-    text = ""
-    for seg in message_segments:
-        if isinstance(seg, dict) and seg.get("type") == "text":
-            text += seg.get("data", {}).get("text", "")
-    return text
-
-asyncio.run(run_all_tests())
-```
-
-### 2. 交互式测试函数
-
-```python
-async def interactive_test():
-    """交互式测试模式"""
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    client.register_plugin(MyPlugin)
-    
-    print("🎮 交互式测试模式")
-    print("输入命令进行测试，输入 'exit' 退出")
-    print("-" * 50)
-    
-    while True:
-        command = input("\n> ")
-        if command.lower() == 'exit':
-            break
-        
-        # 清理历史
-        helper.clear_history()
-        
-        # 发送命令
-        await helper.send_private_message(command)
-        
-        # 获取回复
-        reply = helper.get_latest_reply()
-        if reply:
-            text = extract_text(reply["message"])
-            print(f"📨 回复: {text}")
-        else:
-            print("❌ 没有回复")
-        
-        # 显示 API 调用
-        api_calls = helper.get_api_calls()
-        if api_calls:
-            print(f"📡 API 调用: {len(api_calls)} 次")
-            for endpoint, data in api_calls[-3:]:  # 只显示最后3个
-                print(f"   - {endpoint}")
-
-asyncio.run(interactive_test())
-```
-
-### 3. 性能测试函数
-
-```python
-import time
-
-async def performance_test():
-    """性能测试"""
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    client.register_plugin(MyPlugin)
-    
-    # 测试参数
-    num_messages = 100
-    command = "/hello"
-    
-    print(f"🏃 开始性能测试: 发送 {num_messages} 条消息")
-    
-    # 记录开始时间
-    start_time = time.time()
-    
-    # 发送多条消息
-    for i in range(num_messages):
-        await helper.send_private_message(command)
-        helper.clear_history()  # 避免内存累积
-    
-    # 计算耗时
-    elapsed = time.time() - start_time
-    avg_time = elapsed / num_messages * 1000  # 转换为毫秒
-    
-    print(f"✅ 完成测试")
-    print(f"总耗时: {elapsed:.2f} 秒")
-    print(f"平均响应时间: {avg_time:.2f} 毫秒")
-    print(f"QPS: {num_messages / elapsed:.2f}")
-
-asyncio.run(performance_test())
-```
-
-## 高级技巧
-
-### 1. 测试装饰器
-
-```python
-from functools import wraps
-import traceback
-
-def plugin_test(plugin_class):
-    """测试装饰器，自动设置测试环境"""
-    def decorator(test_func):
-        @wraps(test_func)
-        async def wrapper():
-            # 设置测试环境
-            client = TestClient()
-            helper = TestHelper(client)
-            client.start()
-            client.register_plugin(plugin_class)
-            
-            try:
-                # 运行测试
-                await test_func(client, helper)
-                print(f"✅ {test_func.__name__} 通过")
-            except Exception as e:
-                print(f"❌ {test_func.__name__} 失败: {e}")
-                traceback.print_exc()
-        
-        return wrapper
-    return decorator
-
-# 使用装饰器
-@plugin_test(MyPlugin)
-async def test_decorated(client, helper):
-    """使用装饰器的测试"""
-    await helper.send_private_message("/hello")
-    reply = helper.get_latest_reply()
-    assert reply is not None
-
-asyncio.run(test_decorated())
-```
-
-### 2. 数据驱动测试
-
-```python
-async def data_driven_test():
-    """数据驱动的测试"""
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    client.register_plugin(MyPlugin)
-    
-    # 测试数据
-    test_cases = [
-        {
-            "name": "基本加法",
-            "input": "/calc 1 + 1",
-            "expected": "2",
-        },
-        {
-            "name": "减法",
-            "input": "/calc 10 - 5",
-            "expected": "5",
-        },
-        {
-            "name": "乘法",
-            "input": "/calc 3 * 4",
-            "expected": "12",
-        },
-        {
-            "name": "除法",
-            "input": "/calc 20 / 4",
-            "expected": "5",
-        },
-        {
-            "name": "错误输入",
-            "input": "/calc invalid",
-            "expected": "错误",
-        },
-    ]
-    
-    # 运行测试
-    for case in test_cases:
-        helper.clear_history()
-        await helper.send_private_message(case["input"])
-        reply = helper.get_latest_reply()
-        
-        if reply:
-            text = extract_text(reply["message"])
-            if case["expected"] in text:
-                print(f"✅ {case['name']}: 通过")
-            else:
-                print(f"❌ {case['name']}: 失败 (期望 '{case['expected']}', 实际 '{text}')")
-        else:
-            print(f"❌ {case['name']}: 失败 (没有回复)")
-
-asyncio.run(data_driven_test())
-```
-
-### 3. Mock 集成测试
-
-```python
-async def test_with_mock():
-    """使用 Mock 的测试"""
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    
-    # 创建带 Mock 的插件
-    class WeatherPlugin(BasePlugin):
-        name = "WeatherPlugin"
-        version = "1.0.0"
-        
-        async def on_load(self):
-            @self.on_command("weather")
-            async def weather_cmd(event, city: str = "北京"):
-                # 假设这里会调用外部 API
-                weather_data = await self.get_weather(city)
-                return f"{city}的天气：{weather_data}"
-        
-        async def get_weather(self, city):
-            # 实际会调用天气 API
-            return "晴天"
-    
-    # 注册插件
-    client.register_plugin(WeatherPlugin)
-    plugin = client.get_registered_plugins()[0]
-    
-    # Mock 外部调用
-    async def mock_weather(city):
-        return {"北京": "晴天", "上海": "多云"}.get(city, "未知")
-    
-    plugin.get_weather = mock_weather
-    
-    # 测试不同城市
-    for city in ["北京", "上海", "深圳"]:
-        helper.clear_history()
-        await helper.send_private_message(f"/weather {city}")
-        reply = helper.get_latest_reply()
-        
-        if reply:
-            text = extract_text(reply["message"])
-            print(f"✅ {city}: {text}")
-        else:
-            print(f"❌ {city}: 没有回复")
-
-asyncio.run(test_with_mock())
-```
-
-## 调试技巧
-
-### 1. 详细日志输出
-
-```python
-import logging
-
-# 配置日志
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-
-async def test_with_logging():
-    """带详细日志的测试"""
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    client.register_plugin(MyPlugin)
-    
-    # 测试并查看日志
-    await helper.send_private_message("/debug")
-    
-    # 打印所有 API 调用
-    print("\n📡 API 调用记录:")
-    for endpoint, data in helper.get_api_calls():
-        print(f"Endpoint: {endpoint}")
-        print(f"Data: {json.dumps(data, ensure_ascii=False, indent=2)}")
-        print("-" * 50)
-```
-
-### 2. 断点调试辅助
-
-```python
-async def debug_test():
-    """方便断点调试的测试"""
-    client = TestClient()
-    helper = TestHelper(client)
-    client.start()
-    client.register_plugin(MyPlugin)
-    
-    # 在这里设置断点
-    await helper.send_private_message("/test")
-    
-    # 检查状态
-    reply = helper.get_latest_reply()
-    plugins = client.get_registered_plugins()
-    api_calls = helper.get_api_calls()
-    
-    # 使用 IPython 进行交互式调试（如果安装了）
-    try:
-        from IPython import embed
-        embed()  # 进入交互式环境
-    except ImportError:
-        # 手动检查变量
-        print(f"Reply: {reply}")
-        print(f"Plugins: {[p.name for p in plugins]}")
-        print(f"API Calls: {len(api_calls)}")
-```
-
-## 最佳实践总结
-
-1. **保持简单**: 函数式测试适合快速验证，不要过度复杂化
-2. **快速反馈**: 立即打印结果，方便调试
-3. **重用代码**: 提取公共函数，如 `extract_text()`
-4. **逐步构建**: 从简单测试开始，逐步添加复杂性
-5. **交互式探索**: 使用交互式测试快速了解插件行为
-6. **适时转换**: 当测试变复杂时，考虑转为标准化测试
-
-## 何时使用函数式测试
-
-✅ **适合场景**:
-- 快速验证新功能
-- 调试具体问题
-- 探索性测试
-- 演示和文档示例
-- 一次性测试脚本
-
-❌ **不适合场景**:
-- 需要持续集成的项目
-- 复杂的测试场景
-- 需要测试覆盖率报告
-- 团队协作的大型项目
-
-## 下一步
-
-- 查看[标准化测试最佳实践](./5.%20集成测试最佳实践.md)了解更规范的测试方法
-- 查看[API 参考文档](./3.%20API%20参考.md)了解所有可用的测试 API
-
-
----
-
-# 文件: 8. 高级教程\2. 测试\5. 集成测试最佳实践.md
-
----
-title:  集成测试最佳实践
-createTime: 2025/09/28 10:43:51
-permalink: /guide/z6o1h7ds/
----
-# 标准化测试最佳实践 - 使用 unittest 框架
-
-本文档介绍如何使用 Python 标准库 `unittest` 框架编写规范的 NcatBot 插件测试。
-
-## 基础测试类设置
-
-## 完整可运行示例
-
-以下是一个完整的单元测试示例，包含插件定义和测试代码：
-
-```python
-"""
-完整的插件单元测试示例
-运行方式：python -m unittest test_calculator_plugin.py
-"""
-import unittest
-import asyncio
-from typing import List, Type
-from ncatbot.utils.testing import TestClient, TestHelper
-from ncatbot.plugin_system import NcatBotPlugin
-from ncatbot.utils import get_log
-from ncatbot.plugin_system import on_message
-from ncatbot.core.event import BaseMessageEvent
-from ncatbot.core.event.message_segment import MessageArray
-
-LOG = get_log("PluginTest")
-
-# ============== 插件定义部分 ==============
-class CalculatorPlugin(NcatBotPlugin):
-    """简单计算器插件 - 用于演示测试"""
-    
-    name = "CalculatorPlugin"
-    version = "1.0.0"
-    description = "提供基本数学计算功能的演示插件"
-    
-    async def on_load(self):
-        self.calculation_count = 0
-
-    @on_message
-    async def handle_message(self, event: BaseMessageEvent):
-        """处理消息事件"""
-        message_text = self.extract_text(event.message)
-        
-        # 处理问候命令
-        if message_text.strip() == "/hello":
-            await event.reply("你好！我是计算器插件 🧮")
-            return
-        
-        # 处理计算命令
-        if message_text.startswith("/calc "):
-            expression = message_text[6:].strip()
-            await self._handle_calculation(event, expression)
-            return
-        
-        # 处理统计命令
-        if message_text.strip() == "/stats":
-            await event.reply(f"已进行 {self.calculation_count} 次计算")
-            return
-    
-    async def _handle_calculation(self, event: BaseMessageEvent, expression: str):
-        """处理数学计算"""
-        try:
-            # 简单的安全计算（仅支持基本运算符）
-            allowed_chars = set('0123456789+-*/() .')
-            if not all(c in allowed_chars for c in expression):
-                raise ValueError("包含不支持的字符")
-            
-            result = eval(expression)
-            self.calculation_count += 1
-            await event.reply(f"计算结果：{expression} = {result}")
-            return
-            
-        except Exception as e:
-            await event.reply(f"计算错误：{str(e)}")
-    
-    def extract_text(self, message_array: MessageArray):
-        """提取消息中的文本内容"""
-        return "".join([seg.text for seg in message_array.filter_text()])
-
-
-# ============== 测试基类定义 ==============
-class AsyncTestCase(unittest.TestCase):
-    """支持异步测试的基础类"""
-    
-    def setUp(self):
-        self.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.loop)
-        self.addCleanup(self.loop.close)
-    
-    def run_async(self, coro):
-        """运行异步协程"""
-        return self.loop.run_until_complete(coro)
-    
-    def tearDown(self):
-        # 清理未完成的任务
-        pending = asyncio.all_tasks(self.loop)
-        for task in pending:
-            task.cancel()
-        if pending:
-            self.loop.run_until_complete(
-                asyncio.gather(*pending, return_exceptions=True)
-            )
-
-class AsyncTestCase(unittest.TestCase):
-    """支持异步测试的基础类"""
-    
-    def setUp(self):
-        self.loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(self.loop)
-        self.addCleanup(self.loop.close)
-    
-    def run_async(self, coro):
-        """运行异步协程"""
-        return self.loop.run_until_complete(coro)
-    
-    def tearDown(self):
-        # 清理未完成的任务
-        pending = asyncio.all_tasks(self.loop)
-        for task in pending:
-            task.cancel()
-        if pending:
-            self.loop.run_until_complete(
-                asyncio.gather(*pending, return_exceptions=True)
-            )
-
-
-class NcatBotTestCase(AsyncTestCase):
-    """NcatBot 插件测试基类"""
-    
-    test_plugins: List[Type[BasePlugin]] = []
-    client: TestClient = None
-    helper: TestHelper = None
-    
-    @classmethod
-    def setUpClass(cls):
-        """测试类初始化 - 启动测试客户端并加载插件"""
-        LOG.info(f"开始测试类: {cls.__name__}")
-        
-        cls.client = TestClient()
-        cls.helper = TestHelper(cls.client)
-        cls.client.start()
-        
-        # 加载测试插件
-        if cls.test_plugins:
-            for plugin_class in cls.test_plugins:
-                cls.client.register_plugin(plugin_class)
-                LOG.info(f"已加载测试插件: {plugin_class.__name__}")
-    
-    @classmethod
-    def tearDownClass(cls):
-        """测试类清理 - 卸载插件并清理资源"""
-        if cls.client:
-            plugins = cls.client.get_registered_plugins()
-            for plugin in plugins:
-                cls.client.unregister_plugin(plugin)
-            LOG.info("TestClient 资源已清理")
-    
-    def setUp(self):
-        super().setUp()
-        if self.helper:
-            self.helper.clear_history()
-    
-    def tearDown(self):
-        if self.helper:
-            self.helper.clear_history()
-        super().tearDown()
-    
-    def extract_text(self, message_segments):
-        """从消息段中提取纯文本"""
-        text = ""
-        for seg in message_segments:
-            if isinstance(seg, dict) and seg.get("type") == "text":
-                text += seg.get("data", {}).get("text", "")
-        return text
-
-
-class TestCalculatorPlugin(NcatBotTestCase):
-    """计算器插件的测试类"""
-    
-    test_plugins = [CalculatorPlugin]
-    
-    def setUp(self):
-        super().setUp()
-        self.plugin = self.client.get_plugin(CalculatorPlugin)
-    
-    def test_plugin_metadata(self):
-        """测试插件元数据"""
-        self.assertEqual(self.plugin.name, "CalculatorPlugin")
-        self.assertEqual(self.plugin.version, "1.0.0")
-        self.assertIn("计算", self.plugin.description)
-    
-    def test_hello_command(self):
-        """测试问候命令"""
-        async def _test():
-            await self.helper.send_private_message("/hello")
-            reply = self.helper.get_latest_reply()
-            
-            self.assertIsNotNone(reply, "应该收到回复")
-            text = self.extract_text(reply["message"])
-            self.assertIn("你好", text)
-            self.assertIn("计算器", text)
-        
-        self.run_async(_test())
-    
-    def test_basic_calculation(self):
-        """测试基本计算功能"""
-        async def _test():
-            await self.helper.send_private_message("/calc 10 + 20")
-            reply = self.helper.get_latest_reply()
-            
-            self.assertIsNotNone(reply)
-            text = self.extract_text(reply["message"])
-            self.assertIn("30", text)
-            self.assertIn("10 + 20", text)
-        
-        self.run_async(_test())
-    
-    def test_calculation_error(self):
-        """测试计算错误处理"""
-        async def _test():
-            await self.helper.send_private_message("/calc invalid_expression")
-            reply = self.helper.get_latest_reply()
-            
-            self.assertIsNotNone(reply)
-            text = self.extract_text(reply["message"])
-            self.assertIn("错误", text)
-        
-        self.run_async(_test())
-    
-    def test_statistics_tracking(self):
-        """测试统计功能"""
-        async def _test():
-            # 执行几次计算
-            self.client.get_plugin(CalculatorPlugin).calculation_count = 0
-
-            await self.helper.send_private_message("/calc 1 + 1")
-            self.helper.get_latest_reply()  # 清除回复
-            
-            await self.helper.send_private_message("/calc 2 * 3")
-            self.helper.get_latest_reply()  # 清除回复
-            
-            # 检查统计
-            await self.helper.send_private_message("/stats")
-            reply = self.helper.get_latest_reply()
-            
-            text = self.extract_text(reply["message"])
-            self.assertIn("2", text)  # 应该显示进行了2次计算
-        
-        self.run_async(_test())
-
-
-if __name__ == "__main__":
-    unittest.main()
-```
-
-## 最佳实践总结
-
-### 1. 生命周期管理（关键）
-- **TestClient 单例原则**: 在整个测试类生命周期中，TestClient 只能启动一次
-- **插件集中加载**: 所有测试插件在 `test_plugins` 类属性中声明，在 `setUpClass` 中统一加载
-- **资源正确清理**: 在 `tearDownClass` 中卸载插件和清理客户端资源
-- **测试方法轻量化**: `setUp` 和 `tearDown` 只进行轻量级的状态清理
-
-### 2. 测试设计原则
-- **测试隔离**: 每个测试方法应该独立，不依赖其他测试的状态
-- **有意义的测试名称**: 使用描述性的测试方法名
-- **适当的断言**: 不仅检查是否有响应，还要验证响应内容的正确性
-- **保持测试简洁**: 每个测试只验证一个功能点
-
-### 3. 外部依赖和组织
-- **Mock 外部依赖**: 使用 Mock 隔离外部服务，确保测试的可靠性
-- **恢复原始状态**: Mock 后记得在测试结束时恢复原始方法
-- **使用测试会话管理器**: 确保每个测试类的资源得到正确管理
-- **测试边界情况**: 包括正常情况、错误情况和边界情况
-
-## ⚠️ 重要提醒：生命周期管理
-
-1. **TestClient 只能启动一次**：在整个测试类的生命周期中，`client.start()` 只能被调用一次
-2. **插件集中管理**：所有要测试的插件必须在 `test_plugins` 类属性中声明
-3. **避免重复初始化**：不要在 `setUp` 方法中创建新的 TestClient 实例
-
-**错误示例**：
-```python
-def setUp(self):
-    self.client = TestClient()  # ❌ 错误：每次都创建新客户端
-    self.client.start()         # ❌ 错误：重复启动
-```
-
-**正确示例**：
-```python
-class TestMyPlugin(NcatBotTestCase):
-    test_plugins = [MyPlugin]   # ✅ 正确：在类属性中声明插件
-    
-    def setUp(self):
-        super().setUp()         # ✅ 正确：只调用父类的轻量级初始化
-```
-
-遵循这些原则可以确保测试的稳定性和性能。
-
-## 下一步
-
-- 查看[简单函数式测试最佳实践](./4.%20函数式测试最佳实践.md)了解更灵活的测试方法
-- 查看[API 参考文档](./3.%20API%20参考.md)了解所有测试相关的 API
-
----
-
-# 文件: 8. 高级教程\3. 其他\1. 远端模式.md
-
----
-title: 远端模式
-createTime: 2025/02/09 16:45:00
-permalink: /guide/inxart0k/
----
-
-# [血的教训](https://wesley-young.github.io/2025-09-05-attack-on-onebot-service)
-
-:::warning
-WebUI token 和 WebSocket token **必须使用强 token（包含大小写字母、数字、符号，至少 12 位）**，否则可能会被暴力破解，导致 NapCat 服务器被入侵。
-:::
-
-## 什么是远端模式
-
-远端模式下，NcatBot 不会在本地启动 NapCat，而是连接到远端的 NapCat 服务器。
-
-## 什么时候适合使用远端 NapCat 接口
-
-- ==具备基本的网络和操作系统知识的前提下==。
-- 使用 Docker 部署 NapCat 和 NcatBot, 但不希望 NapCat 和 NcatBot 在同一个容器中运行。
-- NapCat 和 NcatBot 需要分开部署在不同的服务器上。
-- 本地无法正常登录 NapCat。
-
-## 准备工作
-
-:::warning
-务必使用强 token（包含大小写字母、数字、符号，至少 12 位），否则可能会被暴力破解，导致 NapCat 服务器被入侵。
-:::
-
-- 参考 [NapCat 安装教程](https://napneko.github.io/guide/boot/Shell) 安装 NapCat。
-- 启动 NapCat 服务，扫码登录，拿到 NapCat WebUI token 和 WebUI 地址（通常是 `http://<服务器 IP>:6099/webui/`）。
-- 使用 NapCat WebUI token 登录 NapCat WebUI，
-- WebUI 界面中，点击左边栏的 "网络配置"。
-- 点击 "新建"，选择 `Websocket服务器`。
-- 填写以下信息：
-  - 名称：随便起一个名字，比如 `NcatBot`。
-  - Host：如果是公网服务器，填写 `0.0.0.0`。
-  - Port：默认 `3001`，也可以改成其它端口，但要记住。
-  - Token：==必须使用强 token==（包含大小写字母、数字、符号，至少 12 位）。
-  - 勾选 "启用"。
-- 检查服务器防火墙、系统防火墙正确放通。
-
-## 填写有关配置项
-
-根据 [NapCat 文档](https://napneko.github.io/), 在远端正确配置 NapCat 及其 WebSocket 服务器。
-
-参考[配置项](../../2.%20基本开发/4.%20配置项.md)填写 `ws_uri` 和 `ws_token`。并将 `remote_mode` 设置为 `True`。
-
-如果需要，也可以填写 `webui_url` 和 `webui_token`。
-
-## 已知局限
-
-- 使用远端 NapCat 模式时，无法发送大于 30MB（约数）的文件。
-- 获取文件时，由于 NapCat 和 NcatBot 不在同一机器，文件路径可能失效，但 uri 仍然有效。
-
-
----
-
-# 文件: 8. 高级教程\3. 其他\2. 日志.md
-
----
-title: 日志
-createTime: 2025/03/05 20:00:05
-permalink: /guide/qbus9tlp/
----
-
-
-NcatBot 提供日志功能以便检查程序运行情况. 日志**按天分割**保存在工作目录下的 `log/` 文件夹中.
-
-## 默认日志
-
-默认日志是不需要进行任何设置就会自动记录的日志.
-
-### debug
-
-- 所有 `notice`, `request` 事件.
-
-### info
-
-- 所有的 `message` 类型消息接收事件.
-
-## 自定义日志
-
-```python
-from ncatbot.utils import get_log
-from ncatbot.plugin_system import NcatBotPlugin
-
-logger = get_log("MyPlugin")  # 创建一个名为 my_plugin 的日志记录器
-
-class MyPlugin(NcatBotPlugin):
-    async def on_load(self):
-        logger.info("插件已加载")  # 记录一条信息级别的日志
-    
-    async def some_method(self):
-        logger.info("执行了某个方法")  # 记录一条信息级别的日志
-```
-
-## 日志路径
-
-设置环境变量：
-
-`LOG_LEVEL`：终端日志等级，默认 INFO。
-`FILE_LOG_LEVEL`：文件日志等级，默认 DEBUG。
-`LOG_FILE_PATH`：日志保存目录。
-`LOG_FILE_NAME`：日志文件名，默认 `bot_%Y_%m_%d.log`。
-
-
-
----
-
-# 文件: 8. 高级教程\3. 其他\3. CLI.md
-
----
-title: CLI
-createTime: 2025/03/05 20:00:05
-permalink: /guide/ncatbotcli/
----
-
-# 暂时未完成
-
-## 简介
-
-NcatBot CLI 是一个命令行工具，用于管理和控制 NcatBot 的运行。它提供了丰富的命令来管理插件、配置机器人以及执行各种系统操作。
-
-## 快速开始
-
-### 启动 CLI
-
-确保当前 Python 环境已安装 NcatBot。
-
-执行以下命令启动 CLI：
-
-```bash
-python -m ncatbot.cli.main [path]
-```
-
-其中 `[path]` 是一个可选参数，用于指定 CLI 工作目录，默认工作目录为执行此命令的目录。
-
-### 直接执行命令
-
-CLI 支持不进入交互模式直接执行命令：
-
-```bash
-python -m ncatbot.cli.main -c "命令" [-a] [参数...]
-```
-
-例如：
-```bash
-# 直接启动 NcatBot
-python -m ncatbot.cli.main -c start
-
-# 安装插件
-python -m ncatbot.cli.main -c install -a TestPlugin
-
-# 列出已安装插件
-python -m ncatbot.cli.main -c list
-
-# 创建一个模板插件(名为 MyPlugin)
-python -m ncatbot.cli.main -c new -a MyPlugin
-```
-
-### 首次运行
-
-首次运行 CLI 时：
-1. 系统会提示设置 QQ 号
-2. 自动安装 `TestPlugin` 插件用于测试
-3. 创建必要的工作目录结构
-
-## 命令系统
-
-CLI 采用命令注册系统，所有命令都通过装饰器注册到全局命令注册表中。每个命令都包含以下信息：
-- 命令名称
-- 命令描述
-- 使用说明
-- 帮助文本
-- 命令别名
-
-### 系统命令
-
-#### start
-- 用法：`start`
-- 别名：`s`, `run`
-- 描述：启动 NcatBot
-
-#### setqq
-- 用法：`setqq`
-- 别名：`qq`
-- 描述：设置或更新 QQ 号
-
-#### update
-- 用法：`update`
-- 别名：`u`, `upgrade`
-- 描述：更新 NcatBot 和 NapCat
-- 功能：
-  - 更新 NapCat 版本
-  - 从阿里源更新 NcatBot
-  - 更新完成后需要重新启动 CLI
-
-#### exit
-- 用法：`exit`
-- 别名：`quit`, `q`
-- 描述：退出 CLI 工具
-
-### 插件管理命令
-
-#### install
-- 用法：`install <插件名> [--fix]`
-- 别名：`i`
-- 描述：安装或更新插件
-- 参数：
-  - `--fix`：尝试修复安装失败的插件，或者尝试覆盖安装
-
-#### remove
-- 用法：`remove <插件名>`
-- 别名：`r`, `uninstall`
-- 描述：卸载指定插件
-
-#### list
-- 用法：`list`
-- 别名：`l`, `ls`
-- 描述：列出已安装的插件及其版本
-
-#### list_remote
-- 用法：`list_remote`
-- 别名：`lr`
-- 描述：列出远程仓库中可用的插件
-
-#### create
-- 用法：`create <插件名>`
-- 别名：`new`, `template`
-- 描述：创建新的插件模板
-- 功能：
-  - 创建插件目录结构
-  - 生成基本代码文件
-  - 创建配置文件
-  - 生成 README 文档
-
-### 信息命令
-
-#### help
-- 用法：`help [命令名]`
-- 别名：`h`, `?`
-- 描述：显示命令帮助信息
-- 参数：
-  - `命令名`：显示指定命令的详细帮助
-
-#### version
-- 用法：`version`
-- 别名：`v`, `ver`
-- 描述：显示 NcatBot 版本信息
-
-## 工作目录结构
-
-CLI 的工作目录包含以下内容：
-```
-
-plugins/          # 插件目录
-|   ├── plugin1/     # 插件1
-|   └── plugin2/     # 插件2
-├── number.txt       # QQ 号配置文件
-└── logs/            # 日志目录
-```
-
-## 插件开发
-
-### 创建新插件
-
-使用 `create` 命令创建新插件模板：
-
-```bash
-create MyPlugin
-```
-
-或者不进入 CLI 直接执行命令
-
-```bash
-python -m ncatbot.cli -c create MyPlugin
-```
-
-这将创建一个包含以下文件的插件模板，插件名为 `MyPlugin`：
-- `__init__.py`：插件入口文件
-- `main.py`：插件主文件
-- `README.md`：插件文档
-- `.gitignore`：Git 忽略文件
-- `requirements.txt`：依赖项文件
-
-### 插件模板结构
-
-插件模板包含以下基本功能：
-- 群消息事件处理
-- 私聊消息事件处理
-- 配置项管理
-- 功能注册系统
-
-## 注意事项
-
-1. 确保在使用 CLI 前已正确安装 NcatBot
-2. 建议使用稳定的网络环境进行插件安装和更新
-3. 定期使用 `update` 命令保持 NcatBot 为最新版本
-4. 插件安装失败时，可以尝试使用 `--fix` 参数进行修复
-
----
-
-# 文件: 8. 高级教程\3. 其他\4. AI+NcatBot.md
-
----
-title: AI+NcatBot
-createTime: 2025/03/25 23:21:39
-permalink: /guide/useaidv/
----
-
-AI 时代已至, 只需要很低的学习成本, 就能够使用 AI 和 NcatBot 开发自己的 QQ 机器人.
-
-## NcatBot 是一个 AI 友好的项目
-
-### AI 专用文档
-
-本项目提供 AI 专用的单文件文档，位于[这里](https://github.com/huan-yp/NcatBotDocs/blob/master/LLM.md)。
-
-你可以把这个文件下载下来，上传给 AI，AI 就会变成对 NcatBot 无所不知的专家。
-
-像在群里问大佬一样向 AI 提问，它会给你专业的回答。
-
-推荐使用：
-
-- [Kimi](https://kimi.com)。
-
-
-
-
-
-
----
-
-# 文件: 8. 高级教程\3. 其他\5. 开发技巧.md
-
----
-title: 开发技巧
-createTime: 2025/04/30 23:21:39
-permalink: /guide/devtrick/
----
-
-## 优化重载时间
-
-- 调试时，第一次登录完成后，可以在[配置项](../../2.%20基本开发/4.%20配置项.md)使用 `enable_webui_interaction=False` 跳过检查节省加载时间。（如果 QQ 被踢下线，重新登陆时必须设置为 True）
-
----
-
-# 文件: 8. 高级教程\4. 最佳实践.md
-
----
-title: 发送各类消息
-createTime: 2025/09/26 14:00:00
-permalink: /guide/bestpractice/
----
-
-## 最佳实践
-
-### 获取消息中的文本
-
-```python
-from ncatbot.core.event import GroupMessageEvent
-from ncatbot.plugin_system import on_message
-
-@on_message
-def on_group_message(event: BaseMessageEvent):
-    first_text = event.message.filter_text()[0].text # 第一段文本
-    all_text = "".join(seg.text for seg in event.message.filter_text()) # 所有文本
-    if "测试" in first_text:
-        event.reply("前端：测试成功")
+| 组件 | 说明 |
+|------|------|
+| `PluginTestHarness` | 加载真实插件目录，模拟事件流的完整测试编排器 |
+| `TestHarness` | 轻量无插件测试，直接注册 handler 并注入事件 |
+| `Scenario` | 链式构建器，编排多步交互场景 |
+| `MockAdapter` / `MockBotAPI` | 内存级模拟，无需网络 |
+
+### 事件工厂函数
+
+| 工厂函数 | 说明 |
+|---------|------|
+| `group_message(text, group_id=, user_id=)` | 群消息事件 |
+| `private_message(text, user_id=)` | 私聊消息事件 |
+| `friend_request(user_id=, comment=)` | 好友请求 |
+| `group_request(group_id=, user_id=)` | 加群请求 |
+| `group_increase(group_id=, user_id=)` | 群成员增加 |
+| `group_decrease(group_id=, user_id=)` | 群成员减少 |
+| `group_ban(group_id=, user_id=)` | 群禁言 |
+| `poke(group_id=, user_id=)` | 戳一戳 |
+
+### Harness 常用方法
+
+| 方法 | 说明 |
+|------|------|
+| `h.inject(event)` | 注入事件 |
+| `h.settle()` | 等待所有 handler 执行完成 |
+| `h.api_called("method_name")` | 断言：API 被调用 → `bool` |
+| `h.api_not_called("method_name")` | 断言：API 未被调用 → `bool` |
+| `h.get_api_calls("method_name")` | 获取 API 调用记录列表 |
+
+### 典型测试示例
+
+```python
+import pytest
+from ncatbot.testing import PluginTestHarness, group_message
+
+@pytest.mark.asyncio
+async def test_hello_command():
+    async with PluginTestHarness(plugin_names=["hello_world"], plugin_dir=Path("plugins/")) as h:
+        await h.inject(group_message("hello", group_id="100", user_id="99"))
+        await h.settle()
+        assert h.api_called("send_group_msg")
 ```
 
 ---
 
-# 文件: 9. 实际项目参考\1. 简单 BotClient 项目.md
+## 本目录索引
+
+| 章节 | 说明 | 难度 |
+|------|------|------|
+| [1. 快速入门](1.quick-start.md) | 5 分钟写出第一个插件测试 | ⭐ |
+| [2. Harness 详解](2.harness.md) | TestHarness 与 PluginTestHarness 深入使用 | ⭐⭐ |
+| [3. 工厂与场景](3.factory-scenario.md) | 事件工厂、Scenario 构建器、自动冒烟测试 | ⭐⭐ |
+
 
 ---
-title: 简单示例
-createTime: 2025/01/23 20:00:05
-permalink: /guide/eznrproj/
----
-## 简单示例
+
+# 文件: 10. 多平台开发\README.md
 
 ---
-对于初学者但是对 QQ 机器人有简单需求的用户, 这里提供一些可供 CV 的示例:
+title: 多平台开发指南
+createTime: 2026/03/19 17:26:45
+permalink: /guide/jod8utht/
+---
 
-### 捕获指定群聊的指定消息内容, 并且发送消息
+> NcatBot 5.2 起支持跨平台运行 — 通过 Adapter/Platform/Trait 三层抽象实现多平台统一开发。
+
+---
+
+## Quick Reference
+
+### 核心三层抽象
+
+| 层 | 说明 |
+|----|------|
+| **Platform** | 适配器的 `platform` 标识（如 `"qq"`），用于事件路由、API 注入、Handler 过滤 |
+| **API Trait** | 跨平台 API 能力协议：`IMessaging`（消息）、`IGroupManage`（群管理）、`IQuery`（查询）、`IFileTransfer`（文件） |
+| **事件 Trait** | 事件实体通用能力：`Replyable`、`Deletable`、`GroupScoped`、`Kickable`、`Bannable`、`HasSender`、`Approvable` |
+
+### 多平台 API 访问
+
+| 操作 | 调用方式 |
+|------|---------|
+| QQ 平台 API | `self.api.qq.messaging.*` / `self.api.qq.manage.*` 等 || Bilibili 平台 API | `self.api.bilibili.send_danmu()` 等 |
+| GitHub 平台 API | `self.api.github.create_issue()` / `self.api.github.merge_pr()` 等 || 按名称访问 | `self.api.platform("telegram").*` |
+| 查看已注册平台 | `self.api.platforms` → `Dict[str, IAPIClient]` |
+
+### 平台过滤
+
+所有装饰器支持 `platform` 参数限定事件来源：
+
+| 示例 | 说明 |
+|------|------|
+| `@registrar.on_group_command("hello", platform="qq")` | 仅 QQ 群命令 |
+| `@registrar.on_message(platform="qq")` | 仅 QQ 消息 |
+| `@registrar.on_notice()` | 所有平台通知（不设 platform） |
+
+### 跨平台插件编写
+
+使用 Trait 协议检查事件能力：`isinstance(event, Replyable)` → 可调用 `event.reply()`。
+
+---
+
+## 核心概念
+
+### 平台 (Platform)
+
+每个适配器有一个 `platform` 标识符（如 `"qq"`、`"telegram"`），用于：
+- 事件路由：`event.platform` 区分事件来源
+- API 注入：`HandlerDispatcher` 自动为事件实体注入对应平台的 API
+- Handler 过滤：`@bot.on("message", platform="qq")` 仅接收 QQ 消息
+
+### Trait 协议
+
+跨平台 API 按功能拆分为 Trait 协议（`api/traits/`）：
+
+| Trait | 功能 |
+|---|---|
+| `IMessaging` | 发送/撤回消息、转发 |
+| `IGroupManage` | 群管理（踢人、禁言、设管理） |
+| `IQuery` | 信息查询（好友列表、群信息） |
+| `IFileTransfer` | 文件上传/下载 |
+
+事件实体也有 Trait 协议（`event/traits.py`）：
+
+| Trait | 功能 |
+|---|---|
+| `Replyable` | 可回复（`reply()`, `send()`） |
+| `Deletable` | 可撤回（`delete()`） |
+| `HasSender` | 有发送者信息 |
+| `GroupScoped` | 群相关（有 `group_id`） |
+| `Kickable` | 可踢出群成员 |
+| `Bannable` | 可禁言 |
+
+### 多平台运行
+
+单个 `BotClient` 可同时运行多个适配器，共享插件和服务：
 
 ```python
-from ncatbot.core import BotClient
-from ncatbot.core import GroupMessage
+from ncatbot.app import BotClient
+from ncatbot.adapter import NapCatAdapter
+from ncatbot.adapter.github import GitHubAdapter
 
-bot = BotClient()
-
-@bot.group_event()
-async def on_group_message(msg:GroupMessage):
-    group_uin = "12345678" # 指定群聊的账号
-    if msg.group_id == group_uin and msg.raw_message == "你好":
-        await bot.api.post_group_msg(msg.group_id, text="你好呀，有什么需要我帮忙的吗？")
-
-bot.run()
-```
-
-运行结果如下：  
-![pic](https://foruda.gitee.com/images/1737626227690770562/ae0bc55c_13790314.png)
-
-### 捕获指定群聊的指定用户的指定信息，并且进行图片回复
-
-```python
-from ncatbot.core import BotClient
-from ncatbot.core import GroupMessage
-
-bot = BotClient()
-
-@bot.group_event()
-async def on_group_message(msg:GroupMessage):
-    group_uin = "12345678" # 指定群聊的账号
-    user_uin = "987654321" # 指定用户的账号
-    if msg.group_id == group_uin and msg.user_id == user_uin and msg.raw_message == "你好":
-        await bot.api.post_group_file(group_id=group_uin, image="https://gitee.com/li-yihao0328/nc_bot/raw/master/logo.png")# 文件路径支持本地绝对路径，相对路径，网址以及base64
-
-bot.run()
-```
-
-运行如下:
-![输入图片说明](https://foruda.gitee.com/images/1737626482165344411/5bba3f8f_13790314.png)
-
-
----
-
-# 文件: 9. 实际项目参考\教程项目\1. 发送复杂消息.md
-
----
-title: 发送复杂消息
-createTime: 2025/04/22 15:21:39
-permalink: /guide/sendcomm/
----
-
-## 发送各类消息
-
-```python
-from ncatbot.core import BotClient, MessageArray, Text, At, Image, Face, Reply
-
-bot = BotClient()
-api = bot.run_backend(bt_uin="123456") # 替换为实际的 BOT QQ 号
-
-message = MessageArray([
-    "喵喵喵~",
-    Text("你好, 这是一条复杂的测试消息"),
-    At(123456), # 替换为实际的 QQ 号
-    Image(r"meow.jpg"), # 替换为你自己的图片路径
-    [
-        Face(123), # 替换为实际的 QQ 表情 ID
-        Image("https://ghfast.top/https://raw.githubusercontent.com/huan-yp/image_space/master/img/202504081258124.png"), # 替换为你想发的图片路径
-        Reply(123456), # 替换为实际的消息 ID
-    ]
+bot = BotClient(adapters=[
+    NapCatAdapter(),           # platform="qq"
+    GitHubAdapter(),           # platform="github"
+    # TelegramAdapter(),       # platform="telegram" (未来)
 ])
-message += MessageChain(["咕咕咕"])
-message = message + At(123456) # 替换为实际的 QQ 号
-api.post_group_msg_sync(group_id=123456, rtf=message) # 替换为实际的群号
+bot.run()
 ```
 
-效果展示：
-
-![效果展示](https://ghfast.top/raw.githubusercontent.com/huan-yp/image_space/master/img/202504221424416.png)
-
-
 ---
 
-# 文件: 9. 实际项目参考\教程项目\3. 上传和获取文件.md
+## 单平台用法（默认）
 
----
-title: 上传和获取文件
-createTime: 2025/04/22 14:54:49
-permalink: /guide/to4czozs/
----
-
-## 上传文件 && 发送文件
-
-::: tip
-由于 NapCat 的一些原因, 发送**视频**建议以上传文件的形式进行.
-:::
-
-### 通过专用接口发送
+对于只使用 QQ 的场景，用法与 5.0 完全相同：
 
 ```python
-from ncatbot.core import BotClient
+from ncatbot.app import BotClient
+
+bot = BotClient()  # 默认 NapCatAdapter
+
+@bot.on("message.group")
+async def on_msg(event):
+    await event.reply("hello")
+
+bot.run()
+```
+
+---
+
+## 多平台 API 访问
+
+`plugin.api`（`BotAPIClient`）是多平台门面，提供三种访问方式：
+
+```python
+# 方式 1: 直接属性访问（推荐，有类型提示）
+await self.api.qq.messaging.send_group_msg(group_id, message)
+await self.api.bilibili.send_danmu(room_id, text)
+await self.api.github.create_issue_comment(repo, issue_number, body)
+
+# 方式 2: 动态平台访问（按名称获取）
+client = self.api.platform("qq")        # → IQQAPIClient
+await client.messaging.send_group_msg(group_id, message)
+
+# 方式 3: 查看已注册的平台
+print(self.api.platforms)  # {"qq": <IQQAPIClient>, "bilibili": ..., "github": ...}
+```
+
+**选择建议**：
+
+| 方式 | 适用场景 |
+|------|---------|
+| `api.qq.*` / `api.bilibili.*` | 平台确定、需要 IDE 自动补全 |
+| `api.platform(name)` | 平台名来自变量或运行时动态决定 |
+| `api.platforms` | 遍历/列出所有已注册平台 |
+
+---
+
+## 平台过滤
+
+通过 `platform` 参数限定 handler 只接收特定平台的事件：
+
+```python
+@bot.on("message.group", platform="qq")
+async def qq_only(event):
+    """仅处理 QQ 群消息"""
+    await event.reply("QQ!")
+
+@bot.on("message")
+async def all_platforms(event):
+    """处理所有平台的消息"""
+    print(f"来自 {event.platform} 的消息")
+```
+
+所有便捷装饰器都支持 `platform` 参数：
+
+```python
+@bot.on_group_message(platform="qq")
+@bot.on_command("/help", platform="qq")
+@bot.on_notice(platform="qq")
+```
+
+---
+
+## 编写跨平台插件
+
+使用 Trait 协议编写跨平台逻辑：
+
+```python
+from ncatbot.event import Replyable, GroupScoped
+
+@bot.on("message")
+async def cross_platform(event):
+    if isinstance(event, Replyable):
+        await event.reply("hello from any platform!")
+
+    if isinstance(event, GroupScoped):
+        print(f"群 {event.group_id} 的消息")
+```
+
+---
+
+## 参考
+
+- [适配器登录与使用指南](../adapter/) — 各平台具体的登录、认证、配置流程
+- [架构文档](../../architecture.md) — 整体设计
+- [ADR-005: 多平台架构](../../contributing/design_decisions/1_architecture.md#adr-005多平台架构--组合优于继承) — 设计决策
+- [ADR-006: 多适配器运行时](../../contributing/design_decisions/1_architecture.md#adr-006多适配器运行时) — 运行时设计
+- **示例**：[examples/cross_platform/](../../../examples/cross_platform/) — 跨平台开发示例
+
+---
+
+## 实战案例
+
+### GitHub ↔ QQ 双向桥接
+
+[examples/cross_platform/03_github_qq_bridge/](../../../examples/cross_platform/03_github_qq_bridge/) 展示了一个完整的跨平台双向桥接机器人：
+
+- **GitHub → QQ**：Issue/PR/Push/Comment 事件自动转发到指定 QQ 群
+- **QQ → GitHub**：在 QQ 群中引用(reply)通知消息，回复内容自动作为 GitHub Issue Comment 发送
+- **消息映射追踪**：维护 QQ 消息 ID ↔ GitHub Issue 的映射表，支持 reply 反向关联
+
+核心技术点：
+- 同时使用 `registrar.github.*` 和 `registrar.qq.*` 平台子注册器
+- 通过 `self.api.qq.*` 和 `self.api.github.*` 访问多平台 API
+- `ConfigMixin` 读取桥接群号和仓库名，避免硬编码
+- `HasSender` Trait 统一获取 GitHub/QQ 事件的发送者信息
+
+> ⚠️ 本示例依赖开发中的 GitHub Adapter，API 可能变动。
+
+
+---
+
+# 文件: 11. 架构与概念\1. 架构总览.md
+
+---
+title: NcatBot 架构文档
+createTime: 2026/03/19 17:26:45
+permalink: /guide/uxoxz0nf/
+---
+
+::: info
+5.2.0 &nbsp;|&nbsp; **Python**: ≥ 3.12 &nbsp;|&nbsp; **协议**: OneBot v11 (NapCat) + 跨平台扩展
+:::
+
+
+---
+
+## 目录
+
+- [1. 项目概览](#1-项目概览)
+- [2. 目录结构](#2-目录结构)
+- [3. 分层架构](#3-分层架构)
+- [4. 核心模块详解](#4-核心模块详解)
+  - [4.1 Adapter 适配层](#41-adapter-适配层)
+  - [4.2 Types 类型模型](#42-types-类型模型)
+  - [4.3 Event 事件实体](#43-event-事件实体)
+  - [4.4 Core 核心引擎](#44-core-核心引擎)
+  - [4.5 API 接口层](#45-api-接口层)
+  - [4.6 Plugin 插件系统](#46-plugin-插件系统)
+  - [4.7 Service 服务层](#47-service-服务层)
+  - [4.8 Utils 工具集](#48-utils-工具集)
+  - [4.9 Testing 测试支持](#49-testing-测试支持)
+  - [4.10 App 编排层](#410-app-编排层)
+  - [4.11 CLI 命令行工具](#411-cli-命令行工具)
+- [5. 生命周期](#5-生命周期)
+  - [5.1 启动流程](#51-启动流程)
+  - [5.2 事件处理流程](#52-事件处理流程)
+  - [5.3 关闭流程](#53-关闭流程)
+- [6. 插件开发模型](#6-插件开发模型)
+  - [6.1 插件结构](#61-插件结构)
+  - [6.2 Mixin 体系](#62-mixin-体系)
+  - [6.3 插件加载与热重载](#63-插件加载与热重载)
+- [7. 关键设计模式](#7-关键设计模式)
+
+---
+
+## 1. 项目概览
+
+NcatBot 是基于 OneBot v11 协议的 Python 跨平台机器人框架，通过可插拔的适配器架构同时支持 QQ（NapCat）、Bilibili 等多个平台。核心设计目标：
+
+- **跨平台** — 适配器注册表 + 平台工厂，单一 BotClient 同时运行多个平台适配器
+- **配置驱动** — YAML 配置声明适配器列表，自动创建与连接，支持旧格式自动迁移
+- **异步事件驱动** — 基于 asyncio 的纯异步事件流，多适配器并行监听
+- **插件化** — 热重载、依赖解析、Mixin 扩展的插件系统
+- **服务化** — 内置 RBAC、定时任务、文件监控等可插拔服务
+
+### 核心依赖
+
+| 库 | 用途 |
+|---|---|
+| pydantic ≥ 2.0 | 事件数据模型校验 |
+| websockets | WebSocket 通信 |
+| aiofiles | 异步文件 I/O |
+| pyyaml / toml | 配置文件解析 |
+| schedule | 定时任务调度 |
+| rich | 终端输出美化 |
+
+---
+
+## 2. 目录结构
+
+```text
+ncatbot/
+├── adapter/              # 协议适配器
+│   ├── base.py           #   BaseAdapter 抽象接口
+│   ├── registry.py       #   AdapterRegistry 注册表（注册 / 发现 / 工厂）
+│   ├── napcat/           #   NapCat OneBot v11 适配器（platform="qq"）
+│   │   ├── adapter.py    #     NapCatAdapter 主编排器
+│   │   ├── parser.py     #     NapCatEventParser（OB11→BaseEventData）
+│   │   ├── constants.py  #     协议常量
+│   │   ├── api/          #     NapCatBotAPI + Mixin（message / group / account / query / file）
+│   │   ├── connection/   #     NapCatWebSocket + OB11Protocol
+│   │   ├── setup/        #     Launcher / Installer / Auth / Config
+│   │   ├── service/      #     PreUpload 文件流式上传服务
+│   │   └── debug/        #     诊断工具（WebSocket / WebUI 检查）
+│   ├── bilibili/         #   Bilibili 适配器（platform="bilibili"）
+│   │   ├── adapter.py    #     BilibiliAdapter 主编排器
+│   │   ├── parser.py     #     Bilibili 事件解析
+│   │   ├── config.py     #     Bilibili 配置模型
+│   │   ├── api/          #     BiliBotAPI + Mixin（comment / danmu / query / session / room / source）
+│   │   └── source/       #     数据源管理器
+│   ├── github/           #   GitHub 适配器（platform="github"，实验性）
+│   │   ├── adapter.py    #     GitHubAdapter 主编排器
+│   │   ├── parser.py     #     GitHub Webhook 事件解析
+│   │   ├── config.py     #     GitHub 配置模型
+│   │   ├── api/          #     GitHub API 操作
+│   │   └── source/       #     数据源管理
+│   └── mock/             #   测试用 Mock 适配器（platform 可配置）
+├── api/                  # Bot API 封装
+│   ├── base.py           #   IAPIClient 抽象接口
+│   ├── client.py         #   BotAPIClient 多平台 API 门面
+│   ├── proxy.py          #   BaseLoggingProxy 异步日志代理
+│   ├── errors.py         #   API 异常定义
+│   ├── traits/           #   跨平台 Trait 协议（IMessaging / IGroupManage / IQuery / IFileTransfer）
+│   ├── qq/               #   QQ 平台 API
+│   │   ├── interface.py  #     IQQAPIClient 接口
+│   │   ├── client.py     #     QQAPIClient（4 命名空间 + Sugar）
+│   │   ├── sugar.py      #     QQMessageSugarMixin 便捷发送
+│   │   ├── messaging.py  #     QQMessaging 消息操作
+│   │   ├── manage.py     #     QQManage 群管理
+│   │   ├── query.py      #     QQQuery 信息查询
+│   │   ├── file.py       #     QQFile 文件操作
+│   │   └── proxy.py      #     QQLoggingProxy
+│   └── bilibili/         #   Bilibili 平台 API 接口
+├── app/                  # 应用编排层（Composition Root）
+│   └── client.py         #   BotClient 生命周期管理（多适配器）
+├── core/                 # 核心引擎
+│   ├── dispatcher/       #   AsyncEventDispatcher 事件广播（event / stream / predicate）
+│   └── registry/         #   HandlerDispatcher / Registrar / Hook / CommandHook / Context
+├── event/                # 事件实体与工厂
+│   ├── common/           #   跨平台基类与路由
+│   │   ├── base.py       #     BaseEvent 包装器
+│   │   ├── mixins.py     #     事件 Trait（Replyable / Kickable / ...）
+│   │   └── factory.py    #     create_entity() + register_platform_factory()
+│   ├── qq/               #   QQ 平台事件实体与工厂
+│   └── bilibili/         #   Bilibili 平台事件实体与工厂
+├── plugin/               # 插件框架
+│   ├── base.py           #   BasePlugin 抽象基类
+│   ├── ncatbot_plugin.py #   NcatBotPlugin（推荐基类）
+│   ├── manifest.py       #   manifest.toml 解析
+│   ├── loader/           #   PluginLoader / Indexer / Resolver / Importer / PipHelper
+│   └── mixin/            #   Event / TimeTask / RBAC / Config / Data 混入
+├── service/              # 服务层
+│   ├── base.py           #   BaseService 抽象基类
+│   ├── manager.py        #   ServiceManager 注册与生命周期
+│   └── builtin/          #   RBAC / Schedule / FileWatcher 内置服务
+├── types/                # Pydantic 数据模型
+│   ├── common/           #   跨平台通用类型
+│   │   ├── base.py       #     BaseEventData（含 platform 字段）
+│   │   ├── sender.py     #     BaseSender
+│   │   └── segment/      #     通用消息段（PlainText / At / Image / MessageArray 等）
+│   ├── qq/               #   QQ 平台专用类型（消息 / 通知 / 请求 / 元事件）
+│   ├── bilibili/         #   Bilibili 平台专用类型
+│   └── napcat/           #   NapCat API 响应类型
+├── testing/              # 测试工具
+│   ├── factory.py        #   8 个事件数据工厂函数
+│   ├── harness.py        #   TestHarness 测试编排
+│   ├── plugin_harness.py #   PluginTestHarness 插件测试编排
+│   ├── scenario.py       #   Scenario 链式场景构建器
+│   └── discovery.py      #   插件发现与冒烟测试生成
+├── utils/                # 公共工具
+│   ├── logger/           #   日志配置
+│   ├── config/           #   ConfigManager + Config / AdapterEntry 模型
+│   ├── network.py        #   HTTP 工具函数
+│   ├── error.py          #   异常体系
+│   ├── status.py         #   全局状态追踪
+│   └── prompt.py         #   交互式 CLI 工具
+└── cli/                  # CLI 命令行工具
+    ├── main.py           #   Click 入口
+    ├── commands/         #   run / dev / config / plugin / napcat / init
+    ├── utils/            #   颜色输出 / REPL
+    └── templates/        #   插件脚手架模板
+```
+
+---
+
+## 3. 分层架构
+
+NcatBot 采用自底向上的分层设计，每层只**逻辑上依赖**其下方的层：
+
+```mermaid
+graph TB
+    App["编排层<br/><small>BotClient · ConfigManager</small>"]
+
+    Plugin["插件层<br/><small>NcatBotPlugin · Mixin</small>"]
+    Core["核心层<br/><small>Dispatcher · Registry · Hook</small>"]
+    Service["服务层<br/><small>ServiceManager · RBAC · Schedule</small>"]
+    API["API 层<br/><small>BotAPIClient（多平台门面）· QQAPIClient</small>"]
+    Event["事件层<br/><small>BaseEvent · Trait · 平台工厂</small>"]
+    Adapter["适配层<br/><small>AdapterRegistry · NapCat · Bilibili · GitHub · Mock</small>"]
+
+    Plugin --> Core
+    Core --> Service
+    Core --> Event
+    Core --> Adapter
+    Event --> API
+    API --> Adapter
+
+    Types["类型层<br/><small>BaseEventData · Segment · 平台类型</small>"]
+
+    App ~~~ Plugin
+    App ~~~ Service
+    App ~~~ Core
+
+    Adapter ~~~ Types
+    Event ~~~ Types
+
+    style App fill:#e1f5fe,stroke:#03a9f4
+    style Types fill:#f5f5f5,stroke:#9e9e9e,stroke-dasharray: 5 5
+```
+
+### 模块依赖关系
+
+```mermaid
+graph LR
+    subgraph Orchestration [编排层]
+        app["app"]
+    end
+
+    subgraph Business [核心逻辑]
+        plugin["plugin"]
+        service["service"]
+        core["core"]
+        event["event"]
+        api["api"]
+        adapter["adapter"]
+
+        plugin --> service
+        plugin --> core
+        plugin --> api
+        plugin --> event
+
+        core --> service
+        core --> event
+        core --> api
+
+        event --> api
+        adapter -.->|实现 IAPIClient| api
+    end
+
+    subgraph Common [公共层]
+        types["types"]
+        utils["utils"]
+    end
+
+    app ~~~ plugin
+    adapter ~~~ types
+    adapter ~~~ utils
+
+    style Orchestration fill:none,stroke:none
+    style Business fill:none,stroke:none
+    style Common fill:#f9f9f9,stroke:#ccc,stroke-dasharray: 5 5
+```
+
+#### 依赖反转
+
+`adapter -.->|实现 IAPIClient| api` 表示**依赖反转**：`IAPIClient` 接口定义在 `api/` 层，`NapCatBotAPI` 等具体实现在 `adapter/` 层。上层代码仅依赖接口，不依赖具体适配器。
+
+---
+
+## 4. 核心模块详解
+
+### 4.1 Adapter 适配层
+
+适配器负责底层协议通信，将平台特定的消息格式转换为框架统一的数据模型。
+
+#### AdapterRegistry
+
+适配器注册表是适配层的核心协调者，管理适配器的注册、发现和工厂创建：
+
+```mermaid
+graph LR
+    Config["Config<br/><small>adapters: List[AdapterEntry]</small>"]
+    Registry["AdapterRegistry"]
+    Builtin["内置适配器<br/><small>napcat · bilibili · github · mock</small>"]
+    EP["entry_points<br/><small>第三方适配器</small>"]
+    Instance["Adapter 实例"]
+
+    Config -->|AdapterEntry| Registry
+    Builtin -->|register| Registry
+    EP -->|discover| Registry
+    Registry -->|create| Instance
+```
+
+| 方法 | 签名 | 说明 |
+|---|---|---|
+| `register` | `(name, cls) → None` | 注册内置适配器 |
+| `discover` | `() → Dict[str, Type]` | 合并内置 + `entry_points(group="ncatbot.adapters")` 第三方适配器 |
+| `list_available` | `() → list[str]` | 列出所有可用适配器类型名 |
+| `create` | `(entry, *, bot_uin, websocket_timeout) → BaseAdapter` | 根据 `AdapterEntry` 创建实例，可覆盖 platform |
+
+模块级单例 `adapter_registry` 在 `adapter/__init__.py` 中注册内置适配器。
+
+#### BaseAdapter
+
+所有适配器的抽象基类，定义统一的生命周期接口：
+
+| 属性/方法 | 说明 |
+|---|---|
+| `name: str` | 适配器名称，如 `"napcat"` |
+| `platform: str` | 平台标识，如 `"qq"` / `"bilibili"` |
+| `supported_protocols: List[str]` | 支持的协议列表 |
+| `pip_dependencies: Dict[str, str]` | Python 包依赖声明 |
+| `ensure_deps()` | 检查并安装 pip 依赖，返回是否就绪 |
+| `setup()` | 准备平台环境（安装 / 配置 / 启动） |
+| `connect()` | 建立连接并初始化 API |
+| `disconnect()` | 断开连接，释放资源 |
+| `listen()` | 阻塞监听消息，解析事件后调用回调 |
+| `get_api() → IAPIClient` | 返回平台 API 实现 |
+| `set_event_callback(cb)` | 设置事件数据回调（由 Dispatcher 注入） |
+| `connected: bool` | 当前连接状态 |
+
+回调签名为 `Callable[[BaseEventData], Awaitable[None]]`，即适配器只产出纯数据模型，不创建实体。
+
+#### 已注册适配器
+
+| 注册名 | 类 | 默认 platform | 说明 |
+|---|---|---|---|
+| `napcat` | `NapCatAdapter` | `"qq"` | QQ / OneBot v11（WebSocket + OB11Protocol） |
+| `bilibili` | `BilibiliAdapter` | `"bilibili"` | Bilibili 直播 / 私信 / 评论 |
+| `github` | `GitHubAdapter` | `"github"` | GitHub Webhook（实验性） |
+| `mock` | `MockAdapter` | 可配置 | 测试用，支持 `inject_event()` 注入事件 |
+
+### 4.2 Types 类型模型
+
+所有事件数据的 Pydantic 模型定义，是框架最底层的协议无关数据结构。
+
+```mermaid
+graph TB
+    Base["BaseEventData<br/><small>time · self_id · post_type · platform</small>"]
+    Msg["MessageEventData<br/><small>message_id · message · raw_message</small>"]
+    Notice["NoticeEventData<br/><small>notice_type</small>"]
+    Request["RequestEventData<br/><small>request_type</small>"]
+    Meta["MetaEventData<br/><small>meta_event_type</small>"]
+
+    Base --> Msg
+    Base --> Notice
+    Base --> Request
+    Base --> Meta
+
+    Msg --> PrivMsg["PrivateMessageEventData"]
+    Msg --> GrpMsg["GroupMessageEventData"]
+
+    Notice --> GrpInc["GroupIncreaseNoticeEventData"]
+    Notice --> GrpBan["GroupBanNoticeEventData"]
+    Notice --> More1["..."]
+
+    Request --> FriendReq["FriendRequestEventData"]
+    Request --> GroupReq["GroupRequestEventData"]
+```
+
+**关键字段**：`BaseEventData.platform` 默认为 `"unknown"`，各平台子类覆盖为具体值（QQ 子类默认 `"qq"`），用于 `create_entity()` 的平台路由。
+
+#### 消息段体系
+
+| 位置 | 内容 |
+|---|---|
+| `types/common/segment/` | 通用段基类（`base.py`）、文本段（`text.py`）、多媒体段（`media.py`）、`MessageArray` 容器（`array.py`） |
+| `types/qq/segment/` | QQ 专用段（Face / Forward / Markdown 等） |
+
+核心段类型：`PlainText` / `At` / `Image` / `Record` / `Video` / `File` / `Reply` / `Forward` / `MessageArray`
+
+#### 平台类型包
+
+| 包 | 说明 |
+|---|---|
+| `types/qq/` | QQ 消息 / 通知 / 请求 / 元事件数据模型 + 枚举 + 发送者 |
+| `types/bilibili/` | Bilibili 平台专用数据类型 |
+| `types/napcat/` | NapCat API 响应类型（`SendMessageResult` / `GroupInfo` 等） |
+
+### 4.3 Event 事件实体
+
+在 `BaseEventData`（纯数据）之上封装 API 操作能力，为插件提供富接口。
+
+#### 事件 Trait 体系
+
+通过 Mixin 为事件实体附加操作能力：
+
+| Trait | 方法 | 说明 |
+|---|---|---|
+| **Replyable** | `reply(**kwargs)` | 回复事件 |
+| **Deletable** | `delete()` | 撤回消息 |
+| **HasSender** | `user_id` / `sender` | 包含发送者信息 |
+| **GroupScoped** | `group_id` | 属于某个群/频道 |
+| **Kickable** | `kick(**kwargs)` | 踢出成员 |
+| **Bannable** | `ban(duration=1800)` | 禁言成员 |
+| **Approvable** | `approve()` / `reject()` | 审批加群/好友请求 |
+
+#### 核心组件
+
+| 组件 | 职责 |
+|---|---|
+| **BaseEvent** | 包装 `BaseEventData` + `IAPIClient` 引用，`__getattr__` 代理数据字段 |
+| **create_entity()** | 工厂函数：按 `data.platform` 路由到平台工厂，fallback 到 `BaseEvent` |
+| **register_platform_factory()** | 注册平台专用事件工厂（如 QQ 注册 `create_qq_entity`） |
+
+#### 平台路由机制
+
+```mermaid
+graph LR
+    Data["BaseEventData<br/><small>platform='qq'</small>"]
+    Factory["create_entity()"]
+    Lookup["_platform_factories"]
+    QQ["create_qq_entity()"]
+    Fallback["BaseEvent()"]
+    Entity["QQGroupMessageEvent<br/><small>含 reply() / kick() 等</small>"]
+
+    Data --> Factory
+    Factory --> Lookup
+    Lookup -->|找到| QQ --> Entity
+    Lookup -->|未找到| Fallback
+```
+
+每个平台包（`event/qq/`、`event/bilibili/`）在导入时自动调用 `register_platform_factory()` 注册自己的工厂函数。
+
+### 4.4 Core 核心引擎
+
+#### 4.4.1 Dispatcher 事件分发
+
+`AsyncEventDispatcher` — 纯异步事件广播器，无业务逻辑：
+
+```mermaid
+graph LR
+    Adapter["Adapter"] -->|BaseEventData| Callback["dispatcher.callback()"]
+    Callback --> Resolve["类型推导<br/><small>message → message.group</small>"]
+    Resolve --> Broadcast["广播 Event"]
+    Broadcast --> Stream1["EventStream A"]
+    Broadcast --> Stream2["EventStream B"]
+    Broadcast --> Waiter["wait_event()"]
+```
+
+| 组件 | 职责 |
+|---|---|
+| **AsyncEventDispatcher** | 接收事件、类型推导（`BaseEventData.resolve_type()` 推导 `"message.group"` 等类型）、广播到所有活跃 Stream |
+| **Event** | 不可变数据类，包含解析后的事件类型 + 原始数据 |
+| **EventStream** | 异步迭代器，支持 `async with` / `async for` |
+
+#### 4.4.2 Registry 处理器注册与路由
+
+`HandlerDispatcher` — 事件到处理器的路由调度：
+
+```mermaid
+graph TB
+    Stream["EventStream<br/><small>订阅 Dispatcher</small>"]
+    Match["事件匹配<br/><small>精确 + 前缀匹配</small>"]
+    Entity["create_entity()<br/><small>数据 → 实体</small>"]
+    Before["BEFORE_CALL Hooks"]
+    Handler["Handler 执行"]
+    After["AFTER_CALL Hooks"]
+    Error["ON_ERROR Hooks"]
+
+    Stream --> Match
+    Match --> Entity
+    Entity --> Before
+    Before -->|CONTINUE| Handler
+    Before -->|SKIP| Skip["跳过"]
+    Handler --> After
+    Handler -.->|异常| Error
+```
+
+`HandlerDispatcher` 构造时接收 `platform_apis: Dict[str, IAPIClient]`，在 `create_entity()` 时根据 `data.platform` 选择对应的原始 API 注入事件实体。
+
+| 组件 | 职责 |
+|---|---|
+| **HandlerDispatcher** | 订阅事件流、创建事件实体、匹配处理器、按优先级执行、管理 Hook 链 |
+| **Registrar** | 装饰器工厂：`@registrar.on_group_command()` 等收集待注册处理器 |
+| **Hook** | 中间件基类，`HookStage`（`BEFORE_CALL` / `AFTER_CALL` / `ON_ERROR`）+ `HookAction`（`CONTINUE` / `SKIP`） |
+| **HookContext** | Hook 执行上下文：event / handler / services / kwargs / result / error / api |
+| **CommandHook** | 命令匹配：按命令名精确/前缀匹配，类型注解参数绑定（`At` / `int` / `float` / `str`） |
+| **内置过滤 Hook** | `MessageTypeFilter` / `PostTypeFilter` / `SubTypeFilter` / `SelfFilter` 等 |
+| **内置匹配 Hook** | `StartsWithHook` / `KeywordHook` / `RegexHook` |
+| **上下文隔离** | `set_current_plugin()` / `get_current_plugin()` — ContextVar 隔离并发插件注册 |
+
+### 4.5 API 接口层
+
+API 层采用多平台门面模式，`BotAPIClient` 作为统一入口路由到各平台的专用 API 客户端。
+
+```mermaid
+graph TB
+    Plugin["插件代码"]
+    Client["BotAPIClient<br/><small>.qq · .bilibili · .platform()</small>"]
+    QQClient["QQAPIClient"]
+    Sugar["QQMessageSugarMixin<br/><small>post_group_msg · post_private_msg</small>"]
+    Messaging["QQMessaging"]
+    Manage["QQManage"]
+    Query["QQQuery"]
+    File["QQFile"]
+    Interface["IQQAPIClient<br/><small>抽象接口</small>"]
+    Impl["NapCatBotAPI<br/><small>OneBot v11 实现</small>"]
+
+    Plugin --> Client
+    Client -->|.qq| QQClient
+    QQClient --> Sugar
+    QQClient --> Messaging
+    QQClient --> Manage
+    QQClient --> Query
+    QQClient --> File
+    Messaging --> Interface
+    Manage --> Interface
+    Query --> Interface
+    File --> Interface
+    Interface -.->|实现| Impl
+```
+
+#### BotAPIClient（多平台门面）
+
+| 方法/属性 | 签名 | 说明 |
+|---|---|---|
+| `register_platform` | `(name, client) → None` | 注册平台 API 客户端 |
+| `platform` | `(name) → Any` | 获取指定平台的 API 客户端 |
+| `qq` | `→ QQAPIClient` | QQ 平台快捷属性 |
+| `bilibili` | `→ Any` | Bilibili 平台快捷属性 |
+| `platforms` | `→ Dict[str, Any]` | 所有已注册平台 |
+
+#### QQAPIClient
+
+`QQAPIClient` 将 QQ 平台 API 组织为 4 个命名空间 + Sugar 便捷方法：
+
+| 命名空间 | 说明 | 示例方法 |
+|---|---|---|
+| `messaging` | 消息操作 | `send_group_msg()` / `send_private_msg()` / `delete_msg()` |
+| `manage` | 群管理 | `set_group_kick()` / `set_group_ban()` / `set_group_admin()` |
+| `query` | 信息查询 | `get_group_list()` / `get_group_member_info()` / `get_login_info()` |
+| `file` | 文件操作 | `upload_group_file()` / `download_file()` |
+
+**Sugar 方法**（QQMessageSugarMixin）：
+
+| 方法 | 说明 |
+|---|---|
+| `post_group_msg(group_id, text=, at=, reply=, image=, ...)` | 便捷群消息 — 关键字参数自动组装 MessageArray |
+| `post_private_msg(user_id, text=, ...)` | 便捷私聊消息 |
+| `post_group_array_msg(group_id, msg)` | 发送预构造的 MessageArray |
+| `send_group_text()` / `send_group_image()` / ... | 单类型快捷发送 |
+
+所有调用经 `QQLoggingProxy`（继承 `BaseLoggingProxy`）自动记录日志。
+
+### 4.6 Plugin 插件系统
+
+```mermaid
+graph TB
+    NP["NcatBotPlugin<br/><small>推荐基类</small>"]
+    BP["BasePlugin<br/><small>抽象基类</small>"]
+    EM["EventMixin"]
+    TM["TimeTaskMixin"]
+    RM["RBACMixin"]
+    CM["ConfigMixin"]
+    DM["DataMixin"]
+
+    NP --> BP
+    NP --> EM
+    NP --> TM
+    NP --> RM
+    NP --> CM
+    NP --> DM
+```
+
+**加载子系统：**
+
+| 组件 | 职责 |
+|---|---|
+| **PluginLoader** | 主协调器，组合 PluginIndexer + DependencyResolver + ModuleImporter |
+| **PluginIndexer** | 扫描 `manifest.toml`，建立插件索引 |
+| **DependencyResolver** | 拓扑排序解析依赖顺序 |
+| **ModuleImporter** | 动态导入/卸载 Python 模块，查找插件类 |
+| **PipHelper** | 校验 pip 依赖、自动安装缺失包（支持 uv / pip 后端） |
+
+### 4.7 Service 服务层
+
+长生命周期的后台服务，与插件系统解耦：
+
+| 组件 | 职责 |
+|---|---|
+| **BaseService** | 抽象基类：`name` / `on_load()` / `on_close()` / `emit_event` |
+| **ServiceManager** | 服务注册、依赖排序加载、统一关闭 |
+| **RBACService** | 角色权限管理（`PermissionTrie` 高效查询、`EntityManager`、`PermissionChecker`） |
+| **TimeTaskService** | 定时任务执行（`TaskExecutor` 异步执行、`TimeTaskParser` 解析 `'30s'` / `'HH:MM'`） |
+| **FileWatcherService** | 文件系统监控，支持插件热重载 |
+
+### 4.8 Utils 工具集
+
+| 模块 | 职责 |
+|---|---|
+| `logger/` | `BoundLogger` 上下文日志 + `setup_logging()` 初始化（控制台 + 滚动文件） |
+| `config/` | `ConfigManager` YAML 配置管理 + `Config` / `AdapterEntry` Pydantic 模型 |
+| `network.py` | `post_json()` / `get_json()` / `download_file()` + 代理支持 |
+| `error.py` | `NcatBotError` / `NcatBotValueError` / `NcatBotConnectionError` 异常体系 |
+| `status.py` | `Status` 全局状态追踪 |
+| `prompt.py` | 交互式 CLI 工具：`confirm()` / `ask()` / `select()` + `is_interactive()` 控制模式 |
+
+#### Config 配置模型
+
+配置系统通过 `adapters` 列表声明式定义适配器：
+
+```yaml
+# 新格式（推荐）
+bot_uin: "999999"
+adapters:
+  - type: napcat
+    platform: qq
+    enabled: true
+    config:
+      ws_uri: ws://localhost:3001
+      ws_token: napcat_ws
+```
+
+**AdapterEntry**：
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `type` | `str` | 适配器注册表中的 key（`"napcat"` / `"bilibili"` / `"github"` / `"mock"`） |
+| `platform` | `str = ""` | 平台标识，留空则使用适配器默认值 |
+| `enabled` | `bool = True` | 是否启用 |
+| `config` | `Dict[str, Any] = {}` | 适配器专属配置，透传给构造函数 |
+
+**旧格式自动迁移**：`Config` 模型的 `_migrate_legacy_napcat` 验证器自动将旧版 `napcat:` 顶层配置转换为 `adapters:` 列表格式，并通过 `_migrated` PrivateAttr 标记触发配置文件自动回写。
+
+### 4.9 Testing 测试支持
+
+测试模块提供离线测试全套工具，无需真实连接即可验证框架和插件行为。
+
+| 组件 | 职责 |
+|---|---|
+| **TestHarness** | 框架级测试编排：BotClient + MockAdapter + 事件注入 + API 断言 |
+| **PluginTestHarness** | 插件测试编排：选择性加载指定插件，提供 `get_plugin()` / `reload_plugin()` |
+| **Scenario** | 链式 DSL 构建器：`inject()` → `settle()` → `assert_api_called()` → `run()` |
+| **factory** | 8 个事件数据工厂：`group_message()` / `private_message()` / `friend_request()` 等 |
+| **discovery** | `discover_testable_plugins()` 扫描插件 + `generate_smoke_tests()` 生成测试代码 |
+
+#### TestHarness 核心 API
+
+| 方法 | 说明 |
+|---|---|
+| `inject(event_data)` | 注入单个事件 |
+| `inject_many(events)` | 注入多个事件 |
+| `settle(delay)` | 等待 handler 执行完 |
+| `api_called(action) → bool` | 是否调用过某 API |
+| `api_call_count(action) → int` | API 调用次数 |
+| `get_api_calls(action) → list` | 某 API 的所有调用记录 |
+| `reset_api()` | 清空调用记录 |
+
+#### PluginTestHarness
+
+继承 `TestHarness`，增加插件管理能力：
+
+| 参数/方法 | 说明 |
+|---|---|
+| `plugin_names: list[str]` | 要加载的插件名列表 |
+| `plugin_dir: Path` | 插件目录 |
+| `loaded_plugins → list[str]` | 已加载插件名 |
+| `get_plugin(name) → NcatBotPlugin` | 获取插件实例 |
+| `plugin_config(name)` / `plugin_data(name)` | 获取插件配置/数据 |
+| `reload_plugin(name)` | 热重载插件 |
+
+### 4.10 App 编排层
+
+`BotClient` 是整个 Bot 的入口和生命周期管理器（Composition Root），位于 `ncatbot/app/`，组装所有核心组件。
+
+```python
+from ncatbot.app import BotClient
 
 bot = BotClient()
 
-api = bot.run_backend(bt_uin="456789", root="987654") # 这里写你 bot 的 QQ 号
+@bot.on("message.group")
+async def on_group_msg(event):
+    await event.reply("hello")
 
-api.post_private_file_sync(user_id="987654", file = "path/to/file")
-api.post_group_file_sync(group_id="695847", video = "path/to/video")
+bot.run()
 ```
 
-- 当 NcatBot 和 NapCat 不在同一台机器上时，**必须写文件在 NcatBot 上的路径**。这种情况有一些[已知缺陷](../../8.%20高级教程/3.%20其他/1.%20远端模式.md#已知局限)。
-- 支持相对或绝对路径、 base64 字符串、URL 等多种格式。
+#### 多适配器支持
 
-:::tip
-URL 没有任何缺陷，推荐使用。
-:::
+`BotClient` 支持三种适配器配置方式：
 
-### 通过文件消息发送
+| 方式 | 用法 | 说明 |
+|---|---|---|
+| 配置驱动（推荐） | `BotClient()` | 从 `config.yaml` 的 `adapters` 列表自动创建 |
+| 单适配器 | `BotClient(adapter=...)` | 直接传入适配器实例 |
+| 多适配器 | `BotClient(adapters=[...])` | 传入适配器列表 |
 
-参考 [MessageArray](../../4.%20数据结构介绍/3.%20MessageArray.md) 和 [MessageSegment](../../4.%20数据结构介绍/4.%20MessageSegment.md)。
+**配置驱动创建流程**：
+
+```mermaid
+graph LR
+    YAML["config.yaml"] --> Config["Config 模型<br/><small>adapters: List[AdapterEntry]</small>"]
+    Config -->|遍历 enabled 条目| Registry["AdapterRegistry.create()"]
+    Registry --> Adapters["[NapCatAdapter, BilibiliAdapter, ...]"]
+```
+
+#### 启动编排
+
+`BotClient` 启动时按以下顺序组装各组件：
+
+```mermaid
+sequenceDiagram
+    participant Client as BotClient
+    participant Registry as AdapterRegistry
+    participant Adapters as Adapters
+    participant API as BotAPIClient
+    participant Disp as Dispatcher
+    participant HDis as HandlerDispatcher
+    participant Svc as ServiceManager
+    participant Plug as PluginLoader
+
+    Client->>Registry: create(entry) × N
+    Registry->>Adapters: 适配器实例列表
+    Client->>Adapters: setup() + connect()
+    Client->>API: register_platform(name, client) × N
+    Client->>Disp: 绑定所有适配器回调
+    Client->>HDis: 初始化（api, platform_apis）
+    Client->>Svc: register_builtin() + load_all()
+    Client->>Plug: load_all(plugin_dir)
+    Client->>Adapters: listen()（多适配器 asyncio.gather 并行）
+```
+
+### 4.11 CLI 命令行工具
+
+基于 Click 框架的命令行入口，位于 `ncatbot/cli/`：
+
+| 子命令 | 功能 |
+|---|---|
+| `run` | 启动 Bot（可选 `--debug` / `--hot-reload`） |
+| `dev` | 开发模式启动（默认开启 debug + 热重载） |
+| `config` | 配置管理（查看 / 修改） |
+| `plugin` | 插件管理（list / create / remove） |
+| `napcat` | NapCat 安装与控制 |
+| `init` | 初始化项目目录结构 |
+
+---
+
+## 5. 生命周期
+
+### 5.1 启动流程
+
+```mermaid
+sequenceDiagram
+    participant User as 用户代码
+    participant Client as BotClient
+    participant Config as ConfigManager
+    participant Registry as AdapterRegistry
+    participant Adapter as Adapters
+    participant API as BotAPIClient
+    participant Svc as ServiceManager
+    participant Plug as PluginLoader
+
+    User->>Client: bot.run()
+    Client->>Config: 加载 config.yaml
+    Client->>Registry: create(entry) × N
+    Client->>Adapter: setup() + connect()
+    Client->>API: register_platform() × N
+    Client->>Client: 创建 Dispatcher + HandlerDispatcher
+    Client->>Svc: register_builtin() + load_all()
+    Client->>Plug: load_all(plugin_dir)
+    Client->>Adapter: listen()
+```
+
+### 5.2 事件处理流程
+
+以 `AsyncEventDispatcher` 为分界，事件处理分为**上游采集**和**下游消费**两阶段。
+
+#### 5.2.1 上游：事件采集与广播
+
+```mermaid
+sequenceDiagram
+    participant Platform as 平台
+    participant Adapter as Adapter
+    participant Disp as AsyncEventDispatcher
+
+    Platform->>Adapter: 原始消息
+    Adapter->>Adapter: 解析为 BaseEventData（含 platform 字段）
+    Adapter->>Disp: callback(BaseEventData)
+    Disp->>Disp: 推导事件类型（如 "message.group"）
+    Disp->>Disp: 广播 Event 到所有消费者
+```
+
+#### 5.2.2 下游：Handler 匹配与执行
+
+```mermaid
+sequenceDiagram
+    participant Disp as AsyncEventDispatcher
+    participant HDis as HandlerDispatcher
+    participant Hook as Hooks
+    participant Handler as Handler 函数
+    participant Plugin as 插件 EventMixin
+
+    par HandlerDispatcher 消费
+        Disp-->>HDis: Event（全量事件流）
+        HDis->>HDis: create_entity(data, platform_apis[data.platform])
+        HDis->>HDis: 匹配处理器（按优先级排序）
+        HDis->>Hook: BEFORE_CALL
+        alt CONTINUE
+            HDis->>Handler: await handler(event)
+            HDis->>Hook: AFTER_CALL
+        else SKIP
+            Note over HDis: 跳过该处理器
+        end
+        opt 异常
+            HDis->>Hook: ON_ERROR
+        end
+    and 插件直接消费
+        Disp-->>Plugin: async for event in self.events(...)
+    and 一次性等待
+        Disp-->>Plugin: wait_event(predicate, timeout)
+    end
+```
+
+### 5.3 关闭流程
+
+```mermaid
+sequenceDiagram
+    participant Client as BotClient
+    participant Plug as PluginLoader
+    participant Svc as ServiceManager
+    participant HDis as HandlerDispatcher
+    participant Disp as AsyncEventDispatcher
+    participant Adapters as Adapters
+
+    Client->>Plug: stop_hot_reload()
+    Client->>Plug: unload_all()
+    Client->>Svc: close_all()
+    Client->>HDis: stop()
+    Client->>Disp: close()
+    Client->>Adapters: disconnect() × N
+```
+
+---
+
+## 6. 插件开发模型
+
+### 6.1 插件结构
+
+每个插件是一个独立目录，包含 `manifest.toml` 和入口模块：
+
+```text
+plugins/
+└── my_plugin/
+    ├── manifest.toml    # 插件元信息
+    └── main.py          # 入口模块
+```
+
+**manifest.toml 示例：**
+
+```toml
+name = "my_plugin"
+version = "1.0.0"
+main = "main.py"
+author = "developer"
+description = "示例插件"
+dependencies = []
+pip_dependencies = []
+```
+
+**入口模块示例：**
 
 ```python
-from ncatbot.plugin_system import NcatBotPlugin, command_registry, filter_registry
-from ncatbot.core import PrivateMessageEvent
-from ncatbot.core import File, MessageArray
+from ncatbot.core import registrar
+from ncatbot.event.qq import GroupMessageEvent
+from ncatbot.plugin import NcatBotPlugin
 
 class MyPlugin(NcatBotPlugin):
-    name = "FileSender"
+    name = "my_plugin"
     version = "1.0.0"
-    dependencies = {}
-
-    @filter_registry.private_filter
-    @command_registry("sendfile")
-    async def send_file(self, msg: PrivateMessageEvent):
-        msg_arr = MessageArray(File("path/to/file"))
-        await msg.reply(rtf=msg_arr)
-```
-
-- 这里的示例是插件格式。
-- 发送文件时，**MessageArray 中只能有一个 MessageSegment**。
-
-
----
-
-# 文件: 9. 实际项目参考\教程项目\4. 处理好友请求和加群请求.md
-
----
-title: 处理好友请求和加群请求
-createTime: 2025/04/22 13:21:39
-permalink: /guide/friendag/
----
-
-## 后台模式
-
-```python
-from ncatbot.core import BotClient, RequestEvent
-from ncatbot.utils import get_log
-import time
-
-LOG = get_log("request_example")
-bot = BotClient()
-
-@bot.on_request
-def handle_request(msg: RequestEvent):
-    # 同步版本
-    comment = msg.comment # 获取验证信息
-    
-    if msg.is_friend_request():
-        LOG.info(f"收到好友请求，验证信息：{comment}")
-        if "特定关键词" in comment:
-            LOG.info("通过好友请求")
-            msg.approve_sync(True, remark="好友的名字")
-        else:
-            LOG.info("拒绝好友请求")
-            msg.approve_sync(False)
-
-@bot.on_request
-async def handle_request_async(msg: Request):
-    # 异步版本
-    comment = msg.comment     # 获取验证信息
-    if msg.is_group_request():
-        LOG.info(f"收到加群请求，验证信息：{comment}")
-        if "特定关键词" in comment:
-            await msg.approve(True)
-        else:
-            await msg.reply(False, reason="拒绝你的请求")
-
-
-api = bot.run_backend(bt_uin="987654", root="456789")
-time.sleep(86400) # 睡眠, 此时 NcatBot 仍然在运行，收到好友请求后将调用 handle_request 函数
-bot.exit() # 退出 NcatBot
-```
-
-- 上面代码包含同步和异步两个版本，功能完全一致，且都支持使用 `add_request_handler` 添加。
-
-## 前台模式（插件版）
-
-[了解插件](../../7.%20插件系统/1.%20介绍.md)。
-
-### plugin.py
-
-```python
-
-from ncatbot.plugin_system import NcatBotPlugin, on_request
-from ncatbot.utils import OFFICIAL_REQUEST_EVENT
-from ncatbot.core import Request
-
-bot = CompatibleEnrollment()
-
-class RequestHandlerPlugin(BasePlugin):
-    name = "RequestHandler"
-    version = "1.0.0"
-    dependencies = {}
 
     async def on_load(self):
-        print(f"{self.name} 插件已加载")
-        self.register_handler(OFFICIAL_REQUEST_EVENT, self.handle_request_async)
+        pass
 
-    @on_request
-    def handle_request(msg: RequestEvent):
-        # 同步版本
-        comment = msg.comment # 获取验证信息
-        
-        if msg.is_friend_request():
-            LOG.info(f"收到好友请求，验证信息：{comment}")
-            if "特定关键词" in comment:
-                LOG.info("通过好友请求")
-                msg.reply_sync(True, remark="好友的名字")
-            else:
-                LOG.info("拒绝好友请求")
-                msg.reply_sync(False)
+    async def on_close(self):
+        pass
 
-    async def handle_request_async(msg: NcatBotEvent):
-        # 获取实际数据
-        msg: RequestEvent = msg.data # 官方事件的数据格式有一定约定
-
-        # 异步版本
-        comment = msg.comment     # 获取验证信息
-        if msg.is_group_request():
-            LOG.info(f"收到加群请求，验证信息：{comment}")
-            if "特定关键词" in comment:
-                await msg.approve(True)
-            else:
-                await msg.reply(False, reason="拒绝你的请求")
-
-
-        
+    @registrar.on_group_command("hello")
+    async def on_hello(self, event: GroupMessageEvent):
+        # self.api 是 BotAPIClient，通过 .qq 访问 QQ 平台 API
+        await self.api.qq.post_group_msg(event.group_id, text="Hello! 👋")
 ```
 
-- 同步版本使用了 `UnifiedRegistry` 内置插件提供的 `on_request` 装饰器来注册请求处理器[参考](../../8.%20高级教程/1.%20统一命令注册器/1.%20概览.md)。（`on_request` 装饰器也可以用于普通方法）
-- 异步版本使用了 `register_handler` 方法来注册请求处理器，[参考](../../7.%20插件系统/3.%20插件的交互系统/3.1%20事件的发布和订阅.md#订阅事件)。
+### 6.2 Mixin 体系
 
-### main.py
+`NcatBotPlugin` 通过 Mixin 组合提供丰富能力：
 
-```python
-from ncatbot.core import BotClient
+| Mixin | 能力 | 核心方法 |
+|---|---|---|
+| **EventMixin** | 事件消费 | `events(type)` / `wait_event(predicate, timeout)` |
+| **TimeTaskMixin** | 定时任务 | `add_scheduled_task(name, interval)` / `remove_scheduled_task(name)` |
+| **RBACMixin** | 权限管理 | `check_permission(user, perm)` / `add_permission()` / `remove_permission()` |
+| **ConfigMixin** | 配置持久化 | `get_config(key)` / `set_config(key, value)` |
+| **DataMixin** | 数据持久化 | `self.data[key]` — 字典式 JSON 存储 |
 
-bot = BotClient()
-bot.run_frontend(bt_uin="456789", root="987654")
+Mixin 加载顺序：EventMixin → TimeTaskMixin → RBACMixin → ConfigMixin → DataMixin。加载和卸载时 Mixin Hook 按 MRO 顺序自动执行。
+
+### 6.3 插件加载与热重载
+
+```mermaid
+graph LR
+    Scan["扫描 manifest.toml"]
+    Index["建立索引"]
+    Resolve["拓扑排序"]
+    Import["动态导入模块"]
+    Init["注入依赖 + 初始化"]
+    Load["on_load()"]
+
+    Scan --> Index --> Resolve --> Import --> Init --> Load
 ```
 
-- 运行 `main.py` 即可启动 NcatBot，插件中的请求处理器将会生效。
+**热重载机制：**
+- `FileWatcherService` 监控插件目录文件变更
+- 检测到变更后通知 `PluginLoader`
+- PluginLoader 执行：`unload_plugin()` → `rescan` → `load_plugin()`
+- `HandlerDispatcher.revoke_plugin(name)` 清除旧处理器
 
 ---
 
-# 文件: 10. 常见问题\1. 安装时常见问题.md
+## 7. 关键设计模式
 
----
-title:  安装时常见问题
-createTime: 2025/02/09 16:34:49
-permalink: /guide/prgor4t7/
----
+| 模式 | 应用位置 | 说明 |
+|---|---|---|
+| **注册表模式** | `adapter/registry.py` | `AdapterRegistry` 管理适配器的注册、发现和工厂创建 |
+| **门面模式** | `api/client.py` | `BotAPIClient` 作为多平台 API 的统一入口，路由到各平台专用客户端 |
+| **适配器模式** | `adapter/` | `BaseAdapter` 抽象协议差异，支持 NapCat / Bilibili / GitHub / Mock 等多种实现 |
+| **观察者模式** | `core/dispatcher/` | `AsyncEventDispatcher` 广播事件到多个 `EventStream` 订阅者 |
+| **责任链模式** | `core/registry/` | Hook 链按优先级依次执行，可中断或跳过 |
+| **工厂模式** | `event/common/factory.py` | `create_entity()` 根据 `data.platform` 路由到平台工厂创建对应事件实体 |
+| **Mixin 模式** | `plugin/mixin/` | 通过多继承组合插件能力，按 MRO 管理生命周期 |
+| **依赖注入** | `app/client.py` | `BotClient` 作为 Composition Root 组装并注入 API / Dispatcher / Services 到插件 |
+| **ContextVar 隔离** | `core/registry/` | Python ContextVar 隔离并发插件加载的注册上下文 |
+| **拓扑排序** | `plugin/loader/resolver.py` | 插件依赖解析，确保加载顺序正确 |
 
-### Windows10 为什么连接成功了发 "测试" 还是没反应
-
-这个问题是 Win10 命令行开启**快速编辑模式**后 "选中聚焦" 时被暂停导致的.
-
-检查登录 QQ 黑框框是否被 "选中" 了, 当用左键滑过终端时, 会自动选中==并暂停终端==, 暂停终端后自然无法回复, 此时先左键终端再右键终端即可恢复.
-
-也可[关闭快速编辑模式](https://juejin.cn/post/7021695977824190478)一劳永逸解决问题.
-
-### HTTPConnectionPool(host='127.0.0.1', port=6099): Read timed out. (read timeout=5)
-
-![image-20250412213424631](https://raw.githubusercontent.com/huan-yp/image_space/master/img/202504122134722.png)
-
-Windows 的防火墙策略拦截了 6099 端口, 请检查防火墙设置。
-
-[参考](https://blog.csdn.net/albertsh/article/details/122163518)
-
-
-### Daemons using outdated libraries
-
-Package configuration 紫色页面
-
-[参见](https://github.com/ncatbot/ncatbot/issues/240)
-
-Linux 终端环境可能会遇到这个报错，物理重启电脑后重试即可。
-
-如果无法解决请手动安装和配置 NapCat。
 
 ---
 
-# 文件: 10. 常见问题\2. 运行时常见问题.md
+# 文件: 11. 架构与概念\2. 核心概念.md
 
 ---
-title:  运行时常见问题
-createTime: 2025/03/26 08:41:23
-permalink: /guide/8v15vh4m/
+title: 核心概念
+createTime: 2026/03/19 17:26:45
+permalink: /guide/zj0efcir/
 ---
 
-### Windows11 执行 Python 后无反应
+> NcatBot 核心概念速查 — 术语定义、用途、关键类、概念关系一览。用于快速建立全局认知，或按术语检索理解特定概念。
 
-Windows11 如果安装的 Python3.13，那么默认名是 `py`，执行以下命令运行。
+---
 
-```shell
-py main.py
+## 概念地图
+
+```text
+                        ┌──────────────┐
+                        │  BotClient   │ ← 编排入口：组装一切，管理生命周期
+                        └──────┬───────┘
+              ┌────────────────┼───────────────┐
+              ▼                ▼               ▼
+      ┌──────────────┐ ┌────────────┐  ┌─────────────┐
+      │   Adapter    │ │  Service   │  │ PluginLoader │
+      │ (NapCat/Mock)│ │ (RBAC/     │  │ (依赖解析 +  │
+      │              │ │  Schedule/ │  │  热重载)     │
+      └──────┬───────┘ │  Watcher)  │  └──────┬──────┘
+             │         └────────────┘         │
+             ▼                                ▼
+    ┌─────────────────┐              ┌─────────────────┐
+    │    Dispatcher    │              │     Plugin       │
+    │ (事件广播 +      │◄────────────│ (NcatBotPlugin   │
+    │  Handler 分发)  │  注册 Handler │  + Mixin 能力)   │
+    └────────┬────────┘              └─────────────────┘
+             │                                │
+             ▼                                │ 使用
+    ┌─────────────────┐              ┌────────┴────────┐
+    │  Event / Entity  │              │   Registrar     │
+    │ (BaseEventData + │              │ (装饰器注册 +    │
+    │  Trait 协议)     │              │  Hook / Filter) │
+    └────────┬────────┘              └─────────────────┘
+             │
+             ▼
+    ┌─────────────────┐
+    │   API Client     │
+    │ (BotAPIClient +  │
+    │  QQAPIClient +   │
+    │  Sugar)          │
+    └────────┬────────┘
+             │
+             ▼
+    ┌─────────────────┐
+    │ MessageArray /   │
+    │ Segment          │
+    │ (消息构造与解析)  │
+    └─────────────────┘
 ```
 
-### QQ 提醒我使用了第三方插件
+数据流向：Adapter 接收原始数据 → Dispatcher 广播事件 → Handler（经 Hook 链）执行回调 → API Client 发送响应。
 
-无视它，如果被踢下线，重新登录即可。
+---
 
-要求安全验证时，按照它的要求做。
+## 1. 适配器与平台 (Adapter / Platform / Trait)
 
-### 群聊消息无法接收，私聊信息仅接收notice
+### Adapter — 协议适配器
 
-在其他配置正常时出现此问题，大概是系统时间的原因。
+将特定平台的通信协议转换为框架统一的事件流和 API 接口。每个 Adapter 封装一个平台的 WebSocket 连接管理、协议解析、事件标准化和 API 调用转换。
 
-对系统时间进行同步即可解决问题。
+**用途**：
+- 隔离平台差异 — 插件代码无需关心底层协议细节
+- 多平台并行 — 单个 BotClient 可同时运行 NapCat + Bilibili + GitHub 等多个适配器
+- 可扩展 — 新增平台只需实现 BaseAdapter 接口，零修改已有代码
 
+**内置适配器**：NapCatAdapter（QQ，OneBot v11）、BilibiliAdapter（Bilibili 直播/私信/评论）、GitHubAdapter（GitHub Webhook/Polling）、MockAdapter（测试用模拟）
 
+**关键类**：`BaseAdapter`、`AdapterRegistry`、`NapCatAdapter`、`MockAdapter`
+
+### Platform — 平台标识
+
+字符串标识符（`"qq"` / `"bilibili"` / `"github"` / `"mock"`），决定事件路由到哪个适配器、API 调用走哪条通道。
+
+**用途**：在多适配器模式下区分事件来源和 API 目标。
+
+### Trait — 跨平台 API 协议
+
+定义跨平台统一的 API 能力接口：`IMessaging`（消息收发）、`IGroupManage`（群管理）、`IQuery`（信息查询）、`IFileTransfer`（文件操作）。
+
+**用途**：让插件编写平台无关的代码 — 只依赖 Trait 接口而不依赖具体平台 API。
+
+**参见**：[适配器参考](reference/adapter/)、[多平台开发指南](guide/multi_platform/)
+
+---
+
+## 2. 事件系统 (Event / EventStream / Dispatcher)
+
+### Event — 事件实体
+
+适配器接收到的原始数据经 `create_entity()` 工厂函数包装为事件实体。事件实体携带平台信息和 Trait 能力（如 `Replyable` 允许直接回复、`GroupScoped` 提供 `group_id`）。
+
+**用途**：
+- 统一数据模型 — 不同平台的消息/通知/请求统一为同一套事件类型
+- Trait 赋能 — 事件对象自带操作能力（`event.reply()`、`event.delete()`）
+
+**关键类**：`BaseEvent`、`BaseEventData`、`GroupMessageEvent`、`PrivateMessageEvent`
+
+### EventStream — 异步事件流
+
+`AsyncEventDispatcher` 的消费接口，每个监听者获得独立的队列（互不阻塞）。支持 `async with` + `async for` 消费模式。
+
+**用途**：
+- 多步对话 — 在 Handler 中等待用户的后续输入
+- 后台监控 — 持续监听特定类型的事件
+- 插件间协调 — 订阅其他插件产生的事件
+
+### Dispatcher — 事件分发器
+
+分为两层：`AsyncEventDispatcher`（纯广播，一对多分发事件到所有订阅者）和 `HandlerDispatcher`（事件→Handler 匹配与执行，含 Hook 链调用）。
+
+**用途**：
+- 解耦事件生产与消费 — 适配器只管生产事件，不关心谁消费
+- 多消费者并行 — 每个 EventStream 独立队列，一个消费者阻塞不影响其他
+
+**关键类**：`AsyncEventDispatcher`、`HandlerDispatcher`
+
+**参见**：[事件类型参考](reference/events/)、[核心模块参考](reference/core/)
+
+---
+
+## 3. 注册与拦截 (Registrar / Handler / Hook / Filter)
+
+### Registrar — 全局注册器
+
+提供装饰器 API，将函数注册为事件 Handler。通过 ContextVar 在模块加载期隔离各插件的注册上下文，确保 Handler 归属正确的插件。
+
+**用途**：
+- 声明式注册 — `@registrar.on_group_command("hello")` 一行代码完成事件绑定
+- 自动参数绑定 — 命令装饰器自动为 Handler 附加 CommandHook，解析消息中的 `str`、`int`、`At` 参数
+
+**核心装饰器**：
+- 命令：`on_group_command()` / `on_private_command()` / `on_command()`
+- 消息：`on_group_message()` / `on_private_message()` / `on_message()`
+- 事件：`on_notice()` / `on_request()` / `on_poke()` / `on_friend_request()` / `on(event_type)`
+
+### Handler — 事件处理器
+
+注册的回调函数，关联到特定的 EventType + Predicate 条件。支持 `priority` 优先级排序。
+
+**用途**：框架事件处理的基本单元 — 每个 Handler 就是一个功能点的入口。
+
+### Hook — 拦截钩子
+
+三阶段拦截链：`BEFORE_CALL`（Handler 执行前）→ `AFTER_CALL`（执行后）→ `ON_ERROR`（异常时）。每阶段可挂载多个 Hook，按优先级排序执行。BEFORE_CALL Hook 可返回 `SKIP` 阻止 Handler 执行。
+
+**用途**：
+- **权限检查** — 在 Handler 执行前验证用户权限，无权限则 SKIP
+- **参数预处理** — CommandHook 自动从消息中解析命令名和参数，绑定到函数签名
+- **文本匹配** — StartsWithHook / KeywordHook / RegexHook 匹配消息内容
+- **日志审计** — AFTER_CALL Hook 记录谁触发了什么命令
+- **错误通知** — ON_ERROR Hook 在 Handler 异常时通知管理员
+
+### Filter — 过滤器（BEFORE_CALL Hook 的特化）
+
+Filter 不是独立概念，而是所有返回 `SKIP` 来阻止 Handler 执行的 BEFORE_CALL Hook 的统称。
+
+**内置 Filter**：
+- `MessageTypeFilter("group"|"private")` — 消息来源过滤
+- `SelfFilter()` — 过滤 Bot 自身发送的消息
+- `PlatformFilter("qq")` — 平台过滤
+- `PostTypeFilter()` / `SubTypeFilter()` — 事件类型过滤
+- `CommandHook("命令名")` — 命令前缀匹配 + 参数解析（最常用，由命令装饰器自动附加）
+
+**关键类**：`Registrar`、`HandlerEntry`、`HookManager`
+
+**参见**：[Hook 机制指南](guide/plugin/6.hooks.md)、[Registry 参考](reference/core/3_registry.md)
+
+---
+
+## 4. 插件系统 (Plugin / Mixin / Lifecycle)
+
+### Plugin — 插件
+
+功能模块化的基本单元。每个插件是一个独立目录，含 `manifest.toml`（元信息）和 Python 模块。插件通过 PluginLoader 加载，支持依赖声明和拓扑排序。
+
+**用途**：
+- 功能隔离 — 每个功能封装为独立插件，独立开发/测试/部署
+- 热重载 — 运行时修改代码自动重载，无需重启 Bot
+- 依赖管理 — 声明式依赖，自动按序加载
+
+### NcatBotPlugin — 推荐基类
+
+组合了所有 Mixin 能力的插件基类。继承它即获得配置持久化、数据存储、权限控制、定时任务、事件流等全部能力。
+
+### Mixin — 能力混入
+
+通过多继承组合到 NcatBotPlugin 中，每个 Mixin 提供一种独立能力。MRO 保证 `on_load()` / `on_unload()` 按固定顺序执行，单个 Mixin 故障不影响其他。
+
+| Mixin | 提供的能力 | 典型用途 |
+|-------|-----------|---------|
+| **EventMixin** | 事件流 + `wait_event()` | 监听事件、多步对话 |
+| **TimeTaskMixin** | 定时任务 | 定时推送、定期清理 |
+| **RBACMixin** | 权限控制 | 管理员命令保护、分级权限 |
+| **ConfigMixin** | YAML 配置持久化 | 可修改的插件配置 |
+| **DataMixin** | JSON 数据持久化 | 计数器、用户数据、状态存储 |
+
+### Lifecycle — 插件生命周期
+
+`on_load()` → 运行中 → `on_unload()`。加载时初始化资源和注册 Handler，卸载时清理资源和取消注册。热重载 = unload + 重新 import + load。
+
+**关键类**：`NcatBotPlugin`、`BasePlugin`、`PluginLoader`、`DependencyResolver`
+
+**参见**：[插件开发指南](guide/plugin/)、[插件系统参考](reference/plugin/)
+
+---
+
+## 5. 消息模型 (MessageArray / Segment)
+
+### Segment — 消息段
+
+消息的原子单元，对应 OneBot v11 的 CQ 码。每种段类型是一个 Pydantic 模型。
+
+**常用段类型**：
+- `PlainText` — 纯文本
+- `At` — @某人（`user_id="all"` 为 @全体）
+- `Image` — 图片（URL 或本地路径，`type=1` 为闪照）
+- `Reply` — 引用回复
+- `Face` — QQ 表情
+- `Record` — 语音
+- `Video` — 视频
+
+### MessageArray — 消息容器
+
+Segment 的有序容器，支持链式构造（`.add_text().add_at().add_image()`）和查询过滤（`.filter(At)` 获取所有 @段）。
+
+**用途**：
+- 自由组装 — 混合文本、图片、@、引用等构建复杂消息
+- 结构化解析 — 从收到的消息中按类型提取特定段
+- 参数绑定来源 — CommandHook 从 MessageArray 中提取 `At`、`Image` 等参数
+
+### Sugar — 语法糖
+
+`QQMessageSugarMixin` 提供的关键字快捷发消息方式：`api.qq.post_group_msg(group_id, text="...", image="...", at=uid)`。自动将关键字组装为 MessageArray。
+
+**用途**：避免手动构造 MessageArray — 简单消息一行搞定。
+
+### DownloadableSegment — 可下载媒体段
+
+`Image`、`Video`、`Record`、`File` 四种媒体段的共同基类。携带 `file`、`url`、`file_id`、`file_size`、`file_name` 等字段，表示**一条消息中的某个媒体子段**。
+
+**本质**：消息的组成部分 — 始终附着于 `MessageArray`，不独立存在。
+
+### Attachment — 跨平台附件对象
+
+平台无关的可下载文件模型（Pydantic）。携带 `name`、`url`、`size`、`content_type`、`kind` 等字段，表示**独立的可下载对象**。
+
+**本质**：独立的数据实体 — 不依附于消息，可来自 GitHub Release 资产、文件系统，或经由段转换而来。
+
+### DownloadableSegment vs Attachment
+
+两者都代表"可下载的媒体"，但语义和使用场景截然不同：
+
+| 维度 | DownloadableSegment | Attachment |
+|------|-------------------|------------|
+| **定位** | 消息的子段 | 独立的可下载对象 |
+| **来源** | QQ/聊天消息中的媒体 | GitHub Release 资产、文件系统、或由段转换 |
+| **所属** | 附着于 MessageArray | 独立存在 |
+| **跨平台** | 与 OneBot 消息协议绑定 | 平台无关 |
+| **获取方式** | `MessageArray.filter(Image)` | `event.get_attachments()` / `segment.to_attachment()` |
+
+**桥接**：`DownloadableSegment.to_attachment()` 将消息段转为 Attachment，`Attachment.to_segment()` 反向转回。`MessageArray.get_attachments()` 批量提取所有可下载段为 `AttachmentList`。
+
+**设计意图**：Attachment 提供统一的跨平台文件处理抽象 — 无论文件来自 QQ 消息图片还是 GitHub Release，都用同一套 `download()` / `as_bytes()` / `upload_attachment()` 接口操作。
+
+**关键类**：`Segment`（各子类）、`MessageArray`、`QQMessageSugarMixin`、`Attachment`（及子类）、`AttachmentList`
+
+**参见**：[消息发送指南](guide/send_message/)、[类型参考](reference/types/)
+
+---
+
+## 6. 服务层 (Service / RBAC / Schedule)
+
+### Service — 可插拔服务
+
+生命周期由 ServiceManager 管理的单例组件。提供插件可共享的后台功能。
+
+**用途**：
+- 跨插件共享 — 多个插件共用同一个 RBAC 服务或定时任务调度器
+- 生命周期管理 — 随 Bot 启动加载，关闭时自动清理
+
+### RBACService — 权限服务
+
+基于 Trie 树的权限管理。支持层级权限路径（`admin.ban.temporary`）、通配符匹配（`admin.*`）、角色继承。
+
+**用途**：
+- 命令权限控制 — 限制敏感命令仅管理员可用
+- 分级权限 — 不同角色（owner > admin > moderator > user）拥有不同权限范围
+- 插件集成 — 通过 RBACMixin 一行代码检查权限
+
+### TimeTaskService — 定时任务服务
+
+支持间隔时间（`"60s"` / `"1h"`）和 cron 表达式的任务调度。
+
+**用途**：
+- 定时推送 — 每日新闻、整点报时
+- 定期清理 — 清理过期数据、刷新缓存
+- 心跳检测 — 定期检查服务状态
+
+### FileWatcherService — 文件监控服务
+
+监控插件 `.py` 文件变化，触发热重载。
+
+**用途**：开发模式下修改代码自动重载，无需手动重启 Bot。
+
+**关键类**：`BaseService`、`ServiceManager`、`RBACService`、`TimeTaskService`、`FileWatcherService`
+
+**参见**：[RBAC 指南](guide/rbac/)、[服务层参考](reference/services/)
+
+---
+
+## 7. Predicate DSL — 声明式事件过滤
+
+将 lambda 过滤条件替换为可组合的运算符表达式，用于 `wait_event()` 和事件流过滤。
+
+**用途**：
+- 多步对话 — 等待同一用户在同一群的下一条消息：`from_event(event) * msg_equals("确认")`
+- 可读性 — 比嵌套 lambda 和 hasattr 检查更直观
+- 可组合 — `*`（AND）、`+`（OR）、`~`（NOT）运算符自由组合
+
+**核心工厂函数**：`from_event()`（自动推导会话上下文）、`same_user()`、`same_group()`、`msg_equals()`、`msg_matches()`
+
+**参见**：[Predicate DSL 指南](guide/plugin/4c.predicate-dsl.md)、[Predicate API 参考](reference/core/2_predicate.md)
+
+---
+
+## 8. 编排入口 (BotClient)
+
+### BotClient — 应用编排器
+
+Composition Root — 组装适配器、分发器、插件加载器、服务管理器和 API 客户端，管理整个 Bot 的生命周期。
+
+**用途**：
+- 零配置启动 — `BotClient().run()` 从 `config.yaml` 自动加载一切
+- 异步非阻塞启动 — `await BotClient().run_async()` 完成 startup 后立即返回，`bot.api` / `bot.dispatcher` 可用于自定义事件编排
+- 多适配器编排 — 同时连接多个平台
+- 生命周期管理 — 启动（配置→适配器→分发器→插件→服务→监听）→ 关闭（逆序清理）
+
+**关键类**：`BotClient`
+
+**参见**：[架构文档 §4.10](architecture.md)、[Quick Start](guide/quick_start/)
 
 
 ---
 
-# 文件: 10. 常见问题\3. 开发时常见问题.md
+# 文件: README.md
 
 ---
-title:  开发时常见问题
-createTime: 2025/03/26 08:41:39
-permalink: /guide/pkst6v9y/
+title: 使用指南
+createTime: 2026/03/19 17:26:45
+permalink: /guide/
 ---
 
-## 为什么我的插件没有加载成功
+> NcatBot 从入门到进阶的完整指南 — 面向 Bot 开发者的任务导向文档。
 
-### 单文件插件
+---
 
-#### 必须使用 `__all__` 关键字指定需要导入的插件
+## Quick Reference
 
-```python
-class MyPlugin(NcatBotPlugin):
-    ...
+### 两种使用模式
 
-__all__ = [MyPlugin] # 必须在 __all__ 中声明需要加载的插件。
-```
+| 模式 | 入口 | 特点 | Mixin / 热重载 |
+|------|------|------|---------------|
+| 非插件模式 | `main.py` + `registrar` 装饰器 | 快速原型，无需插件目录 | ❌ |
+| 插件模式（推荐） | `NcatBotPlugin` 子类 + `manifest.toml` | 配置持久化、RBAC、定时任务等 | ✅ |
 
-## 通用解决办法
+从零开始的完整流程见 [quick_start/](quick_start/)。
 
-加入[我们](https://qm.qq.com/q/UDw4BmoU8M)，并反馈问题。
+### 核心导入路径
+
+| 导入 | 说明 |
+|------|------|
+| `from ncatbot.app import BotClient` | 应用入口 |
+| `from ncatbot.core import registrar` | 全局事件注册器 |
+| `from ncatbot.plugin import NcatBotPlugin` | 插件基类 |
+| `from ncatbot.event.qq import GroupMessageEvent` | QQ 群消息事件 |
+| `from ncatbot.event.qq import PrivateMessageEvent` | QQ 私聊事件 |
+| `from ncatbot.types import MessageArray` | 消息数组 |
+| `from ncatbot.utils import get_log` | 日志工具 |
+
+### 最常用操作速查
+
+| 操作 | 调用方式 | 需要插件模式 |
+|------|---------|-------------|
+| 注册群命令 | `@registrar.on_group_command("cmd")` | ❌ |
+| 注册私聊命令 | `@registrar.on_private_command("cmd")` | ❌ |
+| 回复消息 | `await event.reply(text="内容")` | ❌ |
+| 发送群消息 | `await self.api.qq.post_group_msg(gid, text="内容")` | ❌ |
+| 发送图片 | `await self.api.qq.send_group_image(gid, "url")` | ❌ |
+| 读取配置 | `self.get_config("key")` | ✅ ConfigMixin |
+| 写入配置 | `self.set_config("key", value)` | ✅ ConfigMixin |
+| 持久化数据 | `self.data["key"] = value` | ✅ DataMixin |
+| 权限检查 | `self.check_permission(uid, "perm")` | ✅ RBACMixin |
+| 定时任务 | `self.add_scheduled_task("名称", "60s")` | ✅ TimeTaskMixin |
+| 等待事件 | `await self.wait_event(predicate, timeout=30)` | ✅ EventMixin |
+| 群管理 | `await self.api.qq.manage.set_group_ban(gid, uid)` | ❌ |
+| 信息查询 | `await self.api.qq.query.get_group_info(gid)` | ❌ |
+
+### 按需求找文档
+
+| 我想… | 去这里 |
+|-------|--------|
+| 从零跑通第一个 Bot | [quick_start/](quick_start/) |
+| 开发插件 | [plugin/](plugin/) |
+| 发消息、构造复杂消息 | [send_message/](send_message/) |
+| 调用群管理/查询/文件 API | [api_usage/](api_usage/) |
+| 管理 config.yaml | [configuration/](configuration/) |
+| 用 CLI 管理项目 | [cli/](cli/) |
+| 添加权限控制 | [rbac/](rbac/) |
+| 写插件测试 | [testing/](testing/) |
+| 接入多平台 | [multi_platform/](multi_platform/) |
+| 各平台登录与配置 | [adapter/](adapter/) |
+
+---
+
+## 本目录索引
+
+| 目录 | 说明 | 难度 |
+|------|------|------|
+| [quick_start/](quick_start/) | 从零启动 — 安装、配置、两种模式启动 | ⭐ |
+| [adapter/](adapter/) | 适配器登录与使用 — NapCat / Bilibili / GitHub / Mock | ⭐ |
+| [plugin/](plugin/) | 插件开发完整指南（11 篇） | ⭐ - ⭐⭐⭐ |
+| [send_message/](send_message/) | 消息发送 — 消息段、MessageArray、转发、语法糖 | ⭐ |
+| [api_usage/](api_usage/) | Bot API 使用 — 消息、群管理、查询 | ⭐⭐ |
+| [configuration/](configuration/) | 配置管理 — config.yaml 结构与安全校验 | ⭐⭐ |
+| [cli/](cli/) | CLI 工具 — init / run / dev / config / plugin | ⭐ |
+| [rbac/](rbac/) | RBAC 权限管理 — 权限模型与插件集成 | ⭐⭐⭐ |
+| [testing/](testing/) | 插件测试 — Harness、工厂函数、Scenario | ⭐⭐ |
+| [multi_platform/](multi_platform/) | 多平台开发 — Trait 协议与跨平台插件 | ⭐⭐ |
+
+---
+
+## 交叉引用
+
+- API 完整签名 → [reference/](../reference/)
+- 核心概念速查 → [concepts.md](../concepts.md)
+- 架构全景 → [architecture.md](../architecture.md)
