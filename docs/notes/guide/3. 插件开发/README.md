@@ -59,12 +59,15 @@ class HelloPlugin(NcatBotPlugin):
 | `@registrar.qq.on_poke()` | QQ 戳一戳 |
 | `@registrar.qq.on_group_increase()` | QQ 群成员增加 |
 | `@registrar.qq.on_group_decrease()` | QQ 群成员减少 |
+| `@registrar.qq.on_group_recall()` | QQ 群撤回 |
 | `@registrar.qq.on_friend_request()` | QQ 好友请求 |
 | `@registrar.qq.on_group_request()` | QQ 群请求 |
 | `@registrar.bilibili.on_danmu()` | B站弹幕 |
 | `@registrar.bilibili.on_gift()` | B站礼物 |
 | `@registrar.github.on_push()` | GitHub Push |
 | `@registrar.github.on_issue()` | GitHub Issue |
+| `@registrar.on_message_sent()` | 消息发送 |
+| `@registrar.on_meta()` | 元事件 |
 | `@registrar.on(event_type, ...)` | 通用注册 |
 
 > 所有装饰器支持 `priority=`（优先级）和 `platform=`（平台过滤）参数。命令装饰器额外支持 `ignore_case=`。
@@ -80,11 +83,14 @@ class HelloPlugin(NcatBotPlugin):
 | **DataMixin** | `self.data[key]` | 读写 JSON 持久化数据（字典） |
 | **RBACMixin** | `check_permission(user, permission)` | 检查权限 |
 | | `add_permission(path)` | 注册权限路径 |
+| | `remove_permission(path)` | 移除权限路径 |
 | | `add_role(role, exist_ok=True)` | 创建角色 |
+| | `user_has_role(user, role)` | 检查用户角色 |
 | | `self.rbac` | 访问 RBACService 实例 |
 | **TimeTaskMixin** | `add_scheduled_task(name, interval, ...)` | 添加定时任务 |
 | | `remove_scheduled_task(name)` | 移除定时任务 |
 | | `list_scheduled_tasks()` | 列出任务 |
+| | `get_task_status(name)` | 获取任务状态 |
 | **EventMixin** | `wait_event(predicate=, timeout=)` | 等待匹配事件 |
 | | `self.events(type)` | 创建事件流（async for） |
 

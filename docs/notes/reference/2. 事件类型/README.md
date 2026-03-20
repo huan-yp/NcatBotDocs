@@ -33,6 +33,7 @@ ncatbot.event                     # 通用层导出
 | `Kickable` | 可踢人 | `async kick(...)` |
 | `Bannable` | 可禁言 | `async ban(duration=...)` |
 | `Approvable` | 可审批 | `async approve(...)`, `async reject(...)` |
+| `HasAttachments` | 有可下载附件 | `async get_attachments() -> AttachmentList` |
 
 ### QQ 事件速查
 

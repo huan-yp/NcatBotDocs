@@ -26,7 +26,7 @@ await self.api.qq.post_group_array_msg(group_id, msg)
 
 ```python
 from ncatbot.types import MessageSegment, MessageArray
-from ncatbot.types.common.segment import PlainText, Image, At, Reply
+from ncatbot.types import PlainText, Image, At, Reply
 
 # 手动构造消息段
 text = PlainText(text="你好")

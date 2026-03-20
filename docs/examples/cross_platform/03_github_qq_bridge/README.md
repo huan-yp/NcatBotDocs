@@ -153,7 +153,7 @@ from ncatbot.event.github import (
     GitHubPREvent,
 )
 from ncatbot.plugin import NcatBotPlugin
-from ncatbot.types.common.segment import Reply, PlainText
+from ncatbot.types import Reply, PlainText
 from ncatbot.utils import get_log
 
 LOG = get_log("GH-QQ-Bridge")

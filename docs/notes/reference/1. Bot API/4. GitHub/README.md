@@ -11,10 +11,10 @@ permalink: /reference/b8v2e8d2/
 ## Quick Reference
 
 ```python
-bot.api.github.create_issue(owner="o", repo="r", title="Bug")
-bot.api.github.create_issue_comment(owner="o", repo="r", issue_number=1, body="Fixed")
-bot.api.github.merge_pr(owner="o", repo="r", pull_number=42)
-bot.api.github.get_repo(owner="o", repo="r")
+api.github.create_issue(repo="owner/repo", title="Bug")
+api.github.create_issue_comment(repo="owner/repo", issue_number=1, body="Fixed")
+api.github.merge_pr(repo="owner/repo", pr_number=42)
+api.github.get_repo(repo="owner/repo")
 ```
 
 ## 本目录索引

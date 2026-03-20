@@ -19,11 +19,13 @@ from ncatbot.core import registrar, Hook
 | 组件 | 职责 | 关键方法 |
 |------|------|---------|
 | `AsyncEventDispatcher` | 事件广播 + 事件流 | `callback`, `events(type)`, `wait_event(predicate, timeout)`, `close()` |
-| `HandlerDispatcher` | Handler 匹配与执行 | `start(dispatcher)`, `stop()`, `register_handler(...)`, `unregister_handler(entry)`, `revoke_plugin(name)` |
-| `Registrar` | 装饰器注册 | `on_group_command(...)`, `on_message(...)`, `on(...)`, `fork(...)` |
+| `HandlerDispatcher` | Handler 匹配与执行 | `start(dispatcher)`, `stop()`, `register_handler(...)`, `unregister_handler(entry)`, `revoke_plugin(name)`, `set_platform_api(platform, api)` |
+| `Registrar` | 装饰器注册 | `on(event_type, priority=, platform=)`, `on_group_command(...)`, `on_message(...)`, `fork(...)` |
 | `Hook` (ABC) | 拦截链 | `execute(ctx) → HookAction` — CONTINUE / SKIP |
 
 ### Registrar 装饰器索引
+
+**跨平台**（`registrar.*`）：
 
 | 装饰器 | 监听 |
 |--------|------|
@@ -32,11 +34,34 @@ from ncatbot.core import registrar, Hook
 | `on_group_command(*names, ignore_case=)` | 群命令 |
 | `on_private_command(*names, ignore_case=)` | 私聊命令 |
 | `on_message()` / `on_group_message()` / `on_private_message()` | 消息 |
+| `on_message_sent()` | 消息发送 |
 | `on_notice()` / `on_request()` / `on_meta()` | 通知/请求/元 |
+
+**QQ 平台**（`registrar.qq.*`）：
+
+| 装饰器 | 监听 |
+|--------|------|
 | `on_poke()` | 戳一戳 |
 | `on_group_increase()` / `on_group_decrease()` | 群成员变动 |
+| `on_group_recall()` / `on_group_admin()` / `on_group_ban()` | 群管理 |
+| `on_friend_add()` | 好友添加 |
 | `on_friend_request()` / `on_group_request()` | 好友/群请求 |
-| `on_message_sent()` | 消息发送 |
+
+**Bilibili 平台**（`registrar.bilibili.*`）：
+
+| 装饰器 | 监听 |
+|--------|------|
+| `on_danmu()` / `on_superchat()` / `on_gift()` | 直播互动 |
+| `on_live()` / `on_interact()` / `on_like()` | 直播间 |
+| `on_comment()` | 评论 |
+
+**GitHub 平台**（`registrar.github.*`）：
+
+| 装饰器 | 监听 |
+|--------|------|
+| `on_push()` / `on_issue()` / `on_pr()` | 代码事件 |
+| `on_star()` / `on_fork()` / `on_release()` | 仓库事件 |
+| `on_comment()` | 评论 |
 
 ### Hook 系统
 

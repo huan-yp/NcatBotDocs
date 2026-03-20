@@ -44,7 +44,7 @@ permalink: /reference/
 | [adapter/](<7. 适配器/>) | 适配器参考（WebSocket、协议处理） |
 | [utils/](<8. 工具模块/>) | 工具模块参考（日志、IO、装饰器） |
 | [cli.md](<10. CLI/1. 命令参考.md>) | CLI 命令参考（全部命令签名与参数） |
-| [testing/](<9. 测试指南/>) | 测试框架参考（TestHarness、事件工厂、Mock） |
+| [testing/](<9. 测试框架/>) | 测试框架参考（TestHarness、事件工厂、Mock） |
 
 ---
 

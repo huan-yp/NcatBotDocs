@@ -40,6 +40,8 @@ from ncatbot.service import ServiceManager, BaseService
 | `has` | `(service_name) → bool` | 检查服务是否已加载 |
 | `list_services` | `() → List[str]` | 列出已加载服务名称 |
 | `set_event_callback` | `(callback) → None` | 注入事件发布回调 |
+| `set_debug_mode` | `(enable: bool = True) → None` | 设置调试模式 |
+| `set_test_mode` | `(enable: bool = True) → None` | 设置测试模式 |
 
 ### 快捷属性（ServiceManager）
 

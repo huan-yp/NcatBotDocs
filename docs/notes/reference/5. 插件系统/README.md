@@ -28,6 +28,8 @@ from ncatbot.plugin import NcatBotPlugin
 | `workspace` | `Path` | 插件工作目录（框架注入） |
 | `services` | `ServiceManager` | 服务管理器（框架注入） |
 | `api` | `BotAPIClient` | Bot API 客户端（框架注入） |
+| `config` | `Dict[str, Any]` | 插件配置字典 |
+| `logger` | `Logger` | 以插件名为标签的 logger |
 | `debug` | `bool` | 调试模式 |
 
 ### NcatBotPlugin 方法

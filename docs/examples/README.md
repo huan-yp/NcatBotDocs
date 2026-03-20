@@ -20,6 +20,7 @@
 | 05 | [scheduled_tasks](common/05_scheduled_tasks/) | 定时任务（多种时间格式/条件执行） | ⭐⭐ |
 | 06 | [multi_step_dialog](common/06_multi_step_dialog/) | 多步对话（from_event/超时/取消） | ⭐⭐ |
 | 07 | [external_api](common/07_external_api/) | 外部 API 集成（aiohttp/配置/错误处理） | ⭐⭐ |
+| 08 | [command_group](common/08_command_group/) | 命令组分层路由（CommandGroupHook/子命令/参数绑定） | ⭐⭐ |
 
 ### qq/ — QQ 平台专属
 
