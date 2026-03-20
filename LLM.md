@@ -461,9 +461,16 @@ config:
 
 ```text
 检测 NapCat 服务是否在线
-  ├─ 已在线 → 验证账号 → 完成
-  └─ 未在线 → 安装/更新 NapCat → 生成配置 → 启动进程 → 登录 → 完成
+  ├─ 已在线 → 账号验证 (WS) → 完成
+  └─ 未在线 → 安装/更新 NapCat → 生成配置（写文件） → 启动进程
+               ├─ 缓存登录成功 → 等待 WS 就绪 → 账号验证 (WS) → 完成
+               └─ 须交互登录（快速/二维码）→ 登录后账号检查 (HTTP)
+                                                  ├─ 匹配 → 等待 WS 就绪 → 账号验证 (WS) → 完成
+                                                  ├─ 默认 bot_uin → 写回实际账号 + HTTP 推送 WS 配置 → 等待 WS 就绪 → 完成
+                                                  └─ 非默认不匹配 → 报错终止
 ```
+
+> **两阶段账号校验**：新登录（快速/二维码）完成后，在 `wait_for_service()` 之前先通过 **HTTP** 检查实际账号（`_post_login_config_check`）。若 `bot_uin` 为默认值且不匹配，此时立即写回并通过 HTTP 推送对应账号的 WS 配置；否则 WebSocket 会因无对应 WS 配置而永久阻塞。缓存登录路径不受影响，直接走 WS 最终验证。
 
 登录优先尝试**快速登录**（如果该 QQ 号之前登录过），失败则自动切换到**二维码登录**（在终端显示 ASCII 二维码，使用手机 QQ 扫码）。
 
@@ -10004,7 +10011,7 @@ ncatbot/
 │   │   ├── constants.py  #     协议常量
 │   │   ├── api/          #     NapCatBotAPI + Mixin（message / group / account / query / file）
 │   │   ├── connection/   #     NapCatWebSocket + OB11Protocol
-│   │   ├── setup/        #     Launcher / Installer / Auth / Config
+│   │   ├── setup/        #     Launcher / Installer / Auth / Config / WebUIClient
 │   │   ├── service/      #     PreUpload 文件流式上传服务
 │   │   └── debug/        #     诊断工具（WebSocket / WebUI 检查）
 │   ├── bilibili/         #   Bilibili 适配器（platform="bilibili"）
