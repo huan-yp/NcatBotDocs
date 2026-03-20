@@ -6,7 +6,7 @@ export default defineUserConfig({
   // 请不要忘记设置默认语言
   blog: false,
   lang: 'zh-CN',
-  pagePatterns: ['**/*.md', '!.vuepress', '!node_modules', '!examples/**'],
+  pagePatterns: ['**/*.md', '!.vuepress', '!node_modules'],
   head: [
     [
         'link', { rel: 'icon', href: '/images/logo.png' },
