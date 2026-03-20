@@ -195,10 +195,10 @@ msg = await self.api.qq.query.get_msg(message_id)
 
 | 文档 | 内容 |
 |------|------|
-| [消息发送详解](1. 消息发送.md) | sugar 方法、原子 messaging API、合并转发 |
-| [群管理详解](2. 群管理.md) | .manage 每个方法的参数与示例 |
-| [查询与文件操作](3. 查询与支持.md) | .query + .file 方法详解 |
+| [消息发送详解](<1. 消息发送.md>) | sugar 方法、原子 messaging API、合并转发 |
+| [群管理详解](<2. 群管理.md>) | .manage 每个方法的参数与示例 |
+| [查询与文件操作](<3. 查询与支持.md>) | .query + .file 方法详解 |
 
 ---
 
-> **返回**：[Bot API 使用指南](../README.md) · **相关**：[QQ 消息发送指南](../../4. 消息发送/2. QQ/README.md) · [QQ API 参考](../../../reference/1. Bot API/2. QQ/1. 消息 API.md)
+> **返回**：[Bot API 使用指南](../README.md) · **相关**：[QQ 消息发送指南](<../../4. 消息发送/2. QQ/README.md>) · [QQ API 参考](<../../../reference/1. Bot API/2. QQ/1. 消息 API.md>)

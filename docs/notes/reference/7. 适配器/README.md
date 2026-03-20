@@ -20,10 +20,10 @@ from ncatbot.adapter.github import GitHubAdapter
 
 | 适配器 | `platform` | 协议 | 用途 | 使用指南 |
 |---|---|---|---|---|
-| `NapCatAdapter` | `"qq"` | OneBot v11 (WebSocket) | QQ 群聊/私聊 Bot | [NapCat 指南](../../guide/2. 适配器/1. NapCat QQ.md) |
-| `BilibiliAdapter` | `"bilibili"` | bilibili-api-python | 直播弹幕 / 私信 / 评论 | [Bilibili 指南](../../guide/2. 适配器/2. Bilibili.md) |
-| `GitHubAdapter` | `"github"` | Webhook / REST Polling | Issue/PR/Push 事件处理 | [GitHub 指南](../../guide/2. 适配器/3. GitHub.md) |
-| `MockAdapter` | `"mock"` | 内存模拟 | 测试环境，无需网络 | [Mock 指南](../../guide/2. 适配器/4. Mock 适配器.md) |
+| `NapCatAdapter` | `"qq"` | OneBot v11 (WebSocket) | QQ 群聊/私聊 Bot | [NapCat 指南](<../../guide/2. 适配器/1. NapCat QQ.md>) |
+| `BilibiliAdapter` | `"bilibili"` | bilibili-api-python | 直播弹幕 / 私信 / 评论 | [Bilibili 指南](<../../guide/2. 适配器/2. Bilibili.md>) |
+| `GitHubAdapter` | `"github"` | Webhook / REST Polling | Issue/PR/Push 事件处理 | [GitHub 指南](<../../guide/2. 适配器/3. GitHub.md>) |
+| `MockAdapter` | `"mock"` | 内存模拟 | 测试环境，无需网络 | [Mock 指南](<../../guide/2. 适配器/4. Mock 适配器.md>) |
 
 ```mermaid
 graph LR
@@ -83,7 +83,7 @@ graph LR
 | `set_response` | `(action, response) → None` | 预设返回值 |
 | `reset` | `() → None` | 清除所有记录 |
 
-**源码位置**: `ncatbot/adapter/` · 详见 [适配器使用指南](../../guide/2. 适配器/) · [多平台开发指南](../../guide/10. 多平台开发/)
+**源码位置**: `ncatbot/adapter/` · 详见 [适配器使用指南](<../../guide/2. 适配器/>) · [多平台开发指南](<../../guide/10. 多平台开发/>)
 
 ---
 
@@ -122,7 +122,7 @@ graph LR
 3. 验证失败或为空 → 调用 `qrcode_login()` 扫码登录
 4. 登录成功 → `save_credential_to_config()` 写回 config.yaml
 
-详见 [Bilibili 使用指南](../../guide/2. 适配器/2. Bilibili.md)。
+详见 [Bilibili 使用指南](<../../guide/2. 适配器/2. Bilibili.md>)。
 
 ---
 
@@ -155,7 +155,7 @@ graph LR
 2. 验证成功打印用户名，失败抛出异常
 3. 不配置 Token 也可运行（公开仓库 Webhook），但 API 速率受限
 
-详见 [GitHub 使用指南](../../guide/2. 适配器/3. GitHub.md)。
+详见 [GitHub 使用指南](<../../guide/2. 适配器/3. GitHub.md>)。
 
 ---
 
@@ -167,5 +167,5 @@ graph LR
 
 | 文件 | 说明 |
 |------|------|
-| [1_connection.md](1. 连接.md) | WebSocket 连接管理 — NapCatWebSocket、重连策略、NapCatLauncher 进程管理 |
-| [2_protocol.md](2. 协议.md) | 协议处理 — OB11Protocol 请求-响应匹配、事件解析、NapCatBotAPI 实现 |
+| [1_connection.md](<1. 连接.md>) | WebSocket 连接管理 — NapCatWebSocket、重连策略、NapCatLauncher 进程管理 |
+| [2_protocol.md](<2. 协议.md>) | 协议处理 — OB11Protocol 请求-响应匹配、事件解析、NapCatBotAPI 实现 |

@@ -48,7 +48,7 @@ BotAPIClient                        ← 多平台路由（纯门面，无业务�
 | `IQuery` | `get_login_info`, `get_friend_list`, `get_group_list` ... | 信息查询 |
 | `IFileTransfer` | `upload_group_file`, `upload_private_file`, `download_file` | 文件上传/下载 |
 
-> 完整方法签名参见各子文档，或查阅 [guide/api_usage/](../../guide/5. API 使用/) 中的速查表。
+> 完整方法签名参见各子文档，或查阅 [guide/api_usage/](<../../guide/5. API 使用/>) 中的速查表。
 
 ---
 
@@ -58,24 +58,24 @@ BotAPIClient                        ← 多平台路由（纯门面，无业务�
 
 | 文件 | 说明 |
 |------|------|
-| [Trait 协议参考](1. 通用/1. Traits.md) | IMessaging, IGroupManage, IQuery, IFileTransfer 完整签名 |
+| [Trait 协议参考](<1. 通用/1. Traits.md>) | IMessaging, IGroupManage, IQuery, IFileTransfer 完整签名 |
 
 ### QQ 平台
 
 | 文件 | 说明 |
 |------|------|
-| [消息 API](2. QQ/1. 消息 API.md) | QQMessaging 核心消息方法 + QQMessageSugarMixin 便捷方法 |
-| [管理 API](2. QQ/2. 管理 API.md) | QQManage 群管理、好友管理与个人资料 |
-| [查询与文件 API](2. QQ/3. 信息支持 API.md) | QQQuery 信息查询 + QQFile 文件操作 |
+| [消息 API](<2. QQ/1. 消息 API.md>) | QQMessaging 核心消息方法 + QQMessageSugarMixin 便捷方法 |
+| [管理 API](<2. QQ/2. 管理 API.md>) | QQManage 群管理、好友管理与个人资料 |
+| [查询与文件 API](<2. QQ/3. 信息支持 API.md>) | QQQuery 信息查询 + QQFile 文件操作 |
 
 ### Bilibili 平台
 
 | 文件 | 说明 |
 |------|------|
-| [Bilibili API](3. Bilibili/1. API.md) | IBiliAPIClient 完整方法签名 |
+| [Bilibili API](<3. Bilibili/1. API.md>) | IBiliAPIClient 完整方法签名 |
 
 ### GitHub 平台
 
 | 文件 | 说明 |
 |------|------|
-| [GitHub API](4. GitHub/1. API.md) | GitHubBotAPI 完整方法签名（Issue / Comment / PR / Query） |
+| [GitHub API](<4. GitHub/1. API.md>) | GitHubBotAPI 完整方法签名（Issue / Comment / PR / Query） |

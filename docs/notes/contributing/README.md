@@ -60,9 +60,9 @@ git push origin feat/my-feature
 
 | 目录 | 说明 |
 |------|------|
-| [development_setup/](1. 开发环境/) | 开发环境搭建、工具链、常用命令 |
-| [design_decisions/](2. 设计决策/) | 架构决策记录（ADR） |
-| [module_internals/](3. 模块内部实现/) | 模块内部实现详解 |
+| [development_setup/](<1. 开发环境/>) | 开发环境搭建、工具链、常用命令 |
+| [design_decisions/](<2. 设计决策/>) | 架构决策记录（ADR） |
+| [module_internals/](<3. 模块内部实现/>) | 模块内部实现详解 |
 
 ---
 
@@ -79,6 +79,6 @@ git push origin feat/my-feature
 
 | 如果你在找… | 去这里 |
 |------------|--------|
-| 架构总览 | [architecture.md](../guide/11. 架构与概念/1. 架构总览.md) |
-| 插件开发教程 | [guide/plugin/](../guide/3. 插件开发/) |
+| 架构总览 | [architecture.md](<../guide/11. 架构与概念/1. 架构总览.md>) |
+| 插件开发教程 | [guide/plugin/](<../guide/3. 插件开发/>) |
 | API 参考 | [reference/](../reference/) |

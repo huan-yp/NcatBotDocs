@@ -64,12 +64,12 @@ ncatbot.types                    # 通用层导出（平台无关）
 
 | 文件 | 层级 | 说明 |
 |------|------|------|
-| [1_common_segments.md](1. 通用消息段.md) | 通用 | 跨平台消息段基类与 7 种通用段 |
-| [2_message_array.md](2. 消息数组.md) | 通用 | MessageArray 容器完整方法详解 |
-| [3_qq_segments.md](3. QQ 消息段.md) | QQ | QQ 专属消息段（Face, Forward, Music 等） |
-| [4_qq_responses.md](4. QQ 响应.md) | QQ | Bot API 响应类型（NapCat 协议） |
-| [5_bilibili_types.md](5. Bilibili 类型.md) | Bilibili | Bilibili 平台类型（Sender, 枚举, 事件数据） |
-| [6_github_types.md](6. GitHub 类型.md) | GitHub | GitHub 平台类型（Repo, Commit, Release, 枚举, 事件数据） |
+| [1_common_segments.md](<1. 通用消息段.md>) | 通用 | 跨平台消息段基类与 7 种通用段 |
+| [2_message_array.md](<2. 消息数组.md>) | 通用 | MessageArray 容器完整方法详解 |
+| [3_qq_segments.md](<3. QQ 消息段.md>) | QQ | QQ 专属消息段（Face, Forward, Music 等） |
+| [4_qq_responses.md](<4. QQ 响应.md>) | QQ | Bot API 响应类型（NapCat 协议） |
+| [5_bilibili_types.md](<5. Bilibili 类型.md>) | Bilibili | Bilibili 平台类型（Sender, 枚举, 事件数据） |
+| [6_github_types.md](<6. GitHub 类型.md>) | GitHub | GitHub 平台类型（Repo, Commit, Release, 枚举, 事件数据） |
 
 ---
 
@@ -77,6 +77,6 @@ ncatbot.types                    # 通用层导出（平台无关）
 
 | 如果你在找… | 去这里 |
 |------------|--------|
-| 消息发送教程 | [guide/send_message/](../../guide/4. 消息发送/) |
-| 事件类型参考 | [events/](../2. 事件类型/) |
-| Bot API 方法签名 | [api/](../1. Bot API/) |
+| 消息发送教程 | [guide/send_message/](<../../guide/4. 消息发送/>) |
+| 事件类型参考 | [events/](<../2. 事件类型/>) |
+| Bot API 方法签名 | [api/](<../1. Bot API/>) |

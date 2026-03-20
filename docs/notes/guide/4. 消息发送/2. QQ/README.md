@@ -97,10 +97,10 @@ await self.api.qq.post_group_forward_msg(group_id, fc.build())
 
 | 文档 | 内容 |
 |------|------|
-| [便捷接口参考](1. 语法糖.md) | event.reply()、所有 sugar 方法完整清单 |
-| [合并转发](2. 合并转发.md) | ForwardNode / Forward / ForwardConstructor 构造器 |
-| [实战示例](3. 示例.md) | 常见场景速查：纯文本、图文、回复、转发等 |
+| [便捷接口参考](<1. 语法糖.md>) | event.reply()、所有 sugar 方法完整清单 |
+| [合并转发](<2. 合并转发.md>) | ForwardNode / Forward / ForwardConstructor 构造器 |
+| [实战示例](<3. 示例.md>) | 常见场景速查：纯文本、图文、回复、转发等 |
 
 ---
 
-> **相关**：[通用消息概念](../1. 通用/README.md) · [QQ API 使用指南](../../5. API 使用/2. QQ/README.md)
+> **相关**：[通用消息概念](<../1. 通用/README.md>) · [QQ API 使用指南](<../../5. API 使用/2. QQ/README.md>)

@@ -62,6 +62,6 @@ async def test_hello_command():
 
 | 章节 | 说明 | 难度 |
 |------|------|------|
-| [1. 快速入门](1. 快速开始.md) | 5 分钟写出第一个插件测试 | ⭐ |
-| [2. Harness 详解](2. 测试工具.md) | TestHarness 与 PluginTestHarness 深入使用 | ⭐⭐ |
-| [3. 工厂与场景](3. 工厂与场景.md) | 事件工厂、Scenario 构建器、自动冒烟测试 | ⭐⭐ |
+| [1. 快速入门](<1. 快速开始.md>) | 5 分钟写出第一个插件测试 | ⭐ |
+| [2. Harness 详解](<2. 测试工具.md>) | TestHarness 与 PluginTestHarness 深入使用 | ⭐⭐ |
+| [3. 工厂与场景](<3. 工厂与场景.md>) | 事件工厂、Scenario 构建器、自动冒烟测试 | ⭐⭐ |

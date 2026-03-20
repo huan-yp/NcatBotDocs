@@ -92,10 +92,10 @@ from ncatbot.event.github import GitHubIssueEvent, GitHubPREvent, GitHubPushEven
 
 | 文件 | 层级 | 说明 |
 |------|------|------|
-| [1_common.md](1. 通用事件.md) | 通用 | BaseEvent 基类、Mixin Traits、工厂函数 |
-| [2_qq_events.md](2. QQ 事件.md) | QQ | QQ 事件实体完整参考 |
-| [3_bilibili_events.md](3. Bilibili 事件.md) | Bilibili | Bilibili 事件实体完整参考 |
-| [4_github_events.md](4. GitHub 事件.md) | GitHub | GitHub 事件实体完整参考（实验性） |
+| [1_common.md](<1. 通用事件.md>) | 通用 | BaseEvent 基类、Mixin Traits、工厂函数 |
+| [2_qq_events.md](<2. QQ 事件.md>) | QQ | QQ 事件实体完整参考 |
+| [3_bilibili_events.md](<3. Bilibili 事件.md>) | Bilibili | Bilibili 事件实体完整参考 |
+| [4_github_events.md](<4. GitHub 事件.md>) | GitHub | GitHub 事件实体完整参考（实验性） |
 
 ---
 
@@ -103,6 +103,6 @@ from ncatbot.event.github import GitHubIssueEvent, GitHubPREvent, GitHubPushEven
 
 | 如果你在找… | 去这里 |
 |------------|--------|
-| 消息段类型 | [types/](../3. 数据类型/) |
-| Bot API 方法 | [api/](../1. Bot API/) |
-| 事件注册方式 | [guide/plugin/4a.event-registration.md](../../guide/3. 插件开发/4. 事件注册.md) |
+| 消息段类型 | [types/](<../3. 数据类型/>) |
+| Bot API 方法 | [api/](<../1. Bot API/>) |
+| 事件注册方式 | [guide/plugin/4a.event-registration.md](<../../guide/3. 插件开发/4. 事件注册.md>) |

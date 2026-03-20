@@ -65,8 +65,8 @@ await self.api.github.create_pr_comment("owner/repo", pr_number=10, body="LGTM!"
 
 | 文档 | 内容 |
 |------|------|
-| [1_messaging.md](1. 消息发送.md) | Issue / PR / Review Comment 发送详解与示例 |
+| [1_messaging.md](<1. 消息发送.md>) | Issue / PR / Review Comment 发送详解与示例 |
 
 ---
 
-> **相关**：[GitHub API 使用](../../5. API 使用/4. GitHub/README.md) · [跨平台通用消息段](../1. 通用/README.md) · [多平台开发](../../10. 多平台开发/README.md)
+> **相关**：[GitHub API 使用](<../../5. API 使用/4. GitHub/README.md>) · [跨平台通用消息段](<../1. 通用/README.md>) · [多平台开发](<../../10. 多平台开发/README.md>)

@@ -88,11 +88,11 @@ config:
 
 | 文档 | 内容 |
 |------|------|
-| [直播间操作](1. 直播间.md) | 弹幕发送、用户禁言、全员禁言、房间信息 |
-| [私信操作](2. 私信.md) | 发送私信文字/图片、获取私信历史 |
-| [评论操作](3. 评论.md) | 发送/回复/删除/点赞评论 |
-| [数据源与查询](4. 源查询.md) | 直播间/评论监听管理、用户信息查询 |
+| [直播间操作](<1. 直播间.md>) | 弹幕发送、用户禁言、全员禁言、房间信息 |
+| [私信操作](<2. 私信.md>) | 发送私信文字/图片、获取私信历史 |
+| [评论操作](<3. 评论.md>) | 发送/回复/删除/点赞评论 |
+| [数据源与查询](<4. 源查询.md>) | 直播间/评论监听管理、用户信息查询 |
 
 ---
 
-> **返回**：[Bot API 使用指南](../README.md) · **相关**：[Bilibili 消息发送](../../4. 消息发送/3. Bilibili/README.md) · [Bilibili API 参考](../../../reference/1. Bot API/3. Bilibili/1. API.md) · **示例**：[examples/bilibili/](../../../../examples/bilibili/01_hello_world/README.md)
+> **返回**：[Bot API 使用指南](../README.md) · **相关**：[Bilibili 消息发送](<../../4. 消息发送/3. Bilibili/README.md>) · [Bilibili API 参考](<../../../reference/1. Bot API/3. Bilibili/1. API.md>) · **示例**：[examples/bilibili/](../../../../examples/bilibili/01_hello_world/README.md)

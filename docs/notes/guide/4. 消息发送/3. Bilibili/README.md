@@ -74,8 +74,8 @@ await self.api.bilibili.reply_comment(
 
 | 文档 | 内容 |
 |------|------|
-| [消息发送详解](1. 消息发送.md) | 弹幕、私信、评论的发送方式与示例 |
+| [消息发送详解](<1. 消息发送.md>) | 弹幕、私信、评论的发送方式与示例 |
 
 ---
 
-> **相关**：[Bilibili API 使用指南](../../5. API 使用/3. Bilibili/README.md)
+> **相关**：[Bilibili API 使用指南](<../../5. API 使用/3. Bilibili/README.md>)

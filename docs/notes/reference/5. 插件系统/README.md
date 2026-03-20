@@ -70,5 +70,5 @@ from ncatbot.plugin import NcatBotPlugin
 
 | 文件 | 说明 |
 |------|------|
-| [1_base_class.md](1. 基类.md) | NcatBotPlugin 完整 API — 属性、方法、继承关系、PluginManifest、依赖解析 |
-| [2_mixins.md](2. Mixins.md) | EventMixin / TimeTaskMixin / RBACMixin / ConfigMixin / DataMixin 完整 API |
+| [1_base_class.md](<1. 基类.md>) | NcatBotPlugin 完整 API — 属性、方法、继承关系、PluginManifest、依赖解析 |
+| [2_mixins.md](<2. Mixins.md>) | EventMixin / TimeTaskMixin / RBACMixin / ConfigMixin / DataMixin 完整 API |

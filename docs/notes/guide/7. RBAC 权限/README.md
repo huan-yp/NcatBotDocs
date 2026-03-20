@@ -58,5 +58,5 @@ async def on_admin_cmd(self, event: GroupMessageEvent):
 
 | 文档 | 内容 |
 |------|------|
-| [RBAC 模型详解](1. RBAC 模型.md) | 三层模型、权限路径、Trie 树、通配符、rbac.json 格式、角色继承 |
-| [RBAC 插件集成](2. 集成.md) | RBACMixin API、RBACService 底层操作、层级权限与默认策略 |
+| [RBAC 模型详解](<1. RBAC 模型.md>) | 三层模型、权限路径、Trie 树、通配符、rbac.json 格式、角色继承 |
+| [RBAC 插件集成](<2. 集成.md>) | RBACMixin API、RBACService 底层操作、层级权限与默认策略 |
