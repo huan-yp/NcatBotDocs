@@ -93,7 +93,6 @@ class RBACPlugin(NcatBotPlugin):
             "  角色: rbac_admin (拥有 admin+user), rbac_user (拥有 user)\n"
             "  授权需通过平台专用命令（如 QQ 的 @用户 授权）"
         )
-
 ~~~
 
 ## manifest.toml
@@ -105,6 +104,5 @@ main = "main.py"
 entry_class = "RBACPlugin"
 author = "NcatBot"
 description = "权限管理系统演示（跨平台）"
-
 ~~~
 

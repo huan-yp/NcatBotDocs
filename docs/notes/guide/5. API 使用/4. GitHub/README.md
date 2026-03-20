@@ -82,9 +82,9 @@ class MyPlugin(NcatBotPlugin):
 
 | 文档 | 内容 |
 |------|------|
-| [1_issue_comment.md](1_issue_comment.md) | Issue CRUD、Label、Assignee、评论操作 |
-| [2_pr_query.md](2_pr_query.md) | PR 评论 / 合并 / 审查 + 信息查询 |
+| [1_issue_comment.md](1. Issue 评论.md) | Issue CRUD、Label、Assignee、评论操作 |
+| [2_pr_query.md](2. PR 查询.md) | PR 评论 / 合并 / 审查 + 信息查询 |
 
 ---
 
-> **相关**：[GitHub 消息发送](../../send_message/github/README.md) · [GitHub API 参考](../../../reference/api/github/1_api.md) · [跨平台 Trait](../common/2_traits.md)
+> **相关**：[GitHub 消息发送](../../4. 消息发送/4. GitHub/README.md) · [GitHub API 参考](../../../reference/1. Bot API/4. GitHub/1. API.md) · [跨平台 Trait](../1. 通用/2. Traits.md)

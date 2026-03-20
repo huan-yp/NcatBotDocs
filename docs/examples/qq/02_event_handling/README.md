@@ -102,7 +102,6 @@ class EventHandlingPlugin(NcatBotPlugin):
             await self.api.qq.post_group_msg(event.group_id, text="操作已确认 ✅")
         except asyncio.TimeoutError:
             await self.api.qq.post_group_msg(event.group_id, text="操作超时已取消 ⏰")
-
 ~~~
 
 ## manifest.toml
@@ -114,6 +113,5 @@ main = "main.py"
 entry_class = "EventHandlingPlugin"
 author = "NcatBot"
 description = "QQ 事件处理三模式演示"
-
 ~~~
 

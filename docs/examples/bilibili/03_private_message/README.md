@@ -68,7 +68,6 @@ class BiliPrivateMessagePlugin(NcatBotPlugin):
             len(history) if history else 0,
             event.user_id,
         )
-
 ~~~
 
 ## manifest.toml
@@ -80,6 +79,5 @@ main = "main.py"
 entry_class = "BiliPrivateMessagePlugin"
 author = "NcatBot"
 description = "Bilibili 私信操作"
-
 ~~~
 

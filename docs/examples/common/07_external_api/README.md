@@ -102,7 +102,6 @@ class ExternalAPIPlugin(NcatBotPlugin):
         url = self.get_config("hitokoto_url", DEFAULT_HITOKOTO_URL)
         count = self.data.get("api_call_count", 0)
         await event.reply(f"🔌 API 状态:\n  一言 API: {url}\n  累计调用: {count} 次")
-
 ~~~
 
 ## manifest.toml
@@ -114,6 +113,5 @@ main = "main.py"
 entry_class = "ExternalAPIPlugin"
 author = "NcatBot"
 description = "外部 API 集成演示（跨平台）"
-
 ~~~
 

@@ -65,7 +65,6 @@ class GitHubIssueBotPlugin(NcatBotPlugin):
     async def on_comment(self, event: GitHubIssueCommentEvent):
         """Issue/PR 评论处理"""
         LOG.info("[GitHub] 新评论: 用户=%s", event.user_id)
-
 ~~~
 
 ## manifest.toml
@@ -77,6 +76,5 @@ main = "main.py"
 entry_class = "GitHubIssueBotPlugin"
 author = "NcatBot"
 description = "GitHub Issue 自动回复机器人（开发中）"
-
 ~~~
 

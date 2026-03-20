@@ -21,6 +21,6 @@ bot.api.github.get_repo(owner="o", repo="r")
 
 | 文件 | 说明 |
 |------|------|
-| [GitHub API 方法](1_api.md) | Issue / Comment / PR / Query 四大 Mixin 共 20 个方法的完整签名 |
+| [GitHub API 方法](1. API.md) | Issue / Comment / PR / Query 四大 Mixin 共 20 个方法的完整签名 |
 
-> 用法示例请查阅 [guide/api_usage/github/](../../../guide/api_usage/github/)。
+> 用法示例请查阅 [guide/api_usage/github/](../../../guide/5. API 使用/4. GitHub/)。

@@ -79,33 +79,33 @@ class DemoPlugin(NcatBotPlugin):
 
 | 文档 | 内容 |
 |------|------|
-| [通用 API](common/README.md) | 跨平台事件方法与 Trait 协议 |
-| [事件方法](common/1_event_methods.md) | `event.reply()`, `event.delete()`, `event.kick()` 等 |
-| [API Trait 协议](common/2_traits.md) | `IMessaging`, `IGroupManage`, `IQuery`, `IFileTransfer` |
+| [通用 API](1. 通用/README.md) | 跨平台事件方法与 Trait 协议 |
+| [事件方法](1. 通用/1. 事件方法.md) | `event.reply()`, `event.delete()`, `event.kick()` 等 |
+| [API Trait 协议](1. 通用/2. Traits.md) | `IMessaging`, `IGroupManage`, `IQuery`, `IFileTransfer` |
 
 ### QQ 平台
 
 | 文档 | 内容 |
 |------|------|
-| [QQ API 概览](qq/README.md) | QQ 平台 API 分层结构与速查 |
-| [消息发送详解](qq/1_messaging.md) | sugar 方法、原子 messaging API、合并转发 |
-| [群管理详解](qq/2_manage.md) | .manage 每个方法的参数与示例 |
-| [查询与文件操作](qq/3_query_support.md) | .query + .file 方法详解 |
+| [QQ API 概览](2. QQ/README.md) | QQ 平台 API 分层结构与速查 |
+| [消息发送详解](2. QQ/1. 消息发送.md) | sugar 方法、原子 messaging API、合并转发 |
+| [群管理详解](2. QQ/2. 群管理.md) | .manage 每个方法的参数与示例 |
+| [查询与文件操作](2. QQ/3. 查询与支持.md) | .query + .file 方法详解 |
 
 ### Bilibili 平台
 
 | 文档 | 内容 |
 |------|------|
-| [Bilibili API 概览](bilibili/README.md) | Bilibili 平台 API 功能分类与速查 |
-| [直播间操作](bilibili/1_live_room.md) | 弹幕、禁言、房间信息 |
-| [私信操作](bilibili/2_private_msg.md) | 私信文字/图片、历史记录 |
-| [评论操作](bilibili/3_comment.md) | 发送/回复/删除/点赞评论 |
-| [数据源与查询](bilibili/4_source_query.md) | 监听管理、用户信息查询 |
+| [Bilibili API 概览](3. Bilibili/README.md) | Bilibili 平台 API 功能分类与速查 |
+| [直播间操作](3. Bilibili/1. 直播间.md) | 弹幕、禁言、房间信息 |
+| [私信操作](3. Bilibili/2. 私信.md) | 私信文字/图片、历史记录 |
+| [评论操作](3. Bilibili/3. 评论.md) | 发送/回复/删除/点赞评论 |
+| [数据源与查询](3. Bilibili/4. 源查询.md) | 监听管理、用户信息查询 |
 
 ### GitHub 平台
 
 | 文档 | 内容 |
 |------|------|
-| [GitHub API 概览](github/README.md) | GitHub 平台 API 功能分类与速查 |
-| [Issue 与评论](github/1_issue_comment.md) | Issue CRUD、标签、指派、评论操作 |
-| [PR 与查询](github/2_pr_query.md) | PR 评论 / 合并 / 审查 + 信息查询 |
+| [GitHub API 概览](4. GitHub/README.md) | GitHub 平台 API 功能分类与速查 |
+| [Issue 与评论](4. GitHub/1. Issue 评论.md) | Issue CRUD、标签、指派、评论操作 |
+| [PR 与查询](4. GitHub/2. PR 查询.md) | PR 评论 / 合并 / 审查 + 信息查询 |

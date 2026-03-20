@@ -62,7 +62,6 @@ class HelloWorldPlugin(NcatBotPlugin):
     async def on_private_hello(self, event: PrivateMessageEvent):
         """收到私聊消息 'hello' 时回复"""
         await event.reply(text="你好！这是来自 HelloWorld 插件的私聊回复 👋")
-
 ~~~
 
 ## manifest.toml
@@ -74,6 +73,5 @@ main = "main.py"
 entry_class = "HelloWorldPlugin"
 author = "NcatBot"
 description = "QQ 平台最小可运行插件"
-
 ~~~
 

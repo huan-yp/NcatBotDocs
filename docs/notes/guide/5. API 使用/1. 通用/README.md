@@ -36,5 +36,5 @@ await self.api.bilibili.send_danmu(room_id, "弹幕内容")
 
 | 文档 | 内容 |
 |------|------|
-| [事件方法](1_event_methods.md) | `event.reply()`, `event.delete()`, `event.kick()` 等跨平台事件操作 |
-| [API Trait 协议](2_traits.md) | `IMessaging`, `IGroupManage`, `IQuery`, `IFileTransfer` 协议说明 |
+| [事件方法](1. 事件方法.md) | `event.reply()`, `event.delete()`, `event.kick()` 等跨平台事件操作 |
+| [API Trait 协议](2. Traits.md) | `IMessaging`, `IGroupManage`, `IQuery`, `IFileTransfer` 协议说明 |

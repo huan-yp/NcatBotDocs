@@ -116,7 +116,6 @@ class NoticeAndRequestPlugin(NcatBotPlugin):
             event.sub_type,
             event.comment,
         )
-
 ~~~
 
 ## manifest.toml
@@ -128,6 +127,5 @@ main = "main.py"
 entry_class = "NoticeAndRequestPlugin"
 author = "NcatBot"
 description = "QQ 通知与请求事件处理演示"
-
 ~~~
 

@@ -67,7 +67,6 @@ class BiliCommentPlugin(NcatBotPlugin):
             LOG.info("[评论] 已点赞评论 comment_id=%s", event.data.comment_id)
         except Exception as e:
             LOG.warning("[评论] 点赞失败: %s", e)
-
 ~~~
 
 ## manifest.toml
@@ -79,6 +78,5 @@ main = "main.py"
 entry_class = "BiliCommentPlugin"
 author = "NcatBot"
 description = "Bilibili 评论操作"
-
 ~~~
 

@@ -17,7 +17,7 @@ permalink: /guide/
 | 非插件模式 | `main.py` + `registrar` 装饰器 | 快速原型，无需插件目录 | ❌ |
 | 插件模式（推荐） | `NcatBotPlugin` 子类 + `manifest.toml` | 配置持久化、RBAC、定时任务等 | ✅ |
 
-从零开始的完整流程见 [quick_start/](quick_start/)。
+从零开始的完整流程见 [quick_start/](1. 快速开始/)。
 
 ### 核心导入路径
 
@@ -53,16 +53,16 @@ permalink: /guide/
 
 | 我想… | 去这里 |
 |-------|--------|
-| 从零跑通第一个 Bot | [quick_start/](quick_start/) |
-| 开发插件 | [plugin/](plugin/) |
-| 发消息、构造复杂消息 | [send_message/](send_message/) |
-| 调用群管理/查询/文件 API | [api_usage/](api_usage/) |
-| 管理 config.yaml | [configuration/](configuration/) |
-| 用 CLI 管理项目 | [cli/](cli/) |
-| 添加权限控制 | [rbac/](rbac/) |
-| 写插件测试 | [testing/](testing/) |
-| 接入多平台 | [multi_platform/](multi_platform/) |
-| 各平台登录与配置 | [adapter/](adapter/) |
+| 从零跑通第一个 Bot | [quick_start/](1. 快速开始/) |
+| 开发插件 | [plugin/](3. 插件开发/) |
+| 发消息、构造复杂消息 | [send_message/](4. 消息发送/) |
+| 调用群管理/查询/文件 API | [api_usage/](5. API 使用/) |
+| 管理 config.yaml | [configuration/](6. 配置管理/) |
+| 用 CLI 管理项目 | [cli/](8. 命令行工具/) |
+| 添加权限控制 | [rbac/](7. RBAC 权限/) |
+| 写插件测试 | [testing/](9. 测试指南/) |
+| 接入多平台 | [multi_platform/](10. 多平台开发/) |
+| 各平台登录与配置 | [adapter/](2. 适配器/) |
 
 ---
 
@@ -70,21 +70,21 @@ permalink: /guide/
 
 | 目录 | 说明 | 难度 |
 |------|------|------|
-| [quick_start/](quick_start/) | 从零启动 — 安装、配置、两种模式启动 | ⭐ |
-| [adapter/](adapter/) | 适配器登录与使用 — NapCat / Bilibili / GitHub / Mock | ⭐ |
-| [plugin/](plugin/) | 插件开发完整指南（11 篇） | ⭐ - ⭐⭐⭐ |
-| [send_message/](send_message/) | 消息发送 — 消息段、MessageArray、转发、语法糖 | ⭐ |
-| [api_usage/](api_usage/) | Bot API 使用 — 消息、群管理、查询 | ⭐⭐ |
-| [configuration/](configuration/) | 配置管理 — config.yaml 结构与安全校验 | ⭐⭐ |
-| [cli/](cli/) | CLI 工具 — init / run / dev / config / plugin | ⭐ |
-| [rbac/](rbac/) | RBAC 权限管理 — 权限模型与插件集成 | ⭐⭐⭐ |
-| [testing/](testing/) | 插件测试 — Harness、工厂函数、Scenario | ⭐⭐ |
-| [multi_platform/](multi_platform/) | 多平台开发 — Trait 协议与跨平台插件 | ⭐⭐ |
+| [quick_start/](1. 快速开始/) | 从零启动 — 安装、配置、两种模式启动 | ⭐ |
+| [adapter/](2. 适配器/) | 适配器登录与使用 — NapCat / Bilibili / GitHub / Mock | ⭐ |
+| [plugin/](3. 插件开发/) | 插件开发完整指南（11 篇） | ⭐ - ⭐⭐⭐ |
+| [send_message/](4. 消息发送/) | 消息发送 — 消息段、MessageArray、转发、语法糖 | ⭐ |
+| [api_usage/](5. API 使用/) | Bot API 使用 — 消息、群管理、查询 | ⭐⭐ |
+| [configuration/](6. 配置管理/) | 配置管理 — config.yaml 结构与安全校验 | ⭐⭐ |
+| [cli/](8. 命令行工具/) | CLI 工具 — init / run / dev / config / plugin | ⭐ |
+| [rbac/](7. RBAC 权限/) | RBAC 权限管理 — 权限模型与插件集成 | ⭐⭐⭐ |
+| [testing/](9. 测试指南/) | 插件测试 — Harness、工厂函数、Scenario | ⭐⭐ |
+| [multi_platform/](10. 多平台开发/) | 多平台开发 — Trait 协议与跨平台插件 | ⭐⭐ |
 
 ---
 
 ## 交叉引用
 
 - API 完整签名 → [reference/](../reference/)
-- 核心概念速查 → [concepts.md](../concepts.md)
-- 架构全景 → [architecture.md](../architecture.md)
+- 核心概念速查 → [concepts.md](11. 架构与概念/2. 核心概念.md)
+- 架构全景 → [architecture.md](11. 架构与概念/1. 架构总览.md)

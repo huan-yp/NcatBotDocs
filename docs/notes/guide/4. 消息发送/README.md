@@ -61,29 +61,29 @@ await self.api.github.create_pr_comment("owner/repo", 10, "LGTM!")
 
 | 文档 | 内容 |
 |------|------|
-| [通用消息概念](common/README.md) | 消息段与 MessageArray 概览 |
-| [消息段参考](common/1_segments.md) | 所有消息段类型的字段、构造方式和序列化格式 |
-| [MessageArray 消息数组](common/2_array.md) | 容器：创建、链式构造、查询过滤、序列化 |
+| [通用消息概念](1. 通用/README.md) | 消息段与 MessageArray 概览 |
+| [消息段参考](1. 通用/1. 消息段.md) | 所有消息段类型的字段、构造方式和序列化格式 |
+| [MessageArray 消息数组](1. 通用/2. 消息数组.md) | 容器：创建、链式构造、查询过滤、序列化 |
 
 ### QQ 平台
 
 | 文档 | 内容 |
 |------|------|
-| [QQ 消息发送](qq/README.md) | QQ 消息发送方式概览 |
-| [便捷接口参考](qq/1_sugar.md) | event.reply()、所有 sugar 方法完整清单 |
-| [合并转发](qq/2_forward.md) | ForwardNode / Forward / ForwardConstructor 构造器 |
-| [实战示例](qq/3_examples.md) | 常见场景速查：纯文本、图文、回复、转发等 |
+| [QQ 消息发送](2. QQ/README.md) | QQ 消息发送方式概览 |
+| [便捷接口参考](2. QQ/1. 语法糖.md) | event.reply()、所有 sugar 方法完整清单 |
+| [合并转发](2. QQ/2. 合并转发.md) | ForwardNode / Forward / ForwardConstructor 构造器 |
+| [实战示例](2. QQ/3. 示例.md) | 常见场景速查：纯文本、图文、回复、转发等 |
 
 ### Bilibili 平台
 
 | 文档 | 内容 |
 |------|------|
-| [Bilibili 消息发送](bilibili/README.md) | 弹幕、私信、评论发送概览 |
-| [消息发送详解](bilibili/1_messaging.md) | 弹幕、私信、评论的发送方式与示例 |
+| [Bilibili 消息发送](3. Bilibili/README.md) | 弹幕、私信、评论发送概览 |
+| [消息发送详解](3. Bilibili/1. 消息发送.md) | 弹幕、私信、评论的发送方式与示例 |
 
 ### GitHub 平台
 
 | 文档 | 内容 |
 |------|------|
-| [GitHub 消息发送](github/README.md) | Issue / PR 评论发送概览 |
-| [消息发送详解](github/1_messaging.md) | Issue / PR / Review Comment 发送与示例 |
+| [GitHub 消息发送](4. GitHub/README.md) | Issue / PR 评论发送概览 |
+| [消息发送详解](4. GitHub/1. 消息发送.md) | Issue / PR / Review Comment 发送与示例 |

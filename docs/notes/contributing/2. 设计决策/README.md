@@ -82,10 +82,10 @@ graph TB
 
 | 编号 | 标题 | 状态 | 结论 |
 |---|---|---|---|
-| ADR-001 | [分层架构](1_architecture.md#adr-001分层架构) | ✅ 已采纳 | 采用 7 层分层架构，各层单一职责、禁止跨层和反向依赖 |
-| ADR-002 | [适配器模式与依赖反转](1_architecture.md#adr-002适配器模式与依赖反转) | ✅ 已采纳 | API 层定义 `IAPIClient` 抽象接口，Adapter 层实现；依赖方向由上至下 |
-| ADR-003 | [AsyncEventDispatcher 纯广播设计](1_architecture.md#adr-003asynceventdispatcher-纯广播设计) | ✅ 已采纳 | 分发器是纯广播器，不含业务逻辑；每个消费者独立 Queue，互不阻塞 |
-| ADR-004 | [ContextVar 隔离注册上下文](1_architecture.md#adr-004contextvar-隔离注册上下文) | ✅ 已采纳 | 使用 `ContextVar` 在模块加载期隔离插件注册上下文，零侵入插件代码 |
+| ADR-001 | [分层架构](1. 架构决策.md#adr-001分层架构) | ✅ 已采纳 | 采用 7 层分层架构，各层单一职责、禁止跨层和反向依赖 |
+| ADR-002 | [适配器模式与依赖反转](1. 架构决策.md#adr-002适配器模式与依赖反转) | ✅ 已采纳 | API 层定义 `IAPIClient` 抽象接口，Adapter 层实现；依赖方向由上至下 |
+| ADR-003 | [AsyncEventDispatcher 纯广播设计](1. 架构决策.md#adr-003asynceventdispatcher-纯广播设计) | ✅ 已采纳 | 分发器是纯广播器，不含业务逻辑；每个消费者独立 Queue，互不阻塞 |
+| ADR-004 | [ContextVar 隔离注册上下文](1. 架构决策.md#adr-004contextvar-隔离注册上下文) | ✅ 已采纳 | 使用 `ContextVar` 在模块加载期隔离插件注册上下文，零侵入插件代码 |
 
 **ADR-001 分层架构** — NcatBot 需同时满足插件开发者（事件处理 + API 调用）、框架扩展者（替换适配器）与核心贡献者（修改分发引擎）三类用户。7 层架构通过严格的依赖规则，使各层可独立演化和测试。
 
@@ -101,12 +101,12 @@ graph TB
 
 | 编号 | 标题 | 状态 | 结论 |
 |---|---|---|---|
-| ADR-005 | [Mixin 多继承 vs 组合](2_implementation.md#adr-005mixin-多继承-vs-组合) | ✅ 已采纳 | 采用 Mixin 多继承，MRO 自动排序 load/unload 钩子，插件继承即获全部能力 |
-| ADR-006 | [Hook 责任链](2_implementation.md#adr-006hook-责任链) | ✅ 已采纳 | 三阶段 Hook（BEFORE_CALL / AFTER_CALL / ON_ERROR）绑定在 handler 函数上，装饰器叠加 |
-| ADR-007 | [HandlerDispatcher 单 Handler 执行模型](2_implementation.md#adr-007handlerdispatcher-单-handler-执行模型) | ✅ 已采纳 | 遍历执行所有匹配 handler（精确+前缀），按优先级排序，`_propagation_stopped` 控制传播 |
-| ADR-008 | [命名空间分层 API](2_implementation.md#adr-008命名空间分层-api) | ✅ 已采纳 | 高频 API 顶层平铺，低频 API 按命名空间分组，`__getattr__` 兜底代理 |
-| ADR-009 | [RBAC Trie 权限路径](2_implementation.md#adr-009rbac-trie-权限路径) | ✅ 已采纳 | Trie 前缀树存储权限路径，支持 `*`/`**` 通配符，$O(k)$ 查询效率 |
-| ADR-010 | [Segment vs Attachment 双模型](3_types.md#adr-010-segment-vs-attachment-双模型设计) | ✅ 已采纳 | DownloadableSegment 是消息子段，Attachment 是独立可下载对象；桥接互转，url 不 fallback file |
+| ADR-005 | [Mixin 多继承 vs 组合](2. 实现决策.md#adr-005mixin-多继承-vs-组合) | ✅ 已采纳 | 采用 Mixin 多继承，MRO 自动排序 load/unload 钩子，插件继承即获全部能力 |
+| ADR-006 | [Hook 责任链](2. 实现决策.md#adr-006hook-责任链) | ✅ 已采纳 | 三阶段 Hook（BEFORE_CALL / AFTER_CALL / ON_ERROR）绑定在 handler 函数上，装饰器叠加 |
+| ADR-007 | [HandlerDispatcher 单 Handler 执行模型](2. 实现决策.md#adr-007handlerdispatcher-单-handler-执行模型) | ✅ 已采纳 | 遍历执行所有匹配 handler（精确+前缀），按优先级排序，`_propagation_stopped` 控制传播 |
+| ADR-008 | [命名空间分层 API](2. 实现决策.md#adr-008命名空间分层-api) | ✅ 已采纳 | 高频 API 顶层平铺，低频 API 按命名空间分组，`__getattr__` 兜底代理 |
+| ADR-009 | [RBAC Trie 权限路径](2. 实现决策.md#adr-009rbac-trie-权限路径) | ✅ 已采纳 | Trie 前缀树存储权限路径，支持 `*`/`**` 通配符，$O(k)$ 查询效率 |
+| ADR-010 | [Segment vs Attachment 双模型](3. 类型决策.md#adr-010-segment-vs-attachment-双模型设计) | ✅ 已采纳 | DownloadableSegment 是消息子段，Attachment 是独立可下载对象；桥接互转，url 不 fallback file |
 
 **ADR-005 Mixin** — `NcatBotPlugin` 通过多继承组合 EventMixin、TimeTaskMixin、RBACMixin 等能力。MRO 自动排序 load/unload 钩子，`self.events()` 直接调用比组合模式的 `self.event_helper.events()` 更直观。
 
@@ -171,7 +171,7 @@ Plugin ─────── Core ─────── Event ──────
 
 | 文档 | 内容 |
 |---|---|
-| [架构级决策](1_architecture.md) | ADR-001 ~ ADR-004：分层架构、适配器模式、纯广播设计、ContextVar |
-| [实现级决策](2_implementation.md) | ADR-005 ~ ADR-009：Mixin、Hook 链、Handler 分发、命名空间 API、RBAC Trie |
-| [架构文档](../../architecture.md) | 完整的分层架构与模块详解 |
-| [插件快速入门](../../guide/plugin/1.quick-start.md) | 插件开发入门指南 |
+| [架构级决策](1. 架构决策.md) | ADR-001 ~ ADR-004：分层架构、适配器模式、纯广播设计、ContextVar |
+| [实现级决策](2. 实现决策.md) | ADR-005 ~ ADR-009：Mixin、Hook 链、Handler 分发、命名空间 API、RBAC Trie |
+| [架构文档](../../guide/11. 架构与概念/1. 架构总览.md) | 完整的分层架构与模块详解 |
+| [插件快速入门](../../guide/3. 插件开发/1. 快速开始.md) | 插件开发入门指南 |

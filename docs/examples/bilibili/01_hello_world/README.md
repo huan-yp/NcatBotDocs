@@ -56,7 +56,6 @@ class BiliHelloWorldPlugin(NcatBotPlugin):
         """收到私信时自动回复"""
         await event.reply("你好！我是 Bot，收到了你的私信 📩")
         LOG.info("回复私信: 用户=%s", event.user_id)
-
 ~~~
 
 ## manifest.toml
@@ -68,6 +67,5 @@ main = "main.py"
 entry_class = "BiliHelloWorldPlugin"
 author = "NcatBot"
 description = "Bilibili 平台最小可运行插件"
-
 ~~~
 

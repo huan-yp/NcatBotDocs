@@ -86,7 +86,6 @@ class MultiAdapterPlugin(NcatBotPlugin):
     async def on_bili_pm(self, event: BiliPrivateMessageEvent):
         """Bilibili 私信 → 自动回复"""
         await event.reply("你好！我是跨平台 Bot，收到了你的 B 站私信 📩")
-
 ~~~
 
 ## manifest.toml
@@ -98,6 +97,5 @@ main = "main.py"
 entry_class = "MultiAdapterPlugin"
 author = "NcatBot"
 description = "跨平台双适配器启动演示"
-
 ~~~
 

@@ -58,7 +58,6 @@ class HelloWorldPlugin(NcatBotPlugin):
         """用 event.reply() 快速回复（跨平台）"""
         if isinstance(event, Replyable):
             await event.reply(text="你好呀！这是跨平台 hello world 🎉")
-
 ~~~
 
 ## manifest.toml
@@ -70,6 +69,5 @@ main = "main.py"
 entry_class = "HelloWorldPlugin"
 author = "NcatBot"
 description = "跨平台最小可运行插件 — 纯 Trait 编程"
-
 ~~~
 

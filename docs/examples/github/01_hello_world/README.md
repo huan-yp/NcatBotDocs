@@ -60,7 +60,6 @@ class GitHubHelloWorldPlugin(NcatBotPlugin):
     async def on_push(self, event: GitHubPushEvent):
         """Push 事件"""
         LOG.info("[GitHub] Push: %s", event.data)
-
 ~~~
 
 ## manifest.toml
@@ -72,6 +71,5 @@ main = "main.py"
 entry_class = "GitHubHelloWorldPlugin"
 author = "NcatBot"
 description = "GitHub 平台基础事件处理（开发中）"
-
 ~~~
 

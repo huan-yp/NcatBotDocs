@@ -6,6 +6,7 @@
 
 ~~~text
 03_message_types/
+├── resources/
 ├── main.py
 └── manifest.toml
 ~~~
@@ -146,7 +147,6 @@ class MessageTypesPlugin(NcatBotPlugin):
             lines.append(f"  图片 {i}: {url}")
 
         await event.reply("\n".join(lines))
-
 ~~~
 
 ## manifest.toml
@@ -158,6 +158,5 @@ main = "main.py"
 entry_class = "MessageTypesPlugin"
 author = "NcatBot"
 description = "QQ 消息构造与解析演示"
-
 ~~~
 

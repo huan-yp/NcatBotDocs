@@ -116,7 +116,6 @@ class ScheduledTasksPlugin(NcatBotPlugin):
     async def conditional_tick(self):
         """条件任务回调"""
         LOG.info("⏱️ 条件定时任务触发")
-
 ~~~
 
 ## manifest.toml
@@ -128,6 +127,5 @@ main = "main.py"
 entry_class = "ScheduledTasksPlugin"
 author = "NcatBot"
 description = "定时任务演示（跨平台）"
-
 ~~~
 

@@ -110,7 +110,6 @@ class BiliLiveManagerPlugin(NcatBotPlugin):
             await self.api.bilibili.send_danmu(room_id=room_id, text=f"房间: {title}")
         except Exception as e:
             LOG.error("查询房间信息失败: %s", e)
-
 ~~~
 
 ## manifest.toml
@@ -122,6 +121,5 @@ main = "main.py"
 entry_class = "BiliLiveManagerPlugin"
 author = "NcatBot"
 description = "Bilibili 直播间管理"
-
 ~~~
 

@@ -163,7 +163,6 @@ class ScheduledReporterPlugin(NcatBotPlugin):
                 await self._send_report(gid)
             except Exception as e:
                 LOG.error("发送群 %s 报告失败: %s", gid, e)
-
 ~~~
 
 ## manifest.toml
@@ -175,6 +174,5 @@ main = "main.py"
 entry_class = "ScheduledReporterPlugin"
 author = "NcatBot"
 description = "QQ 定时报告与统计"
-
 ~~~
 

@@ -129,7 +129,6 @@ class MultiStepDialogPlugin(NcatBotPlugin):
             )
         else:
             await event.reply("你还没有注册，发送「注册」开始注册流程")
-
 ~~~
 
 ## manifest.toml
@@ -141,6 +140,5 @@ main = "main.py"
 entry_class = "MultiStepDialogPlugin"
 author = "NcatBot"
 description = "多步对话演示（跨平台）"
-
 ~~~
 

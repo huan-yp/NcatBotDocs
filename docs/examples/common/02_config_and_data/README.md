@@ -107,7 +107,6 @@ class ConfigAndDataPlugin(NcatBotPlugin):
         self.data["total_messages"] = 0
         self.data["user_counts"] = {}
         await event.reply("统计数据已重置 🗑️")
-
 ~~~
 
 ## manifest.toml
@@ -119,6 +118,5 @@ main = "main.py"
 entry_class = "ConfigAndDataPlugin"
 author = "NcatBot"
 description = "配置与数据持久化演示（跨平台）"
-
 ~~~
 

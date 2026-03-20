@@ -88,7 +88,6 @@ class TraitProgrammingPlugin(NcatBotPlugin):
 
         if isinstance(event, Replyable):
             await event.reply("\n".join(lines))
-
 ~~~
 
 ## manifest.toml
@@ -100,6 +99,5 @@ main = "main.py"
 entry_class = "TraitProgrammingPlugin"
 author = "NcatBot"
 description = "跨平台 Trait 编程演示"
-
 ~~~
 

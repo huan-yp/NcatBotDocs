@@ -82,6 +82,6 @@ from ncatbot.core import registrar, Hook
 
 | 文件 | 说明 |
 |------|------|
-| [1_internals.md](1_internals.md) | Dispatcher 分发引擎内部机制详解 |
-| [2_predicate.md](2_predicate.md) | Predicate DSL 完整 API 参考 |
-| [3_registry.md](3_registry.md) | Registrar + Hook/Filter 完整 API 参考 |
+| [1_internals.md](1. 内部实现.md) | Dispatcher 分发引擎内部机制详解 |
+| [2_predicate.md](2. 谓词系统.md) | Predicate DSL 完整 API 参考 |
+| [3_registry.md](3. 注册表.md) | Registrar + Hook/Filter 完整 API 参考 |

@@ -48,14 +48,14 @@ ncatbot run         # 启动 Bot
 
 | 文件 | 内容 |
 |------|------|
-| [1.install-config.md](1.install-config.md) | 安装 NcatBot、编写 config.yaml、确认 NapCat 连接 |
-| [2.non-plugin-mode.md](2.non-plugin-mode.md) | 非插件模式完整流程 — 直接在 main.py 注册回调，适合快速原型 |
-| [3.plugin-mode.md](3.plugin-mode.md) | 插件模式完整流程 — 创建插件目录 + manifest + 插件类，适合正式项目 |
+| [1.install-config.md](1. 安装与配置.md) | 安装 NcatBot、编写 config.yaml、确认 NapCat 连接 |
+| [2.non-plugin-mode.md](2. 非插件模式.md) | 非插件模式完整流程 — 直接在 main.py 注册回调，适合快速原型 |
+| [3.plugin-mode.md](3. 插件模式.md) | 插件模式完整流程 — 创建插件目录 + manifest + 插件类，适合正式项目 |
 
 ---
 
 ## 交叉引用
 
 - 两种模式的区别 → [使用指南首页](../README.md)
-- 插件开发深入 → [插件开发指南](../plugin/)
-- CLI 命令详解 → [CLI 指南](../cli/)
+- 插件开发深入 → [插件开发指南](../3. 插件开发/)
+- CLI 命令详解 → [CLI 指南](../8. 命令行工具/)

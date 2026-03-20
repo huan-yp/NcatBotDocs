@@ -76,6 +76,6 @@ from ncatbot.utils import get_log, post_json, get_json, download_file
 
 | 文件 | 说明 |
 |------|------|
-| [1a_config.md](1a_config.md) | 配置管理 — ConfigManager、Config / NapCatConfig / PluginConfig 模型 |
-| [1b_io_logging.md](1b_io_logging.md) | 日志系统 + 网络工具 — BoundLogger、setup_logging、网络请求 |
-| [2_decorators_misc.md](2_decorators_misc.md) | 装饰器 + 杂项工具 — 安全工具、tqdm、环境变量 |
+| [1a_config.md](1. 配置.md) | 配置管理 — ConfigManager、Config / NapCatConfig / PluginConfig 模型 |
+| [1b_io_logging.md](2. IO 与日志.md) | 日志系统 + 网络工具 — BoundLogger、setup_logging、网络请求 |
+| [2_decorators_misc.md](3. 装饰器与杂项.md) | 装饰器 + 杂项工具 — 安全工具、tqdm、环境变量 |

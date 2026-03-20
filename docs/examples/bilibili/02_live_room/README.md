@@ -115,7 +115,6 @@ class LiveRoomPlugin(NcatBotPlugin):
     async def on_like(self, event: LikeEvent):
         """点赞事件"""
         LOG.info("[点赞] 房间=%s", event.group_id)
-
 ~~~
 
 ## manifest.toml
@@ -127,6 +126,5 @@ main = "main.py"
 entry_class = "LiveRoomPlugin"
 author = "NcatBot"
 description = "Bilibili 直播间全事件处理"
-
 ~~~
 

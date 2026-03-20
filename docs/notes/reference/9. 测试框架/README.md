@@ -89,22 +89,22 @@ from ncatbot.testing import (
 
 | 名称 | 类型 | 详细文档 |
 |------|------|---------|
-| `TestHarness` | class | [1_harness.md](1_harness.md#testharness) |
-| `PluginTestHarness` | class | [1_harness.md](1_harness.md#plugintestharness) |
-| `Scenario` | class | [2_factory_scenario_mock.md](2_factory_scenario_mock.md#scenario) |
-| `group_message()` | function | [2_factory_scenario_mock.md](2_factory_scenario_mock.md#事件工厂函数) |
-| `private_message()` | function | [2_factory_scenario_mock.md](2_factory_scenario_mock.md#事件工厂函数) |
-| `friend_request()` | function | [2_factory_scenario_mock.md](2_factory_scenario_mock.md#事件工厂函数) |
-| `group_request()` | function | [2_factory_scenario_mock.md](2_factory_scenario_mock.md#事件工厂函数) |
-| `group_increase()` | function | [2_factory_scenario_mock.md](2_factory_scenario_mock.md#事件工厂函数) |
-| `group_decrease()` | function | [2_factory_scenario_mock.md](2_factory_scenario_mock.md#事件工厂函数) |
-| `group_ban()` | function | [2_factory_scenario_mock.md](2_factory_scenario_mock.md#事件工厂函数) |
-| `poke()` | function | [2_factory_scenario_mock.md](2_factory_scenario_mock.md#事件工厂函数) |
-| `MockBotAPI` | class | [2_factory_scenario_mock.md](2_factory_scenario_mock.md#mockbotapi) |
-| `MockAdapter` | class | [2_factory_scenario_mock.md](2_factory_scenario_mock.md#mockadapter) |
-| `APICall` | dataclass | [2_factory_scenario_mock.md](2_factory_scenario_mock.md#apicall) |
-| `discover_testable_plugins()` | function | [2_factory_scenario_mock.md](2_factory_scenario_mock.md#插件发现) |
-| `generate_smoke_tests()` | function | [2_factory_scenario_mock.md](2_factory_scenario_mock.md#插件发现) |
+| `TestHarness` | class | [1_harness.md](1. 测试工具.md#testharness) |
+| `PluginTestHarness` | class | [1_harness.md](1. 测试工具.md#plugintestharness) |
+| `Scenario` | class | [2_factory_scenario_mock.md](2. 工厂场景与 Mock.md#scenario) |
+| `group_message()` | function | [2_factory_scenario_mock.md](2. 工厂场景与 Mock.md#事件工厂函数) |
+| `private_message()` | function | [2_factory_scenario_mock.md](2. 工厂场景与 Mock.md#事件工厂函数) |
+| `friend_request()` | function | [2_factory_scenario_mock.md](2. 工厂场景与 Mock.md#事件工厂函数) |
+| `group_request()` | function | [2_factory_scenario_mock.md](2. 工厂场景与 Mock.md#事件工厂函数) |
+| `group_increase()` | function | [2_factory_scenario_mock.md](2. 工厂场景与 Mock.md#事件工厂函数) |
+| `group_decrease()` | function | [2_factory_scenario_mock.md](2. 工厂场景与 Mock.md#事件工厂函数) |
+| `group_ban()` | function | [2_factory_scenario_mock.md](2. 工厂场景与 Mock.md#事件工厂函数) |
+| `poke()` | function | [2_factory_scenario_mock.md](2. 工厂场景与 Mock.md#事件工厂函数) |
+| `MockBotAPI` | class | [2_factory_scenario_mock.md](2. 工厂场景与 Mock.md#mockbotapi) |
+| `MockAdapter` | class | [2_factory_scenario_mock.md](2. 工厂场景与 Mock.md#mockadapter) |
+| `APICall` | dataclass | [2_factory_scenario_mock.md](2. 工厂场景与 Mock.md#apicall) |
+| `discover_testable_plugins()` | function | [2_factory_scenario_mock.md](2. 工厂场景与 Mock.md#插件发现) |
+| `generate_smoke_tests()` | function | [2_factory_scenario_mock.md](2. 工厂场景与 Mock.md#插件发现) |
 
 ---
 
@@ -112,5 +112,5 @@ from ncatbot.testing import (
 
 | 文件 | 说明 |
 |------|------|
-| [1_harness.md](1_harness.md) | TestHarness + PluginTestHarness 完整 API |
-| [2_factory_scenario_mock.md](2_factory_scenario_mock.md) | 工厂函数、Scenario 构建器、MockAdapter / MockBotAPI |
+| [1_harness.md](1. 测试工具.md) | TestHarness + PluginTestHarness 完整 API |
+| [2_factory_scenario_mock.md](2. 工厂场景与 Mock.md) | 工厂函数、Scenario 构建器、MockAdapter / MockBotAPI |

@@ -138,7 +138,6 @@ class QABotPlugin(NcatBotPlugin):
             if question in text:
                 await event.reply(f"💬 {answer}")
                 return
-
 ~~~
 
 ## manifest.toml
@@ -150,6 +149,5 @@ main = "main.py"
 entry_class = "QABotPlugin"
 author = "NcatBot"
 description = "QQ 问答机器人"
-
 ~~~
 

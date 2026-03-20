@@ -184,11 +184,11 @@ async def cross_platform(event):
 
 ## 参考
 
-- [适配器登录与使用指南](../adapter/) — 各平台具体的登录、认证、配置流程
-- [架构文档](../../architecture.md) — 整体设计
-- [ADR-005: 多平台架构](../../contributing/design_decisions/1_architecture.md#adr-005多平台架构--组合优于继承) — 设计决策
-- [ADR-006: 多适配器运行时](../../contributing/design_decisions/1_architecture.md#adr-006多适配器运行时) — 运行时设计
-- **示例**：[examples/cross_platform/](../../../examples/cross_platform/) — 跨平台开发示例
+- [适配器登录与使用指南](../2. 适配器/) — 各平台具体的登录、认证、配置流程
+- [架构文档](../11. 架构与概念/1. 架构总览.md) — 整体设计
+- [ADR-005: 多平台架构](../../contributing/2. 设计决策/1. 架构决策.md#adr-005多平台架构--组合优于继承) — 设计决策
+- [ADR-006: 多适配器运行时](../../contributing/2. 设计决策/1. 架构决策.md#adr-006多适配器运行时) — 运行时设计
+- **示例**：[examples/cross_platform/](../../../examples/cross_platform/01_multi_adapter/README.md) — 跨平台开发示例
 
 ---
 
@@ -196,7 +196,7 @@ async def cross_platform(event):
 
 ### GitHub ↔ QQ 双向桥接
 
-[examples/cross_platform/03_github_qq_bridge/](../../../examples/cross_platform/03_github_qq_bridge/) 展示了一个完整的跨平台双向桥接机器人：
+[examples/cross_platform/03_github_qq_bridge/](../../../examples/cross_platform/03_github_qq_bridge/README.md) 展示了一个完整的跨平台双向桥接机器人：
 
 - **GitHub → QQ**：Issue/PR/Push/Comment 事件自动转发到指定 QQ 群
 - **QQ → GitHub**：在 QQ 群中引用(reply)通知消息，回复内容自动作为 GitHub Issue Comment 发送

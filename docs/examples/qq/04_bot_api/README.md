@@ -6,6 +6,7 @@
 
 ~~~text
 04_bot_api/
+├── resources/
 ├── main.py
 └── manifest.toml
 ~~~
@@ -173,7 +174,6 @@ class BotAPIPlugin(NcatBotPlugin):
         await event.reply(rtf=info)
 
         await self.api.qq.send_group_forward_msg_by_id(event.group_id, [quoted_msg_id])
-
 ~~~
 
 ## manifest.toml
@@ -185,6 +185,5 @@ main = "main.py"
 entry_class = "BotAPIPlugin"
 author = "NcatBot"
 description = "QQ Bot API 使用大全"
-
 ~~~
 

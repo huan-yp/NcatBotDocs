@@ -159,7 +159,6 @@ class GroupManagerPlugin(NcatBotPlugin):
         msg.add_at(event.user_id)
         msg.add_text(f" {welcome_text}")
         await self.api.qq.post_group_array_msg(event.group_id, msg)
-
 ~~~
 
 ## manifest.toml
@@ -171,6 +170,5 @@ main = "main.py"
 entry_class = "GroupManagerPlugin"
 author = "NcatBot"
 description = "QQ 群管理机器人"
-
 ~~~
 

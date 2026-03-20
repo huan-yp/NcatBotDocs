@@ -12,10 +12,10 @@ permalink: /guide/vagz7643/
 
 | 适配器 | 平台 | 认证方式 | 协议 | 适用场景 |
 |--------|------|---------|------|---------|
-| [NapCat](1_napcat_qq.md) | QQ | WebUI 扫码 / 快速登录 | OneBot v11 (WebSocket) | QQ 群聊/私聊 Bot |
-| [Bilibili](2_bilibili.md) | Bilibili | 终端扫码 | bilibili-api-python | 直播弹幕 / 私信 / 视频评论 |
-| [GitHub](3_github.md) | GitHub | Personal Access Token | Webhook / REST Polling | Issue/PR/Push 事件处理 |
-| [Mock](4_mock.md) | 测试 | 无需认证 | 内存模拟 | 插件集成测试 |
+| [NapCat](1. NapCat QQ.md) | QQ | WebUI 扫码 / 快速登录 | OneBot v11 (WebSocket) | QQ 群聊/私聊 Bot |
+| [Bilibili](2. Bilibili.md) | Bilibili | 终端扫码 | bilibili-api-python | 直播弹幕 / 私信 / 视频评论 |
+| [GitHub](3. GitHub.md) | GitHub | Personal Access Token | Webhook / REST Polling | Issue/PR/Push 事件处理 |
+| [Mock](4. Mock 适配器.md) | 测试 | 无需认证 | 内存模拟 | 插件集成测试 |
 
 ## 配置入口
 
@@ -57,16 +57,16 @@ adapters:
 
 | 文档 | 说明 | 难度 |
 |------|------|------|
-| [1_napcat_qq.md](1_napcat_qq.md) | NapCat/QQ — Setup/Connect 两种模式、WebUI 登录、诊断 | ⭐ |
-| [2_bilibili.md](2_bilibili.md) | Bilibili — 扫码登录、凭据持久化、多数据源配置 | ⭐ |
-| [3_github.md](3_github.md) | GitHub — Token 认证、Webhook/Polling 双模式、内网穿透 | ⭐⭐ |
-| [4_mock.md](4_mock.md) | Mock — 测试用内存适配器 | ⭐ |
+| [1_napcat_qq.md](1. NapCat QQ.md) | NapCat/QQ — Setup/Connect 两种模式、WebUI 登录、诊断 | ⭐ |
+| [2_bilibili.md](2. Bilibili.md) | Bilibili — 扫码登录、凭据持久化、多数据源配置 | ⭐ |
+| [3_github.md](3. GitHub.md) | GitHub — Token 认证、Webhook/Polling 双模式、内网穿透 | ⭐⭐ |
+| [4_mock.md](4. Mock 适配器.md) | Mock — 测试用内存适配器 | ⭐ |
 
 ---
 
 ## 交叉引用
 
-- 跨平台编程模式（Trait / Platform Filter）→ [multi_platform/](../multi_platform/)
-- 适配器接口参考（BaseAdapter / AdapterRegistry）→ [reference/adapter/](../../reference/adapter/)
-- 消息发送（按平台）→ [send_message/](../send_message/)
-- Bot API（按平台）→ [api_usage/](../api_usage/)
+- 跨平台编程模式（Trait / Platform Filter）→ [multi_platform/](../10. 多平台开发/)
+- 适配器接口参考（BaseAdapter / AdapterRegistry）→ [reference/adapter/](../../reference/7. 适配器/)
+- 消息发送（按平台）→ [send_message/](../4. 消息发送/)
+- Bot API（按平台）→ [api_usage/](../5. API 使用/)

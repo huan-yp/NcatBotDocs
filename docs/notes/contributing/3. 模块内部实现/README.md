@@ -20,7 +20,7 @@ NcatBot 源码位于 `ncatbot/`，按职责分为以下层级。推荐从 **数�
 6. **服务层**：`ncatbot/service/builtin/` 下的 RBAC、FileWatcher、PreUpload 等
 
 ::: tip
-建议先阅读 [架构总览](../../architecture.md) 理解全局分层，再按上述顺序深入各模块。
+建议先阅读 [架构总览](../../guide/11. 架构与概念/1. 架构总览.md) 理解全局分层，再按上述顺序深入各模块。
 :::
 
 
@@ -150,15 +150,15 @@ graph TB
 
 | 文档 | 内容 |
 |------|------|
-| [核心模块实现](1.core_modules.md) | adapter/ + core/ 模块 — WebSocket 连接、OB11 协议、事件广播与匹配 |
-| [插件与服务模块实现](2.plugin_service_modules.md) | plugin/ + service/ 模块 — 拓扑排序、RBAC Trie、热重载、预上传 |
+| [核心模块实现](1. 核心模块.md) | adapter/ + core/ 模块 — WebSocket 连接、OB11 协议、事件广播与匹配 |
+| [插件与服务模块实现](2. 插件服务模块.md) | plugin/ + service/ 模块 — 拓扑排序、RBAC Trie、热重载、预上传 |
 
 ### 相关文档
 
-- [架构总览](../../architecture.md) — 项目整体架构与分层
-- [设计决策](../design_decisions/) — 9 个 ADR：分层、适配器、Dispatcher、Hook 等
-- [核心引擎 API 参考](../../reference/core/) — Dispatcher / Registry / Hook / EventStream 公开接口
-- [插件系统 API 参考](../../reference/plugin/) — BasePlugin / NcatBotPlugin / Mixin / Manifest
+- [架构总览](../../guide/11. 架构与概念/1. 架构总览.md) — 项目整体架构与分层
+- [设计决策](../2. 设计决策/) — 9 个 ADR：分层、适配器、Dispatcher、Hook 等
+- [核心引擎 API 参考](../../reference/4. 核心模块/) — Dispatcher / Registry / Hook / EventStream 公开接口
+- [插件系统 API 参考](../../reference/5. 插件系统/) — BasePlugin / NcatBotPlugin / Mixin / Manifest
 
 ---
 

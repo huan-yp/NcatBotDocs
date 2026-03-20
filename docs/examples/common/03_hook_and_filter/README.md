@@ -107,7 +107,6 @@ class HookAndFilterPlugin(NcatBotPlugin):
     async def on_divide_by_zero(self, event):
         """故意触发异常，演示 ON_ERROR Hook"""
         _ = 1 / 0
-
 ~~~
 
 ## manifest.toml
@@ -119,6 +118,5 @@ main = "main.py"
 entry_class = "HookAndFilterPlugin"
 author = "NcatBot"
 description = "Hook 系统与过滤器演示（跨平台）"
-
 ~~~
 
