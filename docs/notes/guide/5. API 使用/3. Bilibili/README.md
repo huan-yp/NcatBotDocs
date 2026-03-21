@@ -25,7 +25,8 @@ permalink: /guide/9jzb0z71/
 | 直播间操作 | `send_danmu`, `ban_user`, `set_room_silent` | 弹幕、禁言、房间管理 |
 | 私信 | `send_private_msg`, `send_private_image` | 私信文字与图片 |
 | 评论 | `send_comment`, `reply_comment`, `delete_comment` | 视频/动态评论操作 |
-| 数据源管理 | `add_live_room`, `add_comment_watch` | 监听直播间/评论 |
+| 数据源管理 | `add_live_room`, `add_comment_watch`, `add_dynamic_watch` | 监听直播间/评论/动态 |
+| 动态查询 | `get_user_dynamics`, `get_user_latest_dynamic` | 获取用户动态 |
 | 用户查询 | `get_user_info` | 获取用户信息 |
 
 ### 快速示例
