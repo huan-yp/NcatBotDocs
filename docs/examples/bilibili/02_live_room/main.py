@@ -8,6 +8,8 @@ bilibili/02_live_room — Bilibili 直播间全事件处理
   - registrar.bilibili.on_guard_buy(): 大航海（舰长/提督/总督）
   - registrar.bilibili.on_interact(): 互动事件（进入/关注/分享）
   - registrar.bilibili.on_like(): 点赞事件
+  - registrar.bilibili.on_live_start(): 开播通知
+  - registrar.bilibili.on_live_end(): 下播通知
   - HasSender Trait 获取用户信息
 
 使用方式: 将本文件夹复制到 plugins/ 目录，启动 Bot 连接 Bilibili 直播间。
@@ -22,6 +24,7 @@ from ncatbot.event.bilibili import (
     GuardBuyEvent,
     InteractEvent,
     LikeEvent,
+    LiveNoticeEvent,
 )
 from ncatbot.plugin import NcatBotPlugin
 from ncatbot.utils import get_log
@@ -100,3 +103,17 @@ class LiveRoomPlugin(NcatBotPlugin):
     async def on_like(self, event: LikeEvent):
         """点赞事件"""
         LOG.info("[点赞] 房间=%s", event.group_id)
+
+    @registrar.bilibili.on_live_start()
+    async def on_live_start(self, event: LiveNoticeEvent):
+        """开播通知"""
+        LOG.info("[开播] 房间=%s", event.group_id)
+        await self.api.bilibili.send_danmu(
+            room_id=event.group_id,
+            text="开播啦！欢迎来到直播间 🎉",
+        )
+
+    @registrar.bilibili.on_live_end()
+    async def on_live_end(self, event: LiveNoticeEvent):
+        """下播通知"""
+        LOG.info("[下播] 房间=%s", event.group_id)
