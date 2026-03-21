@@ -41,6 +41,12 @@ BotAPIClient                        ← 多平台路由（纯门面，无业务�
 │   ├── embeddings()                ← 文本向量化
 │   ├── image_generation()          ← 图像生成
 │   └── generate_image()            ← 图像 → Image 消息段 (sugar)
+├── .misc : MiscAPI                  ← 杂项工具 API
+│   ├── download_to_file()          ← 下载到文件
+│   ├── download_to_bytes()         ← 下载到内存
+│   ├── http_get()                  ← 异步 GET
+│   ├── is_proxy_valid()            ← 代理检查
+│   └── get_proxy()                 ← 获取配置代理
 ├── .platform("xxx")                ← 按名称获取平台 API
 └── .platforms                      ← 所有已注册平台 Dict[str, IAPIClient]
 ```
@@ -91,3 +97,9 @@ BotAPIClient                        ← 多平台路由（纯门面，无业务�
 | 文件 | 说明 |
 |------|------|
 | [AI API](<5. AI/1. API.md>) | AIBotAPI 完整方法签名（Chat / Embeddings / ImageGen）+ ModelResponse 结构 |
+
+### 杂项工具
+
+| 文件 | 说明 |
+|------|------|
+| [MiscAPI](<6. Misc/1. API.md>) | MiscAPI 完整方法签名（下载 / HTTP 请求 / 代理检查） |
