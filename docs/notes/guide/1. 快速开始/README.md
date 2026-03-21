@@ -18,9 +18,12 @@ permalink: /guide/695ruqzj/
 - **事件驱动** — 装饰器注册 + 谓词 DSL，处理消息、通知、请求
 - **跨平台** — 通过 Adapter/Trait 抽象，一套插件适配多个平台
 - **CLI 工具** — `ncatbot init` / `run` / `dev` / `plugin` / `adapter`，零代码启动
+- **内置 skill** — 强烈推荐使用 AI Agent 进行 NcatBot 插件开发，高效、便捷、功能强大。 
 - **Python ≥ 3.12**，原生 async/await，类型标注完备
 
 默认启用 QQ 平台。需要接入 Bilibili 或 GitHub 或其它平台？参见 [适配器指南](<../2. 适配器/>)。
+
+参阅 [最佳实践](<../12. 最佳实践/>) 获取环境安装、生产部署、AI 开发等实用指南。
 
 ## Quick Reference
 

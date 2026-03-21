@@ -63,6 +63,9 @@ permalink: /guide/
 | 写插件测试 | [testing/](<9. 测试指南/>) |
 | 接入多平台 | [multi_platform/](<10. 多平台开发/>) |
 | 各平台登录与配置 | [adapter/](<2. 适配器/>) |
+| 零基础安装 Python/环境 | [best_practices/](<12. 最佳实践/1. 环境安装.md>) |
+| 部署到服务器 | [best_practices/](<12. 最佳实践/2. 部署指南.md>) |
+| 用 AI 工具加速开发 | [best_practices/](<12. 最佳实践/3. AI 辅助开发.md>) |
 
 ---
 
@@ -80,6 +83,7 @@ permalink: /guide/
 | [rbac/](<7. RBAC 权限/>) | RBAC 权限管理 — 权限模型与插件集成 | ⭐⭐⭐ |
 | [testing/](<9. 测试指南/>) | 插件测试 — Harness、工厂函数、Scenario | ⭐⭐ |
 | [multi_platform/](<10. 多平台开发/>) | 多平台开发 — Trait 协议与跨平台插件 | ⭐⭐ |
+| [best_practices/](<12. 最佳实践/>) | 最佳实践 — 环境安装、部署指南、AI 辅助开发 | ⭐ |
 
 ---
 
