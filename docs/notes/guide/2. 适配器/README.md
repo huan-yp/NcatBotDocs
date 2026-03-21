@@ -15,11 +15,24 @@ permalink: /guide/vagz7643/
 | [NapCat](<1. NapCat QQ.md>) | QQ | WebUI 扫码 / 快速登录 | OneBot v11 (WebSocket) | QQ 群聊/私聊 Bot |
 | [Bilibili](<2. Bilibili.md>) | Bilibili | 终端扫码 | bilibili-api-python | 直播弹幕 / 私信 / 视频评论 |
 | [GitHub](<3. GitHub.md>) | GitHub | Personal Access Token | Webhook / REST Polling | Issue/PR/Push 事件处理 |
+| [AI](<5. AI.md>) | 多平台 LLM | API Key / 环境变量 | litellm (REST) | Chat / Embeddings / 图像生成 |
 | [Mock](<4. Mock 适配器.md>) | 测试 | 无需认证 | 内存模拟 | 插件集成测试 |
 
 ## 配置入口
 
-所有适配器均通过 `config.yaml` 的 `adapters` 列表配置：
+推荐使用 CLI 管理适配器：
+
+```bash
+ncatbot adapter list              # 查看可用适配器及启用状态
+ncatbot adapter enable bilibili   # 交互式启用（Bilibili 扫码登录）
+ncatbot adapter enable github     # 交互式启用（GitHub 填写 PAT）
+ncatbot adapter disable <type>    # 禁用适配器
+ncatbot adapter status            # 查看已配置适配器状态
+```
+
+完整 CLI 命令说明见 [CLI 命令详解](<../8. 命令行工具/1. 命令.md>)。
+
+也可以直接编辑 `config.yaml` 的 `adapters` 列表：
 
 ```yaml
 adapters:
@@ -51,6 +64,11 @@ adapters:
     config:
       token: "ghp_xxxx"
       repos: ["owner/repo"]
+  - type: ai
+    platform: ai
+    enabled: true
+    config:
+      completion_model: "gpt-4"
 ```
 
 ## 本目录索引
@@ -60,6 +78,7 @@ adapters:
 | [1_napcat_qq.md](<1. NapCat QQ.md>) | NapCat/QQ — Setup/Connect 两种模式、WebUI 登录、诊断 | ⭐ |
 | [2_bilibili.md](<2. Bilibili.md>) | Bilibili — 扫码登录、凭据持久化、多数据源配置 | ⭐ |
 | [3_github.md](<3. GitHub.md>) | GitHub — Token 认证、Webhook/Polling 双模式、内网穿透 | ⭐⭐ |
+| [5_ai.md](<5. AI.md>) | AI — litellm 统一接口、多提供商、Chat/Embeddings/ImageGen | ⭐ |
 | [4_mock.md](<4. Mock 适配器.md>) | Mock — 测试用内存适配器 | ⭐ |
 
 ---

@@ -10,7 +10,7 @@ permalink: /guide/695ruqzj/
 
 ## 介绍
 
-**NcatBot** 是一个基于 Python 的异步多平台 Bot 框架，以 **QQ 平台**为核心，同时适配 **Bilibili**（直播/私信/评论）和 **GitHub**（Webhook/Polling）。
+**NcatBot** 是一个基于 Python 的异步多平台 Bot 框架，以 **QQ 平台**为核心，同时适配 **Bilibili**（直播/私信/评论）和 **GitHub**（Webhook/Polling）等其它主流平台。
 
 ### 亮点
 
@@ -20,16 +20,7 @@ permalink: /guide/695ruqzj/
 - **CLI 工具** — `ncatbot init` / `run` / `dev` / `plugin` / `adapter`，零代码启动
 - **Python ≥ 3.12**，原生 async/await，类型标注完备
 
-### 启用更多平台
-
-默认启用 QQ 平台（NapCat 适配器）。启用其他平台：
-
-```bash
-ncatbot adapter enable bilibili   # Bilibili — 扫码登录
-ncatbot adapter enable github     # GitHub — 填写 PAT
-```
-
-详见 [适配器指南](<../2. 适配器/>) 和 [CLI 适配器管理](<../8. 命令行工具/1. 命令.md>)。
+默认启用 QQ 平台。需要接入 Bilibili 或 GitHub 或其它平台？参见 [适配器指南](<../2. 适配器/>)。
 
 ## Quick Reference
 
