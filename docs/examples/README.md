@@ -13,7 +13,7 @@
 
 | # | 插件 | 演示功能 | 难度 |
 |---|------|---------|------|
-| 01 | [hello_world](common/01_hello_world/) | NcatBotPlugin 基类、Trait 回复、跨平台命令 | ⭐ |
+| 01 | [hello_world](common/01_hello_world/) | NcatBotPlugin 基类、Trait 回复、跨平台命令、参数绑定 vs 手动解析 | ⭐ |
 | 02 | [config_and_data](common/02_config_and_data/) | ConfigMixin / DataMixin 持久化 | ⭐ |
 | 03 | [hook_and_filter](common/03_hook_and_filter/) | Hook 系统（BEFORE/AFTER/ON_ERROR）、add_hooks | ⭐⭐ |
 | 04 | [rbac](common/04_rbac/) | RBAC 权限管理（角色/权限/检查） | ⭐⭐ |
@@ -28,7 +28,7 @@
 
 | # | 插件 | 演示功能 | 难度 |
 |---|------|---------|------|
-| 01 | [hello_world](qq/01_hello_world/) | registrar.qq 注册、群/私聊命令 | ⭐ |
+| 01 | [hello_world](qq/01_hello_world/) | registrar.qq 注册、群/私聊命令、参数绑定 vs 手动解析 | ⭐ |
 | 02 | [event_handling](qq/02_event_handling/) | 三种事件消费模式（装饰器/事件流/wait_event） | ⭐ |
 | 03 | [message_types](qq/03_message_types/) | MessageArray 链式构造、图文混排、合并转发 | ⭐ |
 | 04 | [bot_api](qq/04_bot_api/) | self.api.qq 消息发送、群管理、信息查询 | ⭐ |
@@ -65,7 +65,7 @@
 
 | # | 插件 | 演示功能 | 难度 |
 |---|------|---------|------|
-| 01 | [hello_world](ai/01_hello_world/) | Chat Completion、Embeddings、图像生成 | ⭐ |
+| 01 | [hello_world](ai/01_hello_world/) | Chat Completion、Embeddings、图像生成、参数自动绑定 | ⭐ |
 
 ### cross_platform/ — 跨平台操作
 
@@ -101,6 +101,7 @@ plugins/
 | on_load / on_close 生命周期 | common/01, common/02, qq/09 |
 | registrar.on_*() 通用装饰器 | common/* |
 | registrar.qq.* 子注册器 | qq/* |
+| CommandHook 参数绑定 | common/01, qq/01, ai/01, qq/04, common/02, common/03 |
 | registrar.bilibili.* 子注册器 | bilibili/* |
 | registrar.github.* 子注册器 | github/* |
 | EventMixin.events() 事件流 | qq/02 |

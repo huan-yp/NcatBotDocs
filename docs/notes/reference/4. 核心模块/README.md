@@ -82,7 +82,7 @@ from ncatbot.core import registrar, Hook
 | `SubTypeFilter(sub_type)` | 过滤 sub_type |
 | `SelfFilter()` | 跳过 bot 自身消息 |
 | `PlatformFilter(platform)` | 过滤平台 |
-| `CommandHook(*names, ignore_case=)` | 命令匹配 + 参数绑定 |
+| `CommandHook(*names, ignore_case=)` | 命令匹配 + 参数绑定（预处理 + 统一前缀 + binding stream + 缺失回复用法） |
 
 ### Predicate DSL 工厂函数
 
