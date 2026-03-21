@@ -1,0 +1,6 @@
+name = "hello_world_ai"
+version = "1.0.0"
+main = "main.py"
+entry_class = "AIHelloWorldPlugin"
+author = "NcatBot"
+description = "AI 适配器基础用法 — Chat / Embeddings / ImageGen"

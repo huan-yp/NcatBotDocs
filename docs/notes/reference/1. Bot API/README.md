@@ -35,6 +35,12 @@ BotAPIClient                        ← 多平台路由（纯门面，无业务�
 │   ├── create_issue_comment()      ← 评论
 │   ├── merge_pr()                  ← PR 管理
 │   └── get_repo() ...              ← 信息查询
+├── .ai : AIBotAPI                  ← AI 平台 API
+│   ├── chat()                      ← Chat Completion
+│   ├── chat_text()                 ← Chat → str (sugar)
+│   ├── embeddings()                ← 文本向量化
+│   ├── image_generation()          ← 图像生成
+│   └── generate_image()            ← 图像 → Image 消息段 (sugar)
 ├── .platform("xxx")                ← 按名称获取平台 API
 └── .platforms                      ← 所有已注册平台 Dict[str, IAPIClient]
 ```
@@ -79,3 +85,9 @@ BotAPIClient                        ← 多平台路由（纯门面，无业务�
 | 文件 | 说明 |
 |------|------|
 | [GitHub API](<4. GitHub/1. API.md>) | GitHubBotAPI 完整方法签名（Issue / Comment / PR / Query） |
+
+### AI 平台
+
+| 文件 | 说明 |
+|------|------|
+| [AI API](<5. AI/1. API.md>) | AIBotAPI 完整方法签名（Chat / Embeddings / ImageGen）+ ModelResponse 结构 |

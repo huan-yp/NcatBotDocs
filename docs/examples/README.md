@@ -59,6 +59,14 @@
 | 01 | [hello_world](github/01_hello_world/) | Issue/PR/Push 基础事件 | ⭐ |
 | 02 | [issue_bot](github/02_issue_bot/) | Issue 自动回复机器人 | ⭐⭐ |
 
+### ai/ — AI 平台
+
+使用 `api.ai.*` 调用 LLM 提供商 API（Chat / Embeddings / Image Generation）。
+
+| # | 插件 | 演示功能 | 难度 |
+|---|------|---------|------|
+| 01 | [hello_world](ai/01_hello_world/) | Chat Completion、Embeddings、图像生成 | ⭐ |
+
 ### cross_platform/ — 跨平台操作
 
 同时使用多个平台的子注册器，或通过 Trait 实现跨平台逻辑。
@@ -102,6 +110,7 @@ plugins/
 | self.api.qq.* | qq/01–09 |
 | self.api.bilibili.* | bilibili/01–05 |
 | self.api.github.* | github/01–02, cross_platform/03 |
+| self.api.ai.* | ai/01 |
 | ConfigMixin | common/02, qq/06, common/07, qq/09, cross_platform/03 |
 | DataMixin | common/02, common/06, qq/07, qq/08, qq/09 |
 | RBACMixin | common/04, qq/06, qq/09 |
