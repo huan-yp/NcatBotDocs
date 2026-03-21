@@ -4,11 +4,90 @@ createTime: 2026/03/19 17:26:45
 permalink: /guide/695ruqzj/
 ---
 
-> 从零开始，5 分钟运行你的第一个 NcatBot。覆盖安装、配置、非插件模式和插件模式两种启动方式。
+> 从零开始，5 分钟运行你的第一个 NcatBot。覆盖三种启动方式：零代码 CLI、非插件模式、插件模式。
 
 ---
 
+## 介绍
+
+**NcatBot** 是一个基于 Python 的异步多平台 Bot 框架，以 **QQ 平台**为核心，同时适配 **Bilibili**（直播/私信/评论）和 **GitHub**（Webhook/Polling）。
+
+### 亮点
+
+- **插件系统** — 配置持久化、权限控制、定时任务、热重载，开箱即用
+- **事件驱动** — 装饰器注册 + 谓词 DSL，处理消息、通知、请求
+- **跨平台** — 通过 Adapter/Trait 抽象，一套插件适配多个平台
+- **CLI 工具** — `ncatbot init` / `run` / `dev` / `plugin` / `adapter`，零代码启动
+- **Python ≥ 3.12**，原生 async/await，类型标注完备
+
+### 启用更多平台
+
+默认启用 QQ 平台（NapCat 适配器）。启用其他平台：
+
+```bash
+ncatbot adapter enable bilibili   # Bilibili — 扫码登录
+ncatbot adapter enable github     # GitHub — 填写 PAT
+```
+
+详见 [适配器指南](<../2. 适配器/>) 和 [CLI 适配器管理](<../8. 命令行工具/1. 命令.md>)。
+
 ## Quick Reference
+
+### 最小插件模式（通过 CLI 快速开始）
+
+#### 第 1 步 — 安装 NcatBot
+
+```bash
+pip install ncatbot5
+```
+
+#### 第 2 步 — 初始化项目
+
+```bash
+mkdir my-bot && cd my-bot
+ncatbot init
+```
+
+按提示交互式输入：
+
+| 提示 | 示例输入 |
+|------|---------|
+| Bot QQ 号 | `123456789` |
+| 管理员 QQ 号 | `987654321` |
+
+完成后自动生成：
+
+```text
+my-bot/
+├── config.yaml                   # 配置文件
+└── plugins/
+    └── {你的用户名}_plugin/             # 模板插件目录
+        ├── manifest.toml
+        └── plugin.py
+```
+
+#### 第 3 步 — 启动 Bot
+
+```bash
+ncatbot dev     # 开发模式：debug 日志 + 热重载
+```
+
+或生产模式：
+
+```bash
+ncatbot run
+```
+
+按照终端输出的提示，扫描二维码登录。
+
+连接成功后终端输出类似：
+
+```text
+[INFO] WebSocket 连接已建立: ws://localhost:3001
+[INFO] 插件 {你的用户名}_plugin 已加载
+```
+
+在群聊发送 `hello`，Bot 回复 "Hello from plugin!" 即成功。
 
 ### 最小非插件模式
 
@@ -32,14 +111,6 @@ async def on_hello(event: GroupMessageEvent):
 
 if __name__ == "__main__":
     bot.run()
-```
-
-### 最小插件模式
-
-```bash
-pip install ncatbot5
-ncatbot init        # 交互式生成 config.yaml + 模板插件
-ncatbot run         # 启动 Bot
 ```
 
 ---

@@ -17,6 +17,7 @@ export default defineThemeConfig({
     { text: '使用指南', link: '/guide/' },
     { text: '示例插件', link: '/examples/' },
     { text: 'API 参考', link: '/reference/' },
+    { text: '案例展示', link: '/showcase/' },
     { text: '贡献指南', link: '/contributing/' },
   ],
   sidebar: 'auto',
