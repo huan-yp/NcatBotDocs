@@ -27,7 +27,7 @@ class AIHelloWorldPlugin(NcatBotPlugin):
 
     name = "hello_world_ai"
 
-    @registrar.on_group_command("ai")
+    @registrar.qq.on_group_command("ai")
     async def ai_chat(self, event: GroupMessageEvent):
         """简单 AI 对话：/ai 你好"""
         text = event.message.text.strip()
@@ -39,7 +39,7 @@ class AIHelloWorldPlugin(NcatBotPlugin):
         answer = resp.choices[0].message.content
         await event.reply(answer)
 
-    @registrar.on_group_command("ai-multi")
+    @registrar.qq.on_group_command("ai-multi")
     async def ai_multi_turn(self, event: GroupMessageEvent):
         """多轮对话示例：/ai-multi"""
         resp = await self.api.ai.chat([
@@ -48,7 +48,7 @@ class AIHelloWorldPlugin(NcatBotPlugin):
         ])
         await event.reply(resp.choices[0].message.content)
 
-    @registrar.on_group_command("embed")
+    @registrar.qq.on_group_command("embed")
     async def ai_embed(self, event: GroupMessageEvent):
         """文本向量化：/embed 文本"""
         text = event.message.text.strip().strip()
@@ -60,7 +60,7 @@ class AIHelloWorldPlugin(NcatBotPlugin):
         dim = len(resp.data[0].embedding)
         await event.reply(f"向量维度: {dim}")
 
-    @registrar.on_group_command("imagine")
+    @registrar.qq.on_group_command("imagine")
     async def ai_image(self, event: GroupMessageEvent):
         """图像生成：/imagine 描述"""
         prompt = event.message.text.strip().strip()
