@@ -49,6 +49,8 @@
 | 03 | [private_message](bilibili/03_private_message/) | 私信收发 + 历史查询 | ⭐⭐ |
 | 04 | [comment](bilibili/04_comment/) | 评论自动回复 + 点赞 | ⭐⭐ |
 | 05 | [live_manager](bilibili/05_live_manager/) | 直播间管理（弹幕命令/禁言/静音） | ⭐⭐⭐ |
+| 06 | [dynamic](bilibili/06_dynamic/) | 动态页多 UP 主合并监听 | ⭐⭐ |
+| 07 | [video_parser](bilibili/07_video_parser/) | QQ 群自动解析 B 站视频链接（含小程序卡片） | ⭐⭐ |
 
 ### github/ — GitHub 平台专属（开发中）
 
@@ -109,7 +111,7 @@ plugins/
 | MessageArray 链式构造 | qq/03, qq/08 |
 | Forward / ForwardConstructor | qq/03, qq/08 |
 | self.api.qq.* | qq/01–09 |
-| self.api.bilibili.* | bilibili/01–05 |
+| self.api.bilibili.* | bilibili/01–07 |
 | self.api.github.* | github/01–02, cross_platform/03 |
 | self.api.ai.* | ai/01 |
 | ConfigMixin | common/02, qq/06, common/07, qq/09, cross_platform/03 |
@@ -122,3 +124,4 @@ plugins/
 | 跨平台双向桥接 | cross_platform/03 |
 | 多步对话 | common/06, qq/07 |
 | 外部 HTTP API | common/07 |
+| MessageArray.filter(Json) 小程序卡片解析 | bilibili/06 |

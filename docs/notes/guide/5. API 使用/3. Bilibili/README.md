@@ -28,6 +28,7 @@ permalink: /guide/9jzb0z71/
 | 数据源管理 | `add_live_room`, `add_comment_watch`, `add_dynamic_watch` | 监听直播间/评论/动态 |
 | 动态查询 | `get_user_dynamics`, `get_user_latest_dynamic` | 获取用户动态 |
 | 用户查询 | `get_user_info` | 获取用户信息 |
+| 视频查询 | `get_video_info`, `parse_bili_id` | 获取视频信息、解析B站链接 |
 
 ### 快速示例
 

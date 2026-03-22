@@ -1,0 +1,6 @@
+name = "video_parser_bilibili"
+version = "1.0.0"
+main = "main.py"
+entry_class = "BiliVideoParserPlugin"
+author = "NcatBot"
+description = "QQ 群内自动解析 B 站视频链接"

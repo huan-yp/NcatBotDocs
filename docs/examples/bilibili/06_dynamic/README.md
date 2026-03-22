@@ -85,3 +85,14 @@ class BiliDynamicPlugin(NcatBotPlugin):
             (event.text or "")[:80],
         )
 ~~~
+
+## manifest.toml
+
+~~~toml
+name = "dynamic_bilibili"
+version = "1.0.0"
+main = "main.py"
+entry_class = "BiliDynamicPlugin"
+author = "NcatBot"
+description = "Bilibili 动态页多 UP 主合并监听"
+~~~
