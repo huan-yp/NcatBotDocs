@@ -15,22 +15,23 @@ permalink: /guide/2kgrpw5d/
 | 组件 | 说明 |
 |------|------|
 | `PluginTestHarness` | 加载真实插件目录，模拟事件流的完整测试编排器 |
-| `TestHarness` | 轻量无插件测试，直接注册 handler 并注入事件 |
+| `TestHarness` | 多平台测试编排器，直接注册 handler 并注入事件 |
 | `Scenario` | 链式构建器，编排多步交互场景 |
-| `MockAdapter` / `MockBotAPI` | 内存级模拟，无需网络 |
+| `APICallAssertion` | Fluent 断言 — 语义化 API 调用验证 |
+| `MockAdapter` / `MockAPIBase` | 内存级模拟，无需网络 |
 
-### 事件工厂函数
+### 事件工厂
 
-| 工厂函数 | 说明 |
-|---------|------|
-| `group_message(text, group_id=, user_id=)` | 群消息事件 |
-| `private_message(text, user_id=)` | 私聊消息事件 |
-| `friend_request(user_id=, comment=)` | 好友请求 |
-| `group_request(group_id=, user_id=)` | 加群请求 |
-| `group_increase(group_id=, user_id=)` | 群成员增加 |
-| `group_decrease(group_id=, user_id=)` | 群成员减少 |
-| `group_ban(group_id=, user_id=)` | 群禁言 |
-| `poke(group_id=, user_id=)` | 戳一戳 |
+```python
+from ncatbot.testing.factories import qq, bilibili, github
+from ncatbot.testing.factories.qq import group_message, private_message
+```
+
+| 平台 | 工厂函数 |
+|------|---------|
+| QQ | `group_message`, `private_message`, `friend_request`, `group_request`, `group_increase`, `group_decrease`, `group_ban`, `poke` |
+| Bilibili | `danmu`, `super_chat`, `gift`, `private_message`, `comment`, `dynamic` |
+| GitHub | `issue_opened`, `issue_closed`, `issue_comment`, `pr_opened`, `push`, `star`, `release_published` |
 
 ### Harness 常用方法
 
@@ -38,22 +39,28 @@ permalink: /guide/2kgrpw5d/
 |------|------|
 | `h.inject(event)` | 注入事件 |
 | `h.settle()` | 等待所有 handler 执行完成 |
-| `h.api_called("method_name")` | 断言：API 被调用 → `bool` |
-| `h.api_not_called("method_name")` | 断言：API 未被调用 → `bool` |
-| `h.get_api_calls("method_name")` | 获取 API 调用记录列表 |
+| `h.assert_api("action").called()` | Fluent 断言：API 被调用 |
+| `h.assert_api("action").not_called()` | Fluent 断言：API 未被调用 |
+| `h.assert_api("action").with_params(k=v)` | Fluent 断言：参数匹配 |
+| `h.assert_api("action").with_text("text")` | Fluent 断言：文本匹配 |
+| `h.on("qq").assert_api("action")` | 平台作用域断言 |
+| `h.reset_api()` | 清空 API 调用记录 |
 
 ### 典型测试示例
 
 ```python
 import pytest
-from ncatbot.testing import PluginTestHarness, group_message
+from pathlib import Path
+from ncatbot.testing import PluginTestHarness
+from ncatbot.testing.factories.qq import group_message
 
-@pytest.mark.asyncio
+pytestmark = pytest.mark.asyncio(mode="strict")
+
 async def test_hello_command():
     async with PluginTestHarness(plugin_names=["hello_world"], plugins_dir=Path("plugins/")) as h:
         await h.inject(group_message("hello", group_id="100", user_id="99"))
         await h.settle()
-        assert h.api_called("send_group_msg")
+        h.assert_api("send_group_msg").called()
 ```
 
 ---
@@ -62,6 +69,6 @@ async def test_hello_command():
 
 | 章节 | 说明 | 难度 |
 |------|------|------|
-| [1. 快速入门](<1. 快速开始.md>) | 5 分钟写出第一个插件测试 | ⭐ |
-| [2. Harness 详解](<2. 测试工具.md>) | TestHarness 与 PluginTestHarness 深入使用 | ⭐⭐ |
-| [3. 工厂与场景](<3. 工厂与场景.md>) | 事件工厂、Scenario 构建器、自动冒烟测试 | ⭐⭐ |
+| [1. 快速入门](1.%20快速开始.md) | 5 分钟写出第一个插件测试 | ⭐ |
+| [2. Harness 详解](2.%20测试工具.md) | TestHarness 与 PluginTestHarness 深入使用 | ⭐⭐ |
+| [3. 工厂与场景](3.%20工厂与场景.md) | 事件工厂、Scenario 构建器、自动冒烟测试 | ⭐⭐ |

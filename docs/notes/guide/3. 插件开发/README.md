@@ -59,15 +59,12 @@ class HelloPlugin(NcatBotPlugin):
 | `@registrar.qq.on_poke()` | QQ 戳一戳 |
 | `@registrar.qq.on_group_increase()` | QQ 群成员增加 |
 | `@registrar.qq.on_group_decrease()` | QQ 群成员减少 |
-| `@registrar.qq.on_group_recall()` | QQ 群撤回 |
 | `@registrar.qq.on_friend_request()` | QQ 好友请求 |
 | `@registrar.qq.on_group_request()` | QQ 群请求 |
 | `@registrar.bilibili.on_danmu()` | B站弹幕 |
 | `@registrar.bilibili.on_gift()` | B站礼物 |
 | `@registrar.github.on_push()` | GitHub Push |
 | `@registrar.github.on_issue()` | GitHub Issue |
-| `@registrar.on_message_sent()` | 消息发送 |
-| `@registrar.on_meta()` | 元事件 |
 | `@registrar.on(event_type, ...)` | 通用注册 |
 
 > 所有装饰器支持 `priority=`（优先级）和 `platform=`（平台过滤）参数。命令装饰器额外支持 `ignore_case=`。
@@ -83,14 +80,11 @@ class HelloPlugin(NcatBotPlugin):
 | **DataMixin** | `self.data[key]` | 读写 JSON 持久化数据（字典） |
 | **RBACMixin** | `check_permission(user, permission)` | 检查权限 |
 | | `add_permission(path)` | 注册权限路径 |
-| | `remove_permission(path)` | 移除权限路径 |
 | | `add_role(role, exist_ok=True)` | 创建角色 |
-| | `user_has_role(user, role)` | 检查用户角色 |
 | | `self.rbac` | 访问 RBACService 实例 |
 | **TimeTaskMixin** | `add_scheduled_task(name, interval, ...)` | 添加定时任务 |
 | | `remove_scheduled_task(name)` | 移除定时任务 |
 | | `list_scheduled_tasks()` | 列出任务 |
-| | `get_task_status(name)` | 获取任务状态 |
 | **EventMixin** | `wait_event(predicate=, timeout=)` | 等待匹配事件 |
 | | `self.events(type)` | 创建事件流（async for） |
 
@@ -106,15 +100,15 @@ class HelloPlugin(NcatBotPlugin):
 
 | 章节 | 说明 | 难度 |
 |------|------|------|
-| [1. 快速入门](<1. 快速开始.md>) | 环境准备、安装、5 分钟跑通第一个插件 | ⭐ |
-| [2. 插件结构](<2. 插件结构.md>) | manifest.toml 详解、基类选择、多文件组织 | ⭐ |
-| [3. 生命周期](<3. 生命周期.md>) | 加载流程、卸载流程、生命周期钩子 | ⭐ |
-| [4a. 事件注册](<4. 事件注册.md>) | 事件类型体系、装饰器路由、优先级 | ⭐⭐ |
-| [4b. 事件高级用法](<5. 事件高级.md>) | 事件流、wait_event、实战组合 | ⭐⭐ |
-| [4c. Predicate DSL](<6. 谓词 DSL.md>) | 谓词组合、P 基类、工厂函数 | ⭐⭐ |
-| [5a. 配置与数据](<7. 配置与数据.md>) | ConfigMixin + DataMixin | ⭐⭐ |
-| [5b. 权限/定时/事件](<8. RBAC 定时任务与事件.md>) | RBACMixin + TimeTaskMixin + EventMixin | ⭐⭐ |
-| [6. Hook 机制](<9. Hooks.md>) | 三阶段模型、内置 Hook、自定义编写 | ⭐⭐ |
-| [7a. 高级模式](<10. 模式.md>) | 热重载、依赖管理、跨插件交互 | ⭐⭐⭐ |
-| [7b. 实战案例](<11. 案例研究.md>) | 群管理/定时报告/外部 API 案例 | ⭐⭐⭐ |
-| [7c. 内置管理命令](<12. 内置管理命令.md>) | `!reload` / `!sysinfo` / `root` 与配置开关 | ⭐⭐ |
+| [1. 快速入门](1.quick-start.md) | 环境准备、安装、5 分钟跑通第一个插件 | ⭐ |
+| [2. 插件结构](2.structure.md) | manifest.toml 详解、基类选择、多文件组织 | ⭐ |
+| [3. 生命周期](3.lifecycle.md) | 加载流程、卸载流程、生命周期钩子 | ⭐ |
+| [4a. 事件注册](4a.event-registration.md) | 事件类型体系、装饰器路由、优先级 | ⭐⭐ |
+| [4b. 事件高级用法](4b.event-advanced.md) | 事件流、wait_event、实战组合 | ⭐⭐ |
+| [4c. Predicate DSL](4c.predicate-dsl.md) | 谓词组合、P 基类、工厂函数 | ⭐⭐ |
+| [5a. 配置与数据](5a.config-data.md) | ConfigMixin + DataMixin | ⭐⭐ |
+| [5b. 权限/定时/事件](5b.rbac-schedule-event.md) | RBACMixin + TimeTaskMixin + EventMixin | ⭐⭐ |
+| [6. Hook 机制](6.hooks.md) | 三阶段模型、内置 Hook、自定义编写 | ⭐⭐ |
+| [7a. 高级模式](7a.patterns.md) | 热重载、依赖管理、跨插件交互 | ⭐⭐⭐ |
+| [7b. 实战案例](7b.case-studies.md) | 群管理/定时报告/外部 API 案例 | ⭐⭐⭐ |
+| [12. 内置管理命令](<12. 内置管理命令.md>) | 系统内置 `!` 命令、权限模型与 plugin.* 配置 | ⭐⭐ |

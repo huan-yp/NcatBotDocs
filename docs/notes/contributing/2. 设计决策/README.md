@@ -89,7 +89,7 @@ graph TB
 
 **ADR-001 分层架构** — NcatBot 需同时满足插件开发者（事件处理 + API 调用）、框架扩展者（替换适配器）与核心贡献者（修改分发引擎）三类用户。7 层架构通过严格的依赖规则，使各层可独立演化和测试。
 
-**ADR-002 适配器模式** — `IAPIClient` 定义在 API 层而非 Adapter 层，确保依赖方向正确。新增协议适配器只需实现接口，零修改已有代码。`MockBotAPI` 使测试完全脱离真实 QQ 连接。
+**ADR-002 适配器模式** — `IAPIClient` 定义在 API 层而非 Adapter 层，确保依赖方向正确。新增协议适配器只需实现接口，零修改已有代码。`MockAPIBase` 体系（`MockBotAPI` / `MockBiliAPI` / `MockGitHubAPI`）使测试完全脱离真实连接。
 
 **ADR-003 纯广播设计** — `AsyncEventDispatcher` 只做事件广播（Queue per consumer），不含 Handler 匹配等业务逻辑。三类消费者（HandlerDispatcher / EventMixin / wait_event）共存互不干扰。
 
@@ -161,7 +161,7 @@ Plugin ─────── Core ─────── Event ──────
 
 ### 5. 可测试性优先
 
-每层可通过 Mock 其下层进行隔离测试。`MockBotAPI` 使测试不依赖真实 QQ 连接，`ContextVar` 支持测试上下文隔离。
+每层可通过 Mock 其下层进行隔离测试。`MockAPIBase` 体系（`MockBotAPI` / `MockBiliAPI` / `MockGitHubAPI`）使测试不依赖真实连接，`ContextVar` 支持测试上下文隔离。
 
 > **实践指导：** 新增模块必须能在不启动完整框架的情况下通过单元测试验证。
 

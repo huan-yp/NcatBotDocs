@@ -35,18 +35,17 @@ BotAPIClient                        ← 多平台路由（纯门面，无业务�
 │   ├── create_issue_comment()      ← 评论
 │   ├── merge_pr()                  ← PR 管理
 │   └── get_repo() ...              ← 信息查询
-├── .ai : AIBotAPI                  ← AI 平台 API
+├── .ai : IAIAPIClient              ← AI 平台 API
 │   ├── chat()                      ← Chat Completion
-│   ├── chat_text()                 ← Chat → str (sugar)
+│   ├── chat_text()                 ← Chat → 直接返回文本
 │   ├── embeddings()                ← 文本向量化
 │   ├── image_generation()          ← 图像生成
-│   └── generate_image()            ← 图像 → Image 消息段 (sugar)
-├── .misc : MiscAPI                  ← 杂项工具 API
+│   └── generate_image()            ← 图像生成 → Image 消息段
+├── .misc : MiscAPI                 ← 杂项工具 API
 │   ├── download_to_file()          ← 下载到文件
 │   ├── download_to_bytes()         ← 下载到内存
-│   ├── http_get()                  ← 异步 GET
-│   ├── is_proxy_valid()            ← 代理检查
-│   └── get_proxy()                 ← 获取配置代理
+│   ├── http_get()                  ← GET 请求
+│   └── is_proxy_valid()            ← 代理检查
 ├── .platform("xxx")                ← 按名称获取平台 API
 └── .platforms                      ← 所有已注册平台 Dict[str, IAPIClient]
 ```
@@ -60,7 +59,7 @@ BotAPIClient                        ← 多平台路由（纯门面，无业务�
 | `IQuery` | `get_login_info`, `get_friend_list`, `get_group_list` ... | 信息查询 |
 | `IFileTransfer` | `upload_group_file`, `upload_private_file`, `download_file` | 文件上传/下载 |
 
-> 完整方法签名参见各子文档，或查阅 [guide/api_usage/](<../../guide/5. API 使用/>) 中的速查表。
+> 完整方法签名参见各子文档，或查阅 [guide/api_usage/](../../guide/api_usage/) 中的速查表。
 
 ---
 
@@ -70,36 +69,36 @@ BotAPIClient                        ← 多平台路由（纯门面，无业务�
 
 | 文件 | 说明 |
 |------|------|
-| [Trait 协议参考](<1. 通用/1. Traits.md>) | IMessaging, IGroupManage, IQuery, IFileTransfer 完整签名 |
+| [Trait 协议参考](common/traits.md) | IMessaging, IGroupManage, IQuery, IFileTransfer 完整签名 |
 
 ### QQ 平台
 
 | 文件 | 说明 |
 |------|------|
-| [消息 API](<2. QQ/1. 消息 API.md>) | QQMessaging 核心消息方法 + QQMessageSugarMixin 便捷方法 |
-| [管理 API](<2. QQ/2. 管理 API.md>) | QQManage 群管理、好友管理与个人资料 |
-| [查询与文件 API](<2. QQ/3. 信息支持 API.md>) | QQQuery 信息查询 + QQFile 文件操作 |
+| [消息 API](qq/1_message_api.md) | QQMessaging 核心消息方法 + QQMessageSugarMixin 便捷方法 |
+| [管理 API](qq/2_manage_api.md) | QQManage 群管理、好友管理与个人资料 |
+| [查询与文件 API](qq/3_info_support_api.md) | QQQuery 信息查询 + QQFile 文件操作 |
 
 ### Bilibili 平台
 
 | 文件 | 说明 |
 |------|------|
-| [Bilibili API](<3. Bilibili/1. API.md>) | IBiliAPIClient 完整方法签名 |
+| [Bilibili API](bilibili/1_api.md) | IBiliAPIClient 完整方法签名 |
 
 ### GitHub 平台
 
 | 文件 | 说明 |
 |------|------|
-| [GitHub API](<4. GitHub/1. API.md>) | GitHubBotAPI 完整方法签名（Issue / Comment / PR / Query） |
+| [GitHub API](github/1_api.md) | GitHubBotAPI 完整方法签名（Issue / Comment / PR / Query） |
 
 ### AI 平台
 
 | 文件 | 说明 |
 |------|------|
-| [AI API](<5. AI/1. API.md>) | AIBotAPI 完整方法签名（Chat / Embeddings / ImageGen）+ ModelResponse 结构 |
+| [AI API](ai/1_api.md) | IAIAPIClient 完整方法签名（Chat / Embeddings / Image Generation） |
 
 ### 杂项工具
 
 | 文件 | 说明 |
 |------|------|
-| [MiscAPI](<6. Misc/1. API.md>) | MiscAPI 完整方法签名（下载 / HTTP 请求 / 代理检查） |
+| [Misc API](misc/1_api.md) | MiscAPI 完整方法签名（下载 / HTTP 请求 / 代理检查） |
