@@ -50,7 +50,7 @@ from ncatbot.testing import PluginTestHarness, group_message
 
 @pytest.mark.asyncio
 async def test_hello_command():
-    async with PluginTestHarness(plugin_names=["hello_world"], plugin_dir=Path("plugins/")) as h:
+    async with PluginTestHarness(plugin_names=["hello_world"], plugins_dir=Path("plugins/")) as h:
         await h.inject(group_message("hello", group_id="100", user_id="99"))
         await h.settle()
         assert h.api_called("send_group_msg")

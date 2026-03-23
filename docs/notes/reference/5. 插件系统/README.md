@@ -44,6 +44,10 @@ from ncatbot.plugin import NcatBotPlugin
 | `list_plugins` | `() → List[str]` | 已加载插件名称列表 |
 | `get_plugin` | `(name) → Optional[BasePlugin]` | 获取已加载的插件实例 |
 
+### 内置管理命令
+
+详见 [3. 内置管理命令](<3. 内置管理命令.md>)（`plugin.enable_builtin_commands` 等）。
+
 ### Mixin 方法签名
 
 | Mixin | 方法 | 签名 | 说明 |
@@ -74,3 +78,4 @@ from ncatbot.plugin import NcatBotPlugin
 |------|------|
 | [1_base_class.md](<1. 基类.md>) | NcatBotPlugin 完整 API — 属性、方法、继承关系、PluginManifest、依赖解析 |
 | [2_mixins.md](<2. Mixins.md>) | EventMixin / TimeTaskMixin / RBACMixin / ConfigMixin / DataMixin 完整 API |
+| [3. 内置管理命令.md](<3. 内置管理命令.md>) | `plugin.enable_builtin_commands` 等与内置 `!` 命令相关的配置 |

@@ -75,7 +75,7 @@ permalink: /guide/
 |------|------|------|
 | [quick_start/](<1. 快速开始/>) | 从零启动 — 安装、配置、两种模式启动 | ⭐ |
 | [adapter/](<2. 适配器/>) | 适配器登录与使用 — NapCat / Bilibili / GitHub / Mock | ⭐ |
-| [plugin/](<3. 插件开发/>) | 插件开发完整指南（11 篇） | ⭐ - ⭐⭐⭐ |
+| [plugin/](<3. 插件开发/>) | 插件开发完整指南（12 篇） | ⭐ - ⭐⭐⭐ |
 | [send_message/](<4. 消息发送/>) | 消息发送 — 消息段、MessageArray、转发、语法糖 | ⭐ |
 | [api_usage/](<5. API 使用/>) | Bot API 使用 — 消息、群管理、查询 | ⭐⭐ |
 | [configuration/](<6. 配置管理/>) | 配置管理 — config.yaml 结构与安全校验 | ⭐⭐ |

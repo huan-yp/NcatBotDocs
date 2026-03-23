@@ -30,7 +30,7 @@ from ncatbot.service import ServiceManager, BaseService
 
 | 方法 | 签名 | 说明 |
 |------|------|------|
-| `register_builtin` | `(*, debug=False) → None` | 注册所有内置服务 |
+| `register_builtin` | `() → None` | 注册所有内置服务 |
 | `register` | `(service_class, **config) → None` | 注册自定义服务类 |
 | `load` | `async (service_name) → BaseService` | 加载单个服务（含依赖注入） |
 | `load_all` | `async () → None` | 按拓扑排序加载所有服务 |
@@ -40,8 +40,6 @@ from ncatbot.service import ServiceManager, BaseService
 | `has` | `(service_name) → bool` | 检查服务是否已加载 |
 | `list_services` | `() → List[str]` | 列出已加载服务名称 |
 | `set_event_callback` | `(callback) → None` | 注入事件发布回调 |
-| `set_debug_mode` | `(enable: bool = True) → None` | 设置调试模式 |
-| `set_test_mode` | `(enable: bool = True) → None` | 设置测试模式 |
 
 ### 快捷属性（ServiceManager）
 
