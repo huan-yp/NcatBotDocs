@@ -14,6 +14,10 @@ permalink: /reference/r01s9yay/
 
 ```python
 from ncatbot.utils import get_log, post_json, get_json, download_file
+from ncatbot.utils import BoundLogger, setup_logging, tqdm
+from ncatbot.utils import ConfigManager, get_config_manager, Config
+from ncatbot.utils import NcatBotError, AdapterEventError
+from ncatbot.utils import confirm, ask, select
 ```
 
 ### 日志 — `get_log`
@@ -69,6 +73,23 @@ from ncatbot.utils import get_log, post_json, get_json, download_file
 | `NcatBotValueError` | `(var_name, val_name, must_be=False)` | 值校验异常 |
 | `NcatBotConnectionError` | `(info)` | 网络连接异常 |
 | `AdapterEventError` | `(info, log=True)` | 适配器事件异常 |
+
+### 其他导出
+
+| 符号 | 说明 |
+|------|------|
+| `ConfigValueError` | 配置值校验异常 |
+| `MISSING` | 缺省值哨兵 |
+| `CONFIG_PATH` | 默认配置文件路径 |
+| `setup_logging` | 初始化日志系统 |
+| `tqdm` | 进度条（re-export） |
+| `Status` / `status` | 全局状态单例 |
+| `gen_url_with_proxy` | 为 URL 添加代理前缀 |
+| `async_download_to_file` | 异步下载到文件 |
+| `async_download_to_bytes` | 异步下载到内存 |
+| `async_http_get` | 异步 HTTP GET |
+| `async_check_proxy` | 检查代理可用性 |
+| `is_interactive` / `set_interactive` | 交互模式查询/开启 |
 
 ---
 

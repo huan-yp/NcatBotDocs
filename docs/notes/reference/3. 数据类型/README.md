@@ -12,7 +12,7 @@ permalink: /reference/yi156fkl/
 
 ### 类型架构
 
-```
+```bash
 ncatbot.types                    # 通用层导出（平台无关）
 ├── ncatbot.types.common         #   MessageSegment, MessageArray, PlainText, At, Image ...
 ├── ncatbot.types.qq             # QQ 平台: Face, Forward, Music, 枚举, Sender ...

@@ -26,7 +26,7 @@ permalink: /reference/
 | RBAC/定时任务服务 | [services/](<6. 服务层/>) | `RBACService`, `TimeTaskService` |
 | 适配器接口 | [adapter/](<7. 适配器/>) | `BaseAdapter`, `AdapterRegistry` |
 | 日志/网络/配置工具 | [utils/](<8. 工具模块/>) | `get_log`, `ConfigManager`, `post_json` |
-| 测试框架 | [testing/](<9. 测试指南/>) | `PluginTestHarness`, `Scenario` |
+| 测试框架 | [testing/](<9. 测试框架/>) | `PluginTestHarness`, `Scenario` |
 | CLI 命令 | [cli.md](<10. CLI/1. 命令参考.md>) | `ncatbot init/run/dev` |
 
 ---

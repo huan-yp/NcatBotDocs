@@ -14,7 +14,7 @@ permalink: /reference/kmerqln8/
 
 ### 事件架构
 
-```
+```bash
 ncatbot.event                     # 通用层导出
 ├── ncatbot.event.common          #   BaseEvent, Mixin traits, create_entity 工厂
 ├── ncatbot.event.qq              # QQ 事件实体

@@ -101,23 +101,23 @@ from ncatbot.testing import (
 
 | 名称 | 类型 | 详细文档 |
 |------|------|---------|
-| `TestHarness` | class | [1. 测试工具](1.%20测试工具.md#testharness) |
-| `PluginTestHarness` | class | [1. 测试工具](1.%20测试工具.md#plugintestharness) |
-| `APICallAssertion` | class | [2. 工厂场景与 Mock](2.%20工厂场景与%20Mock.md#apicallassertion) |
-| `PlatformScope` | class | [2. 工厂场景与 Mock](2.%20工厂场景与%20Mock.md#platformscope) |
-| `extract_text()` | function | [2. 工厂场景与 Mock](2.%20工厂场景与%20Mock.md#extract_text) |
-| `Scenario` | class | [2. 工厂场景与 Mock](2.%20工厂场景与%20Mock.md#scenario) |
-| `APICall` | dataclass | [2. 工厂场景与 Mock](2.%20工厂场景与%20Mock.md#apicall) |
-| `MockAPIBase` | class | [2. 工厂场景与 Mock](2.%20工厂场景与%20Mock.md#mockapibase) |
-| `MockBotAPI` | class | [2. 工厂场景与 Mock](2.%20工厂场景与%20Mock.md#mockbotapi) |
-| `MockBiliAPI` | class | [2. 工厂场景与 Mock](2.%20工厂场景与%20Mock.md#mockbiliapi) |
-| `MockGitHubAPI` | class | [2. 工厂场景与 Mock](2.%20工厂场景与%20Mock.md#mockgithubapi) |
-| `MockAdapter` | class | [2. 工厂场景与 Mock](2.%20工厂场景与%20Mock.md#mockadapter) |
-| `factories.qq.*` | functions | [2. 工厂场景与 Mock](2.%20工厂场景与%20Mock.md#qq-事件工厂) |
-| `factories.bilibili.*` | functions | [2. 工厂场景与 Mock](2.%20工厂场景与%20Mock.md#bilibili-事件工厂) |
-| `factories.github.*` | functions | [2. 工厂场景与 Mock](2.%20工厂场景与%20Mock.md#github-事件工厂) |
-| `discover_testable_plugins()` | function | [2. 工厂场景与 Mock](2.%20工厂场景与%20Mock.md#插件发现) |
-| `generate_smoke_tests()` | function | [2. 工厂场景与 Mock](2.%20工厂场景与%20Mock.md#插件发现) |
+| `TestHarness` | class | [1. 测试工具](<1. 测试工具.md#testharness>) |
+| `PluginTestHarness` | class | [1. 测试工具](<1. 测试工具.md#plugintestharness>) |
+| `APICallAssertion` | class | [2. 工厂场景与 Mock](<2. 工厂场景与 Mock.md#apicallassertion>) |
+| `PlatformScope` | class | [2. 工厂场景与 Mock](<2. 工厂场景与 Mock.md#platformscope>) |
+| `extract_text()` | function | [2. 工厂场景与 Mock](<2. 工厂场景与 Mock.md#extract_text>) |
+| `Scenario` | class | [2. 工厂场景与 Mock](<2. 工厂场景与 Mock.md#scenario>) |
+| `APICall` | dataclass | [2. 工厂场景与 Mock](<2. 工厂场景与 Mock.md#apicall>) |
+| `MockAPIBase` | class | [2. 工厂场景与 Mock](<2. 工厂场景与 Mock.md#mockapibase>) |
+| `MockBotAPI` | class | [2. 工厂场景与 Mock](<2. 工厂场景与 Mock.md#mockbotapi>) |
+| `MockBiliAPI` | class | [2. 工厂场景与 Mock](<2. 工厂场景与 Mock.md#mockbiliapi>) |
+| `MockGitHubAPI` | class | [2. 工厂场景与 Mock](<2. 工厂场景与 Mock.md#mockgithubapi>) |
+| `MockAdapter` | class | [2. 工厂场景与 Mock](<2. 工厂场景与 Mock.md#mockadapter>) |
+| `factories.qq.*` | functions | [2. 工厂场景与 Mock](<2. 工厂场景与 Mock.md#qq-事件工厂>) |
+| `factories.bilibili.*` | functions | [2. 工厂场景与 Mock](<2. 工厂场景与 Mock.md#bilibili-事件工厂>) |
+| `factories.github.*` | functions | [2. 工厂场景与 Mock](<2. 工厂场景与 Mock.md#github-事件工厂>) |
+| `discover_testable_plugins()` | function | [2. 工厂场景与 Mock](<2. 工厂场景与 Mock.md#插件发现>) |
+| `generate_smoke_tests()` | function | [2. 工厂场景与 Mock](<2. 工厂场景与 Mock.md#插件发现>) |
 
 ---
 
@@ -125,5 +125,5 @@ from ncatbot.testing import (
 
 | 文件 | 说明 |
 |------|------|
-| [1. 测试工具](1.%20测试工具.md) | TestHarness + PluginTestHarness 完整 API |
-| [2. 工厂场景与 Mock](2.%20工厂场景与%20Mock.md) | 工厂函数、Scenario 构建器、MockAPIBase 体系、Fluent 断言 |
+| [1. 测试工具](<1. 测试工具.md>) | TestHarness + PluginTestHarness 完整 API |
+| [2. 工厂场景与 Mock](<2. 工厂场景与 Mock.md>) | 工厂函数、Scenario 构建器、MockAPIBase 体系、Fluent 断言 |

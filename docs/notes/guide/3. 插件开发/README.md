@@ -100,15 +100,15 @@ class HelloPlugin(NcatBotPlugin):
 
 | 章节 | 说明 | 难度 |
 |------|------|------|
-| [1. 快速入门](1.quick-start.md) | 环境准备、安装、5 分钟跑通第一个插件 | ⭐ |
-| [2. 插件结构](2.structure.md) | manifest.toml 详解、基类选择、多文件组织 | ⭐ |
-| [3. 生命周期](3.lifecycle.md) | 加载流程、卸载流程、生命周期钩子 | ⭐ |
-| [4a. 事件注册](4a.event-registration.md) | 事件类型体系、装饰器路由、优先级 | ⭐⭐ |
-| [4b. 事件高级用法](4b.event-advanced.md) | 事件流、wait_event、实战组合 | ⭐⭐ |
-| [4c. Predicate DSL](4c.predicate-dsl.md) | 谓词组合、P 基类、工厂函数 | ⭐⭐ |
-| [5a. 配置与数据](5a.config-data.md) | ConfigMixin + DataMixin | ⭐⭐ |
-| [5b. 权限/定时/事件](5b.rbac-schedule-event.md) | RBACMixin + TimeTaskMixin + EventMixin | ⭐⭐ |
-| [6. Hook 机制](6.hooks.md) | 三阶段模型、内置 Hook、自定义编写 | ⭐⭐ |
-| [7a. 高级模式](7a.patterns.md) | 热重载、依赖管理、跨插件交互 | ⭐⭐⭐ |
-| [7b. 实战案例](7b.case-studies.md) | 群管理/定时报告/外部 API 案例 | ⭐⭐⭐ |
+| [1. 快速开始](<1. 快速开始.md>) | 环境准备、安装、5 分钟跑通第一个插件 | ⭐ |
+| [2. 插件结构](<2. 插件结构.md>) | manifest.toml 详解、基类选择、多文件组织 | ⭐ |
+| [3. 生命周期](<3. 生命周期.md>) | 加载流程、卸载流程、生命周期钩子 | ⭐ |
+| [4. 事件注册](<4. 事件注册.md>) | 事件类型体系、装饰器路由、优先级 | ⭐⭐ |
+| [5. 事件高级](<5. 事件高级.md>) | 事件流、wait_event、实战组合 | ⭐⭐ |
+| [6. 谓词 DSL](<6. 谓词 DSL.md>) | 谓词组合、P 基类、工厂函数 | ⭐⭐ |
+| [7. 配置与数据](<7. 配置与数据.md>) | ConfigMixin + DataMixin | ⭐⭐ |
+| [8. RBAC / 定时 / 事件](<8. RBAC 定时任务与事件.md>) | RBACMixin + TimeTaskMixin + EventMixin | ⭐⭐ |
+| [9. Hooks](<9. Hooks.md>) | 三阶段模型、内置 Hook、自定义编写 | ⭐⭐ |
+| [10. 模式](<10. 模式.md>) | 热重载、依赖管理、跨插件交互 | ⭐⭐⭐ |
+| [11. 案例研究](<11. 案例研究.md>) | 群管理/定时报告/外部 API 案例 | ⭐⭐⭐ |
 | [12. 内置管理命令](<12. 内置管理命令.md>) | 系统内置 `!` 命令、权限模型与 plugin.* 配置 | ⭐⭐ |
