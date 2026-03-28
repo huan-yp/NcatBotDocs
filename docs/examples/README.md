@@ -61,6 +61,14 @@
 | 01 | [hello_world](github/01_hello_world/) | Issue/PR/Push 基础事件 | ⭐ |
 | 02 | [issue_bot](github/02_issue_bot/) | Issue 自动回复机器人 | ⭐⭐ |
 
+### lark/ — 飞书平台专属
+
+使用 `registrar.lark.*` 平台子注册器和飞书专用事件/API。
+
+| # | 插件 | 演示功能 | 难度 |
+|---|------|---------|------|
+| 01 | [hello_world](lark/01_hello_world/) | 群聊/私聊基础响应、LarkPostBuilder 富文本 | ⭐ |
+
 ### ai/ — AI 平台
 
 使用 `api.ai.*` 调用 LLM 提供商 API（Chat / Embeddings / Image Generation）。
@@ -106,6 +114,7 @@ plugins/
 | CommandHook 参数绑定 | common/01, qq/01, ai/01, qq/04, common/02, common/03 |
 | registrar.bilibili.* 子注册器 | bilibili/* |
 | registrar.github.* 子注册器 | github/* |
+| registrar.lark.* 子注册器 | lark/* |
 | EventMixin.events() 事件流 | qq/02 |
 | EventMixin.wait_event() | qq/02, common/06, qq/07 |
 | MessageArray 链式构造 | qq/03, qq/08 |
@@ -113,6 +122,7 @@ plugins/
 | self.api.qq.* | qq/01–09 |
 | self.api.bilibili.* | bilibili/01–07 |
 | self.api.github.* | github/01–02, cross_platform/03 |
+| self.api.lark.* | lark/01 |
 | self.api.ai.* | ai/01 |
 | ConfigMixin | common/02, qq/06, common/07, qq/09, cross_platform/03 |
 | DataMixin | common/02, common/06, qq/07, qq/08, qq/09 |

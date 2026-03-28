@@ -15,6 +15,7 @@ permalink: /guide/vagz7643/
 | [NapCat](<1. NapCat QQ.md>) | QQ | WebUI 扫码 / 快速登录 | OneBot v11 (WebSocket) | QQ 群聊/私聊 Bot |
 | [Bilibili](<2. Bilibili.md>) | Bilibili | 终端扫码 | bilibili-api-python | 直播弹幕 / 私信 / 视频评论 |
 | [GitHub](<3. GitHub.md>) | GitHub | Personal Access Token | Webhook / REST Polling | Issue/PR/Push 事件处理 |
+| [Lark](<6. Lark.md>) | 飞书 | App ID + App Secret | lark-oapi SDK (WebSocket) | 飞书群聊/私聊 Bot |
 | [AI](<5. AI.md>) | 多平台 LLM | API Key / 环境变量 | litellm (REST) | Chat / Embeddings / 图像生成 |
 | [Mock](<4. Mock 适配器.md>) | 测试 | 无需认证 | 内存模拟 | 插件集成测试 |
 
@@ -78,6 +79,7 @@ adapters:
 | [1_napcat_qq.md](<1. NapCat QQ.md>) | NapCat/QQ — Setup/Connect 两种模式、WebUI 登录、诊断 | ⭐ |
 | [2_bilibili.md](<2. Bilibili.md>) | Bilibili — 扫码登录、凭据持久化、多数据源配置 | ⭐ |
 | [3_github.md](<3. GitHub.md>) | GitHub — Token 认证、Webhook/Polling 双模式、内网穿透 | ⭐⭐ |
+| [6_lark.md](<6. Lark.md>) | Lark — 飞书企业应用创建、WebSocket 长连接、群聊/私聊 | ⭐ |
 | [5_ai.md](<5. AI.md>) | AI — litellm 统一接口、多提供商、Chat/Embeddings/ImageGen | ⭐ |
 | [4_mock.md](<4. Mock 适配器.md>) | Mock — 测试用内存适配器 | ⭐ |
 

@@ -19,7 +19,8 @@ ncatbot.event                     # 通用层导出
 ├── ncatbot.event.common          #   BaseEvent, Mixin traits, create_entity 工厂
 ├── ncatbot.event.qq              # QQ 事件实体
 ├── ncatbot.event.bilibili        # Bilibili 事件实体
-└── ncatbot.event.github          # GitHub 事件实体（实验性）
+├── ncatbot.event.github          # GitHub 事件实体（实验性）
+└── ncatbot.event.lark            # Lark (飞书) 事件实体
 ```
 
 ### Mixin Trait 速查
@@ -87,6 +88,19 @@ from ncatbot.event.github import GitHubIssueEvent, GitHubPREvent, GitHubPushEven
 | `GitHubForkEvent` | HasSender | `repo`, `forkee_full_name` |
 | `GitHubReleaseEvent` | HasSender | `release_tag`, `release_name`, `repo` |
 
+### Lark 事件速查
+
+```python
+from ncatbot.event.lark import LarkGroupMessageEvent, LarkPrivateMessageEvent
+```
+
+| 事件类 | Trait 组合 | 关键属性 |
+|--------|-----------|----------|
+| `LarkGroupMessageEvent` | Replyable, HasSender | `chat_id`, `group_id`, `content`, `sender` |
+| `LarkPrivateMessageEvent` | Replyable, HasSender | `chat_id`, `content`, `user_id`, `sender` |
+| `LarkMessageReadEvent` | — | `message_id_list`, `reader_open_id`, `read_time` |
+| `LarkMessageRecalledEvent` | — | `message_id`, `chat_id`, `recall_time`, `recall_type` |
+
 ---
 
 ## 本目录索引
@@ -97,6 +111,7 @@ from ncatbot.event.github import GitHubIssueEvent, GitHubPREvent, GitHubPushEven
 | [2_qq_events.md](<2. QQ 事件.md>) | QQ | QQ 事件实体完整参考 |
 | [3_bilibili_events.md](<3. Bilibili 事件.md>) | Bilibili | Bilibili 事件实体完整参考 |
 | [4_github_events.md](<4. GitHub 事件.md>) | GitHub | GitHub 事件实体完整参考（实验性） |
+| [5_lark_events.md](<5. Lark 事件.md>) | Lark | Lark (飞书) 事件实体完整参考 |
 
 ---
 

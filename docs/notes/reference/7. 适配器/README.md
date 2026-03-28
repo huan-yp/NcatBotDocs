@@ -14,6 +14,7 @@ permalink: /reference/qd57aoql/
 from ncatbot.adapter import BaseAdapter, NapCatAdapter, MockAdapter
 from ncatbot.adapter.bilibili import BilibiliAdapter
 from ncatbot.adapter.github import GitHubAdapter
+from ncatbot.adapter.lark import LarkAdapter
 ```
 
 适配层（Adapter）负责屏蔽底层通信协议差异，为上层提供统一的事件流和 Bot API 接口。
@@ -23,6 +24,7 @@ from ncatbot.adapter.github import GitHubAdapter
 | `NapCatAdapter` | `"qq"` | OneBot v11 (WebSocket) | QQ 群聊/私聊 Bot | [NapCat 指南](<../../guide/2. 适配器/1. NapCat QQ.md>) |
 | `BilibiliAdapter` | `"bilibili"` | bilibili-api-python | 直播弹幕 / 私信 / 评论 | [Bilibili 指南](<../../guide/2. 适配器/2. Bilibili.md>) |
 | `GitHubAdapter` | `"github"` | Webhook / REST Polling | Issue/PR/Push 事件处理 | [GitHub 指南](<../../guide/2. 适配器/3. GitHub.md>) |
+| `LarkAdapter` | `"lark"` | lark-oapi SDK (WebSocket) | 飞书群聊/私聊 Bot | [Lark 指南](<../../guide/2. 适配器/6. Lark.md>) |
 | `MockAdapter` | `"mock"` | 内存模拟 | 测试环境，无需网络 | [Mock 指南](<../../guide/2. 适配器/4. Mock 适配器.md>) |
 
 ```mermaid
@@ -30,12 +32,15 @@ graph LR
     QQ[QQ / NapCat] <-->|WebSocket| A1[NapCatAdapter<br>platform=qq]
     Bili[Bilibili] <-->|WS + REST| A2[BilibiliAdapter<br>platform=bilibili]
     GH[GitHub] <-->|Webhook / Polling| A3[GitHubAdapter<br>platform=github]
+    LK[飞书] <-->|WebSocket| A4[LarkAdapter<br>platform=lark]
     A1 -->|BaseEventData| Dispatcher[Dispatcher 分发器]
     A2 -->|BaseEventData| Dispatcher
     A3 -->|BaseEventData| Dispatcher
+    A4 -->|BaseEventData| Dispatcher
     A1 -.->|IAPIClient| BotAPIClient[BotAPIClient 多平台门面]
     A2 -.->|IAPIClient| BotAPIClient
     A3 -.->|IAPIClient| BotAPIClient
+    A4 -.->|IAPIClient| BotAPIClient
     BotAPIClient -.-> Plugin[插件 / 服务]
 ```
 
@@ -168,6 +173,37 @@ MockAdapter 根据 `platform` 参数自动选择对应的 Mock API 子类：
 3. 不配置 Token 也可运行（公开仓库 Webhook），但 API 速率受限
 
 详见 [GitHub 使用指南](<../../guide/2. 适配器/3. GitHub.md>)。
+
+---
+
+## LarkAdapter
+
+**模块**: `ncatbot.adapter.lark`
+
+| 属性 | 值 |
+|------|-----|
+| `name` | `"lark"` |
+| `platform` | `"lark"` |
+| `supported_protocols` | `["lark_ws"]` |
+| `pip_dependencies` | `{"lark-oapi": ">=1.5.3"}` |
+
+### LarkConfig 配置模型
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `app_id` | `str` | `""` | 飞书应用 App ID |
+| `app_secret` | `str` | `""` | 飞书应用 App Secret |
+| `verification_token` | `str` | `""` | 事件验证 Token |
+| `encrypt_key` | `str` | `""` | 事件加密 Key |
+
+### 连接流程
+
+1. `setup()` 验证 `app_id` 和 `app_secret` 非空
+2. `connect()` 创建 lark-oapi Client 和 WebSocket 客户端
+3. `listen()` 在独立线程中启动 SDK WebSocket 监听
+4. 事件回调通过 `run_coroutine_threadsafe` 调度到主事件循环
+
+详见 [Lark 使用指南](<../../guide/2. 适配器/6. Lark.md>)。
 
 ---
 

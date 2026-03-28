@@ -1,0 +1,6 @@
+name = "hello_world_lark"
+version = "1.0.0"
+main = "main.py"
+entry_class = "LarkHelloWorldPlugin"
+author = "NcatBot"
+description = "飞书平台最小可运行插件"

@@ -81,11 +81,12 @@ permalink: /guide/jod8utht/
 from ncatbot.app import BotClient
 from ncatbot.adapter import NapCatAdapter
 from ncatbot.adapter.github import GitHubAdapter
+from ncatbot.adapter.lark import LarkAdapter
 
 bot = BotClient(adapters=[
     NapCatAdapter(),           # platform="qq"
     GitHubAdapter(),           # platform="github"
-    # TelegramAdapter(),       # platform="telegram" (未来)
+    LarkAdapter(),             # platform="lark"
 ])
 bot.run()
 ```
@@ -119,13 +120,14 @@ bot.run()
 await self.api.qq.messaging.send_group_msg(group_id, message)
 await self.api.bilibili.send_danmu(room_id, text)
 await self.api.github.create_issue_comment(repo, issue_number, body)
+await self.api.lark.send_text(chat_id, "hello from lark")
 
 # 方式 2: 动态平台访问（按名称获取）
 client = self.api.platform("qq")        # → IQQAPIClient
 await client.messaging.send_group_msg(group_id, message)
 
 # 方式 3: 查看已注册的平台
-print(self.api.platforms)  # {"qq": <IQQAPIClient>, "bilibili": ..., "github": ...}
+print(self.api.platforms)  # {"qq": <IQQAPIClient>, "bilibili": ..., "github": ..., "lark": ...}
 ```
 
 **选择建议**：

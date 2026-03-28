@@ -35,6 +35,12 @@ BotAPIClient                        ← 多平台路由（纯门面，无业务�
 │   ├── create_issue_comment()      ← 评论
 │   ├── merge_pr()                  ← PR 管理
 │   └── get_repo() ...              ← 信息查询
+├── .lark : LarkBotAPI              ← 飞书平台 API
+│   ├── send_text()                 ← 发送文本
+│   ├── reply_text()                ← 回复文本
+│   ├── send_post()                 ← 发送富文本
+│   ├── upload_file()               ← 上传文件
+│   └── delete_message() ...        ← 撤回消息
 ├── .ai : IAIAPIClient              ← AI 平台 API
 │   ├── chat()                      ← Chat Completion
 │   ├── chat_text()                 ← Chat → 直接返回文本
@@ -90,6 +96,12 @@ BotAPIClient                        ← 多平台路由（纯门面，无业务�
 | 文件 | 说明 |
 |------|------|
 | [GitHub API](<4. GitHub/1. API.md>) | GitHubBotAPI 完整方法签名（Issue / Comment / PR / Query） |
+
+### Lark 平台
+
+| 文件 | 说明 |
+|------|------|
+| [Lark API](<7. Lark/1. API.md>) | LarkBotAPI 完整方法签名（消息 / 富文本 / 文件上传 / 撤回） |
 
 ### AI 平台
 
