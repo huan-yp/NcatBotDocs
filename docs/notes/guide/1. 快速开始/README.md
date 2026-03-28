@@ -83,6 +83,10 @@ ncatbot run
 
 在群聊发送 `hello`，Bot 回复 "Hello from plugin!" 即成功。
 
+如果你想最快的定制你的插件，推荐前往 [AI 开发指南](<../12. 最佳实践/3. AI 辅助开发.md>)，使用 AI Agent 进行插件开发，效率更高。
+
+如果你更喜欢古法编程，请继续阅读本文档。
+
 ### 最小非插件模式
 
 安装 → 写 config.yaml → 写 main.py → 运行：
