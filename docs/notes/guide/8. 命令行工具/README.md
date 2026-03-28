@@ -15,7 +15,7 @@ permalink: /guide/txmbm7xd/
 | 命令 | 说明 |
 |------|------|
 | `ncatbot init [--dir PATH]` | 初始化项目（生成 config.yaml + plugins/ + 模板插件） |
-| `ncatbot run [--debug] [--no-hot-reload]` | 启动 Bot |
+| `ncatbot run [--debug] [--no-hot-reload] [--bot-uin] [--root] [--non-interactive]` | 启动 Bot |
 | `ncatbot dev` | 开发模式启动（debug + 热重载） |
 | `ncatbot` | 进入交互模式（REPL） |
 | **配置管理** | |
