@@ -39,6 +39,8 @@ permalink: /guide/txmbm7xd/
 | **NapCat 管理** | |
 | `ncatbot napcat install [--yes]` | 安装 NapCat + QQ |
 | `ncatbot napcat diagnose [ws\|webui]` | NapCat 连接诊断 |
+| **参考资料** | |
+| `ncatbot ref [--vscode\|--trae\|--cursor]` | 下载 AI 用户参考资料（按 IDE 适配） |
 
 ## 本目录索引
 
