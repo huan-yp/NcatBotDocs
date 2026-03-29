@@ -80,3 +80,4 @@ from ncatbot.service import ServiceManager, BaseService
 |------|------|
 | [1_rbac_service.md](<1. RBAC 服务.md>) | RBACService — 权限路径、角色管理、权限分配与检查、持久化 |
 | [2_config_task_service.md](<2. 配置任务服务.md>) | TimeTaskService / FileWatcherService 详解 + 服务交互流程 |
+| [3_dispatch_filter_service.md](<3. 分发过滤服务.md>) | DispatchFilterService — 按群/用户维度禁用插件或命令 |

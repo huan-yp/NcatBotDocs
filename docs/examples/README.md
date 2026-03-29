@@ -37,6 +37,7 @@
 | 07 | [qa_bot](qq/07_qa_bot/) | 问答机器人（多步对话/关键词匹配/数据持久化） | ⭐⭐⭐ |
 | 08 | [scheduled_reporter](qq/08_scheduled_reporter/) | 定时统计报告（定时任务/合并转发/数据统计） | ⭐⭐⭐ |
 | 09 | [full_featured_bot](qq/09_full_featured_bot/) | 全功能群助手（所有框架特性综合） | ⭐⭐⭐ |
+| 10 | [dispatch_filter](qq/10_dispatch_filter/) | DispatchFilterMixin / !filter 管理命令 / 群禁用插件 | ⭐⭐ |
 
 ### bilibili/ — Bilibili 平台专属
 
