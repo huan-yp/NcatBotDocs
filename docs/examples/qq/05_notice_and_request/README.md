@@ -19,10 +19,10 @@ qq/05_notice_and_request — QQ 通知与请求事件处理
 演示功能:
   - registrar.qq.on_group_increase(): 群成员增加 → 自动欢迎
   - registrar.qq.on_group_decrease(): 群成员减少 → 记录
+  - registrar.qq.on_group_recall(): 消息撤回 → 记录
   - registrar.qq.on_poke(): 戳一戳 → 回戳
   - registrar.qq.on_friend_request(): 好友请求 → 自动通过
   - registrar.qq.on_group_request(): 群请求 → 记录
-  - registrar.on("notice.group_recall"): 消息撤回 → 记录
 
 使用方式: 将本文件夹复制到 plugins/ 目录即可，事件自动触发。
 """
@@ -30,7 +30,9 @@ qq/05_notice_and_request — QQ 通知与请求事件处理
 from ncatbot.core import registrar
 from ncatbot.event.qq import (
     GroupIncreaseEvent,
-    NoticeEvent,
+    GroupDecreaseEvent,
+    GroupRecallEvent,
+    PokeNotifyEvent,
     FriendRequestEvent,
     GroupRequestEvent,
 )
@@ -62,40 +64,36 @@ class NoticeAndRequestPlugin(NcatBotPlugin):
         LOG.info("欢迎新成员 %s 加入群 %s", event.user_id, event.group_id)
 
     @registrar.qq.on_group_decrease()
-    async def on_group_decrease(self, event: NoticeEvent):
+    async def on_group_decrease(self, event: GroupDecreaseEvent):
         """群成员减少 → 记录日志"""
-        sub_type = getattr(event, "sub_type", "unknown")
         LOG.info(
-            "成员 %s 离开了群 %s (类型: %s)", event.user_id, event.group_id, sub_type
+            "成员 %s 离开了群 %s (类型: %s)", event.user_id, event.group_id, event.sub_type
         )
         if event.group_id:
             await self.api.qq.post_group_msg(
                 event.group_id, text=f"成员 {event.user_id} 已离开群聊 👋"
             )
 
-    @registrar.on("notice.group_recall", platform="qq")
-    async def on_group_recall(self, event: NoticeEvent):
+    @registrar.qq.on_group_recall()
+    async def on_group_recall(self, event: GroupRecallEvent):
         """消息撤回 → 记录撤回信息"""
-        operator_id = getattr(event.data, "operator_id", None)
-        message_id = getattr(event.data, "message_id", None)
         LOG.info(
             "群 %s 中用户 %s 的消息 %s 被 %s 撤回",
             event.group_id,
             event.user_id,
-            message_id,
-            operator_id,
+            event.message_id,
+            event.operator_id,
         )
         if event.group_id:
             await self.api.qq.post_group_msg(
                 event.group_id,
-                text=f"有人撤回了一条消息 👀 (操作者: {operator_id})",
+                text=f"有人撤回了一条消息 👀 (操作者: {event.operator_id})",
             )
 
     @registrar.qq.on_poke()
-    async def on_poke(self, event: NoticeEvent):
+    async def on_poke(self, event: PokeNotifyEvent):
         """戳一戳 → 回戳"""
-        target_id = getattr(event.data, "target_id", None)
-        if str(target_id) == str(event.self_id) and event.group_id and event.user_id:
+        if str(event.target_id) == str(event.self_id) and event.group_id and event.user_id:
             await self.api.qq.send_poke(event.group_id, event.user_id)
             LOG.info("被 %s 戳了，已回戳", event.user_id)
 
