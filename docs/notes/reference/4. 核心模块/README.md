@@ -45,6 +45,7 @@ from ncatbot.core import registrar, Hook
 | `on_group_increase()` / `on_group_decrease()` | 群成员变动 |
 | `on_group_recall()` / `on_group_admin()` / `on_group_ban()` | 群管理 |
 | `on_friend_add()` | 好友添加 |
+| `on_group_msg_emoji_like()` | 群消息表情回应 |
 | `on_friend_request()` / `on_group_request()` | 好友/群请求 |
 
 **Bilibili 平台**（`registrar.bilibili.*`）：

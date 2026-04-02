@@ -57,6 +57,7 @@ class HelloPlugin(NcatBotPlugin):
 | `@registrar.on_notice()` | 通知事件 |
 | `@registrar.on_request()` | 请求事件 |
 | `@registrar.qq.on_poke()` | QQ 戳一戳 |
+| `@registrar.qq.on_group_msg_emoji_like()` | QQ 群消息表情回应 |
 | `@registrar.qq.on_group_increase()` | QQ 群成员增加 |
 | `@registrar.qq.on_group_decrease()` | QQ 群成员减少 |
 | `@registrar.qq.on_friend_request()` | QQ 好友请求 |
