@@ -20,7 +20,14 @@ qq/05_notice_and_request — QQ 通知与请求事件处理
   - registrar.qq.on_group_increase(): 群成员增加 → 自动欢迎
   - registrar.qq.on_group_decrease(): 群成员减少 → 记录
   - registrar.qq.on_group_recall(): 消息撤回 → 记录
+  - registrar.qq.on_group_admin(): 管理员变动 → 记录
+  - registrar.qq.on_group_ban(): 禁言 → 记录
+  - registrar.qq.on_friend_add(): 好友已添加 → 记录
   - registrar.qq.on_poke(): 戳一戳 → 回戳
+  - registrar.qq.on_group_msg_emoji_like(): 群消息表情回应 → 记录
+  - registrar.qq.on("notice.group_upload"): 群文件上传 → 记录
+  - registrar.qq.on("notice.friend_recall"): 好友撤回 → 记录
+  - registrar.qq.on("notice.notify"): 运气王/群荣誉 → 记录
   - registrar.qq.on_friend_request(): 好友请求 → 自动通过
   - registrar.qq.on_group_request(): 群请求 → 记录
 
@@ -32,9 +39,17 @@ from ncatbot.event.qq import (
     GroupIncreaseEvent,
     GroupDecreaseEvent,
     GroupRecallEvent,
+    GroupAdminEvent,
+    GroupBanEvent,
+    GroupUploadEvent,
+    FriendAddEvent,
+    FriendRecallEvent,
     PokeNotifyEvent,
+    LuckyKingNotifyEvent,
+    HonorNotifyEvent,
     FriendRequestEvent,
     GroupRequestEvent,
+    GroupMsgEmojiLikeEvent,
 )
 from ncatbot.plugin import NcatBotPlugin
 from ncatbot.types import MessageArray
@@ -96,6 +111,84 @@ class NoticeAndRequestPlugin(NcatBotPlugin):
         if str(event.target_id) == str(event.self_id) and event.group_id and event.user_id:
             await self.api.qq.send_poke(event.group_id, event.user_id)
             LOG.info("被 %s 戳了，已回戳", event.user_id)
+
+    @registrar.qq.on_group_msg_emoji_like()
+    async def on_group_msg_emoji_like(self, event: GroupMsgEmojiLikeEvent):
+        """群消息点赞 → 记录日志"""
+        LOG.info(
+            "群 %s 中用户 %s 对消息 %s 贴了表情点赞 (表情细节: %s)",
+            event.group_id,
+            event.user_id,
+            event.message_id,
+            event.likes,
+        )
+
+    @registrar.qq.on_group_admin()
+    async def on_group_admin(self, event: GroupAdminEvent):
+        """管理员变动 → 记录日志"""
+        LOG.info(
+            "群 %s 管理员变动: 用户 %s, 类型: %s",
+            event.group_id,
+            event.user_id,
+            event.sub_type,
+        )
+
+    @registrar.qq.on_group_ban()
+    async def on_group_ban(self, event: GroupBanEvent):
+        """禁言事件 → 记录日志"""
+        LOG.info(
+            "群 %s 禁言事件: 用户 %s 被 %s %s, 时长: %s 秒",
+            event.group_id,
+            event.user_id,
+            event.operator_id,
+            event.sub_type,
+            event.duration,
+        )
+
+    @registrar.qq.on_friend_add()
+    async def on_friend_add(self, event: FriendAddEvent):
+        """好友已添加 → 记录日志"""
+        LOG.info("新好友已添加: %s", event.user_id)
+
+    @registrar.qq.on("notice.group_upload")
+    async def on_group_upload(self, event: GroupUploadEvent):
+        """群文件上传 → 记录日志"""
+        LOG.info(
+            "群 %s 用户 %s 上传了文件: %s (大小: %s)",
+            event.group_id,
+            event.user_id,
+            event.file.name,
+            event.file.size,
+        )
+
+    @registrar.qq.on("notice.friend_recall")
+    async def on_friend_recall(self, event: FriendRecallEvent):
+        """好友消息撤回 → 记录日志"""
+        LOG.info("好友 %s 撤回了消息 %s", event.user_id, event.message_id)
+
+    @registrar.qq.on("notice.notify")
+    async def on_lucky_king(self, event: LuckyKingNotifyEvent):
+        """运气王 → 记录日志（通过 sub_type 手动过滤）"""
+        if event.sub_type != "lucky_king":
+            return
+        LOG.info(
+            "群 %s 运气王: 用户 %s, 运气王: %s",
+            event.group_id,
+            event.user_id,
+            event.target_id,
+        )
+
+    @registrar.qq.on("notice.notify")
+    async def on_honor(self, event: HonorNotifyEvent):
+        """群荣誉变更 → 记录日志（通过 sub_type 手动过滤）"""
+        if event.sub_type != "honor":
+            return
+        LOG.info(
+            "群 %s 荣誉变更: 用户 %s, 荣誉类型: %s",
+            event.group_id,
+            event.user_id,
+            event.honor_type,
+        )
 
     # ==================== 请求事件 ====================
 

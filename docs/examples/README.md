@@ -32,7 +32,7 @@
 | 02 | [event_handling](qq/02_event_handling/) | 三种事件消费模式（装饰器/事件流/wait_event） | ⭐ |
 | 03 | [message_types](qq/03_message_types/) | MessageArray 链式构造、图文混排、合并转发 | ⭐ |
 | 04 | [bot_api](qq/04_bot_api/) | self.api.qq 消息发送、群管理、信息查询 | ⭐ |
-| 05 | [notice_and_request](qq/05_notice_and_request/) | 通知与请求事件（入群/退群/好友/撤回/戳） | ⭐⭐ |
+| 05 | [notice_and_request](qq/05_notice_and_request/) | 通知与请求事件（入群/退群/管理员/禁言/好友/撤回/戳/文件上传/运气王/荣誉） | ⭐⭐ |
 | 06 | [group_manager](qq/06_group_manager/) | 群管理机器人（踢/禁言/欢迎/RBAC） | ⭐⭐⭐ |
 | 07 | [qa_bot](qq/07_qa_bot/) | 问答机器人（多步对话/关键词匹配/数据持久化） | ⭐⭐⭐ |
 | 08 | [scheduled_reporter](qq/08_scheduled_reporter/) | 定时统计报告（定时任务/合并转发/数据统计） | ⭐⭐⭐ |

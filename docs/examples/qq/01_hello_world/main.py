@@ -49,6 +49,12 @@ class HelloWorldPlugin(NcatBotPlugin):
         """收到私聊消息 'hello' 时回复"""
         await event.reply(text="你好！这是来自 HelloWorld 插件的私聊回复 👋")
 
+    @registrar.qq.on_command("common")
+    async def on_common(self, event: GroupMessageEvent):
+        """群聊和私聊通用命令示例（'common'）"""
+        await event.reply(
+            "通过 on_command 可与同时监听群消息和私聊消息"
+        )
     # ---- echo: 自动参数绑定（推荐） ----
     # 实现含参数命令时，建议使用自动参数绑定，框架自动提取并转换参数，
     # 无需手动解析消息。上方 hello / hi 是无参数命令的示例。

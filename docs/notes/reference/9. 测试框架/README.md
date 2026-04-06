@@ -32,7 +32,7 @@ from ncatbot.testing.factories import qq, bilibili, github
 
 | 平台 | 模块 | 工厂函数 |
 |------|------|---------|
-| QQ | `factories.qq` | `group_message`, `private_message`, `friend_request`, `group_request`, `group_increase`, `group_decrease`, `group_ban`, `poke` |
+| QQ | `factories.qq` | `group_message`, `private_message`, `friend_request`, `group_request`, `napcat_comment`, `group_increase`, `group_decrease`, `group_ban`, `group_msg_emoji_like`, `poke`, `group_upload`, `group_admin`, `friend_add`, `group_recall`, `friend_recall`, `lucky_king`, `honor` |
 | Bilibili | `factories.bilibili` | `danmu`, `super_chat`, `gift`, `private_message`, `comment`, `dynamic` |
 | GitHub | `factories.github` | `issue_opened`, `issue_closed`, `issue_comment`, `pr_opened`, `push`, `star`, `release_published` |
 

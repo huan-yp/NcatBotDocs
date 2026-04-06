@@ -14,12 +14,10 @@ qq/02_event_handling — QQ 事件处理三模式
 
 import asyncio
 
-from ncatbot.core import registrar
+from ncatbot.core import registrar, from_event
 from ncatbot.event.qq import GroupMessageEvent
 from ncatbot.plugin import NcatBotPlugin
 from ncatbot.utils import get_log
-
-LOG = get_log("EventHandling")
 
 
 class EventHandlingPlugin(NcatBotPlugin):
@@ -29,45 +27,28 @@ class EventHandlingPlugin(NcatBotPlugin):
     description = "QQ 事件处理三模式演示"
 
     async def on_load(self):
-        LOG.info("EventHandling 插件已加载")
-        self._stream_task = asyncio.create_task(self._stream_listener())
+        self.logger.info("EventHandling 插件已加载") # 也可以用 self.logger 记录日志
 
     async def on_close(self):
-        if hasattr(self, "_stream_task"):
-            self._stream_task.cancel()
-
-    # ==================== 模式 A: 命令装饰器 ====================
-
-    @registrar.qq.on_group_command("ping", priority=10)
-    async def on_ping(self, event: GroupMessageEvent):
-        """高优先级：群里发 'ping' 回复 'pong'"""
-        await event.reply("pong 🏓")
-
-    @registrar.qq.on_group_command("状态", priority=0)
-    async def on_status(self, event: GroupMessageEvent):
-        """低优先级：群里发 '状态' 回复插件状态"""
-        await event.reply("EventHandling 插件运行中 ✅")
-
-    # ==================== 模式 B: 事件流 ====================
-
-    async def _stream_listener(self):
-        """后台事件流: 监听所有私聊消息并记录日志"""
-        try:
-            async with self.events("message") as stream:
-                async for event in stream:
-                    if (
-                        getattr(event.data, "message_type", None)
-                        and event.data.message_type.value == "private"
-                    ):
-                        LOG.info(
-                            "[事件流] 收到私聊消息: %s (来自 %s)",
-                            event.data.raw_message,
-                            event.data.user_id,
-                        )
-        except asyncio.CancelledError:
-            pass
+        self.logger.info("EventHandling 插件已卸载。")
 
     # ==================== 模式 C: wait_event ====================
+    @registrar.qq.on_group_command("下一条")
+    async def on_wait_next(self, event: GroupMessageEvent):
+        """收到 '下一条' → 等待用户在同一会话中 30 秒内发送任意消息 → 回复消息内容"""
+        """'同一会话' 指的是同一个用户在同一个群里发消息（或同一个用户的私聊消息）"""
+        """对其它事件处理无任何干扰"""
+        await event.reply("请在 30 秒内发送任意消息，我会回复你的下一条消息内容...")
+
+        try:
+            next_event = await self.wait_event(
+                predicate=from_event(event),
+                timeout=30.0,
+            )
+            assert isinstance(next_event, GroupMessageEvent)  # 类型断言，方便 IDE 提示
+            await event.reply(f"你刚才发的消息是: {next_event.raw_message}")
+        except asyncio.TimeoutError:
+            await event.reply("等待超时，你没有发送消息 ⏰")
 
     @registrar.qq.on_group_command("确认测试")
     async def on_confirm_test(self, event: GroupMessageEvent):
