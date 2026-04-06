@@ -6,4 +6,4 @@ title: AI 平台 API
 
 | 文件 | 说明 |
 |------|------|
-| [1. API](<1. API.md>) | IAIAPIClient 完整方法签名（Chat / Embeddings / Image Generation） |
+| [1. API](<1. API.md>) | IAIAPIClient 完整方法签名（Chat / Embeddings / Image Generation / ASR） |
