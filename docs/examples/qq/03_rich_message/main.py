@@ -3,7 +3,7 @@ qq/03_rich_message — QQ 富文本消息发送演示
 
 演示功能:
   - MessageArray 链式构造     图文 → text + image
-  - 各类常用消息段              At, Face, Image, Video, File, Record
+  - 各类常用消息段              At, Reply, Face, Image, Video, File, Record
   - event.reply()             快速回复
   - Sugar 发送接口             send_group_text, send_group_image, ...
   - 底层 API                  post_group_msg / post_group_array_msg
@@ -25,6 +25,7 @@ from ncatbot.core import registrar
 from ncatbot.event.qq import GroupMessageEvent
 from ncatbot.plugin import NcatBotPlugin
 from ncatbot.types import MessageArray
+from ncatbot.types.qq import Face
 from ncatbot.utils import get_log
 
 LOG = get_log("RichMessage")
@@ -58,7 +59,32 @@ class RichMessagePlugin(NcatBotPlugin):
         await event.reply(msg)
 
     # ================================================================
-    # 2. send_group_image — Sugar 发送图片
+    # 2. MessageArray — Reply / Face / Record 消息段
+    # ================================================================
+    # add_reply: 引用回复指定消息
+    # add_segment: 添加任意消息段，如 Face（QQ 表情）
+    # Record 语音段通过 send_group_record Sugar 发送（见下方）
+
+    @registrar.qq.on_group_command("回复")
+    async def on_reply(self, event: GroupMessageEvent):
+        """MessageArray — Reply 消息段（引用回复）"""
+        msg = MessageArray()
+        msg.add_reply(event.message_id)         # 引用原消息
+        msg.add_text("已收到你的消息！这是引用回复 ↩️")
+        await event.reply(msg)
+
+    @registrar.qq.on_group_command("表情段")
+    async def on_face(self, event: GroupMessageEvent):
+        """MessageArray — Face 消息段（QQ 表情）"""
+        msg = MessageArray()
+        msg.add_text("发送一个 QQ 表情：")
+        msg.add_segment(Face(id="178"))         # 178 = 喝彩 表情
+        msg.add_text(" ")
+        msg.add_segment(Face(id="66"))          # 66 = 爱心 表情
+        await event.reply(msg)
+
+    # ================================================================
+    # 3. send_group_image — Sugar 发送图片
     # ================================================================
     # Sugar 方法是对底层 API 的便捷封装，一行代码即可发送单类型消息。
 
@@ -71,7 +97,20 @@ class RichMessagePlugin(NcatBotPlugin):
         )
 
     # ================================================================
-    # 3. send_group_video — Sugar 发送视频
+    # 4. send_group_record — Sugar 发送语音
+    # ================================================================
+
+    @registrar.qq.on_group_command("语音")
+    async def on_record(self, event: GroupMessageEvent):
+        """Sugar — send_group_record 发送语音"""
+        record_path = RESOURCE_DIR / "sample.mp3"
+        if record_path.exists():
+            await self.api.qq.send_group_record(event.group_id, str(record_path))
+        else:
+            await event.reply(text="请将 sample.mp3 放入 resources/ 目录后重试")
+
+    # ================================================================
+    # 5. send_group_video — Sugar 发送视频
     # ================================================================
 
     @registrar.qq.on_group_command("视频")
@@ -86,7 +125,7 @@ class RichMessagePlugin(NcatBotPlugin):
             await event.reply(text="请将 sample.mp4 放入 resources/ 目录后重试")
 
     # ================================================================
-    # 4. send_group_file — Sugar 发送文件
+    # 6. send_group_file — Sugar 发送文件
     # ================================================================
 
     @registrar.qq.on_group_command("文件")
@@ -101,7 +140,7 @@ class RichMessagePlugin(NcatBotPlugin):
             await event.reply(text="请将 sample.pdf 放入 resources/ 目录后重试")
 
     # ================================================================
-    # 5. At 消息段 — MessageArray 构造
+    # 7. At 消息段 — MessageArray 构造
     # ================================================================
     # At 段用于在群聊中 @某人。通过 add_at 添加。
 
@@ -114,7 +153,7 @@ class RichMessagePlugin(NcatBotPlugin):
         await event.reply(msg)
 
     # ================================================================
-    # 6. send_group_sticker — Sugar 发送表情贴纸
+    # 8. send_group_sticker — Sugar 发送表情贴纸
     # ================================================================
 
     @registrar.qq.on_group_command("表情")
@@ -127,7 +166,7 @@ class RichMessagePlugin(NcatBotPlugin):
             await event.reply(text="请将 sticker.png 放入 resources/ 目录后重试")
 
     # ================================================================
-    # 7. send_poke — Sugar 戳一戳
+    # 9. send_poke — Sugar 戳一戳
     # ================================================================
 
     @registrar.qq.on_group_command("戳我")
@@ -136,7 +175,7 @@ class RichMessagePlugin(NcatBotPlugin):
         await self.api.qq.send_poke(event.group_id, event.user_id)
 
     # ================================================================
-    # 8. 语法糖大全 — 一次展示多种 Sugar 方法
+    # 10. 语法糖大全 — 一次展示多种 Sugar 方法
     # ================================================================
 
     @registrar.qq.on_group_command("语法糖")
@@ -163,7 +202,7 @@ class RichMessagePlugin(NcatBotPlugin):
         )
 
     # ================================================================
-    # 9. 底层 API — post_group_msg vs post_group_array_msg
+    # 11. 底层 API — post_group_msg vs post_group_array_msg
     # ================================================================
     # post_group_msg:      发送纯文本消息（text 参数）
     # post_group_array_msg: 发送 MessageArray 构造的富文本消息

@@ -149,10 +149,26 @@ class ForwardMessagePlugin(NcatBotPlugin):
         await self.api.qq.post_group_forward_msg(event.group_id, forward)
 
     # ================================================================
+    # 5. 按消息 ID 转发 — send_group_forward_msg_by_id
+    # ================================================================
+    # 如果不需要重新构造消息内容，可以直接通过历史消息 ID
+    # 将已有消息打包转发。适用于"帮我把这几条消息转发到某群"的场景。
+
+    @registrar.qq.on_group_command("ID转发", aliases=["id转发"])
+    async def on_forward_by_id(self, event: GroupMessageEvent):
+        """按消息 ID 转发 — 将历史消息直接打包转发"""
+
+        # 教学说明：实际场景中 message_ids 可来自用户输入或历史记录查询
+        # 这里用当前消息 ID 做演示
+        message_ids = [event.message_id]
+
+        await self.api.qq.send_group_forward_msg_by_id(
+            event.group_id, message_ids
+        )
+
+    # ================================================================
     # 补充说明
     # ================================================================
     # 1. 私聊版：post_private_forward_msg 用法完全相同，只是目标改为 user_id
-    # 2. 按消息 ID 转发：send_group_forward_msg_by_id(group_id, [msg_id1, msg_id2])
-    #    适用于将已有的历史消息打包转发，不需要构造 ForwardConstructor
-    # 3. 查询已有转发：self.api.qq.query.get_forward_msg(message_id)
+    # 2. 查询已有转发：self.api.qq.query.get_forward_msg(message_id)
     #    获取一条转发消息的展开内容
