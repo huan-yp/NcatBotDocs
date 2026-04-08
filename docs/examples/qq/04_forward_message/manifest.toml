@@ -1,0 +1,6 @@
+name = "forward_message_qq"
+version = "1.0.0"
+main = "main.py"
+entry_class = "ForwardMessagePlugin"
+author = "NcatBot"
+description = "QQ 合并转发消息演示"
