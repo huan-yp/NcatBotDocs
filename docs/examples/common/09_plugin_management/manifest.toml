@@ -1,0 +1,6 @@
+name = "plugin_management_demo"
+version = "1.0.0"
+main = "main.py"
+entry_class = "PluginManagementPlugin"
+author = "NcatBot"
+description = "插件管理示例 — 动态加载/卸载、生命周期回调与状态持久化"

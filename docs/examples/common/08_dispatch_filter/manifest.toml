@@ -1,0 +1,6 @@
+name = "dispatch_filter_demo"
+version = "1.0.0"
+main = "main.py"
+entry_class = "DispatchFilterPlugin"
+author = "NcatBot"
+description = "分发过滤示例 — 群级/用户级/命令级禁用与管理命令封装"
