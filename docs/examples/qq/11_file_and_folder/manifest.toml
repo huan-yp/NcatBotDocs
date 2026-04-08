@@ -1,0 +1,6 @@
+name = "file_and_folder_qq"
+version = "1.0.0"
+main = "main.py"
+entry_class = "FileAndFolderPlugin"
+author = "NcatBot"
+description = "QQ 文件上传与群文件夹管理演示"

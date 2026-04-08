@@ -1,0 +1,6 @@
+name = "info_query_qq"
+version = "1.0.0"
+main = "main.py"
+entry_class = "InfoQueryPlugin"
+author = "NcatBot"
+description = "QQ 信息查询助手"
