@@ -1,6 +1,0 @@
-name = "session_helpers"
-version = "1.0.0"
-main = "main.py"
-entry_class = "SessionHelpersPlugin"
-author = "NcatBot"
-description = "Session 便利方法演示（跨平台）"
