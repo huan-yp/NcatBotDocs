@@ -18,26 +18,35 @@
 | 03 | [hook_and_filter](common/03_hook_and_filter/) | Hook 系统（BEFORE/AFTER/ON_ERROR）、add_hooks | ⭐⭐ |
 | 04 | [rbac](common/04_rbac/) | RBAC 权限管理（角色/权限/检查） | ⭐⭐ |
 | 05 | [scheduled_tasks](common/05_scheduled_tasks/) | 定时任务（多种时间格式/条件执行） | ⭐⭐ |
-| 06 | [multi_step_dialog](common/06_multi_step_dialog/) | 多步对话（from_event/超时/取消） | ⭐⭐ |
-| 07 | [external_api](common/07_external_api/) | 外部 API 集成（aiohttp/配置/错误处理） | ⭐⭐ |
-| 08 | [command_group](common/08_command_group/) | 命令组分层路由（CommandGroupHook/子命令/参数绑定） | ⭐⭐ |
+| 06 | [external_api](common/06_external_api/) | 外部 API 集成（aiohttp/配置/错误处理） | ⭐⭐ |
+| 07 | [command_group](common/07_command_group/) | 命令组分层路由（CommandGroupHook/子命令/参数绑定） | ⭐⭐ |
+| 08 | [dispatch_filter](common/08_dispatch_filter/) | DispatchFilterMixin 群/用户/命令级禁用管理 | ⭐⭐ |
+| 09 | [plugin_management](common/09_plugin_management/) | 插件动态加载、卸载、生命周期状态持久化 | ⭐⭐ |
 
 ### qq/ — QQ 平台专属
 
 使用 `registrar.qq.*` 平台子注册器和 QQ 专用事件/API。
 
+**基础层**（01-07）：建立命令、事件、消息、会话的核心心智模型。
+
 | # | 插件 | 演示功能 | 难度 |
 |---|------|---------|------|
-| 01 | [hello_world](qq/01_hello_world/) | registrar.qq 注册、群/私聊命令、参数绑定 vs 手动解析 | ⭐ |
-| 02 | [event_handling](qq/02_event_handling/) | 三种事件消费模式（装饰器/事件流/wait_event） | ⭐ |
-| 03 | [message_types](qq/03_message_types/) | MessageArray 链式构造、图文混排、合并转发 | ⭐ |
-| 04 | [bot_api](qq/04_bot_api/) | self.api.qq 消息发送、群管理、信息查询 | ⭐ |
-| 05 | [notice_and_request](qq/05_notice_and_request/) | 通知与请求事件（入群/退群/管理员/禁言/好友/撤回/戳/文件上传/运气王/荣誉） | ⭐⭐ |
-| 06 | [group_manager](qq/06_group_manager/) | 群管理机器人（踢/禁言/欢迎/RBAC） | ⭐⭐⭐ |
-| 07 | [qa_bot](qq/07_qa_bot/) | 问答机器人（多步对话/关键词匹配/数据持久化） | ⭐⭐⭐ |
-| 08 | [scheduled_reporter](qq/08_scheduled_reporter/) | 定时统计报告（定时任务/合并转发/数据统计） | ⭐⭐⭐ |
-| 09 | [full_featured_bot](qq/09_full_featured_bot/) | 全功能群助手（所有框架特性综合） | ⭐⭐⭐ |
-| 10 | [dispatch_filter](qq/10_dispatch_filter/) | DispatchFilterMixin / !filter 管理命令 / 群禁用插件 | ⭐⭐ |
+| 01 | [event_registration](qq/01_event_registration/) | 事件注册方式（on_command/on_message/on_notice/on_request/priority/ignore_case） | ⭐ |
+| 02 | [command_binding](qq/02_command_binding/) | 命令参数绑定（str/int/float/At/Reply/Image/Optional/aliases/shlex） | ⭐ |
+| 03 | [rich_message](qq/03_rich_message/) | 富文本消息三路径（MessageArray/Sugar/底层 API） | ⭐ |
+| 04 | [forward_message](qq/04_forward_message/) | 合并转发（ForwardConstructor/set_author/嵌套转发） | ⭐ |
+| 05 | [notice_and_request](qq/05_notice_and_request/) | 通知与请求事件（入群/退群/撤回/戳/表情回应/好友/群请求） | ⭐⭐ |
+| 06 | [session_basics](qq/06_session_basics/) | 会话等待与过滤（wait_session_reply/SessionResult/谓词组合） | ⭐⭐ |
+| 07 | [dialog_and_menu](qq/07_dialog_and_menu/) | 多步对话与菜单（session_prompt/session_choose/嵌套菜单） | ⭐⭐ |
+
+**场景层**（08-11）：用完整小助手串联真实使用场景。
+
+| # | 插件 | 演示功能 | 难度 |
+|---|------|---------|------|
+| 08 | [receive_attachment](qq/08_receive_attachment/) | 消息解析与附件处理（filter/Attachment/download/is_at） | ⭐⭐ |
+| 09 | [group_admin](qq/09_group_admin/) | 群管理助手（踢/禁言/名片/头衔/公告/精华/RBAC） | ⭐⭐⭐ |
+| 10 | [info_query](qq/10_info_query/) | 信息查询助手（群/成员/消息/好友/公告/精华） | ⭐⭐ |
+| 11 | [file_and_folder](qq/11_file_and_folder/) | 文件上传与群文件夹管理（upload/download/folder/转存） | ⭐⭐⭐ |
 
 ### bilibili/ — Bilibili 平台专属
 
@@ -97,7 +106,7 @@
 
 ```text
 plugins/
-├── qq_01_hello_world/      # 从 examples/qq/01_hello_world/ 复制
+├── qq_01_event_registration/   # 从 examples/qq/01_event_registration/ 复制
 │   ├── manifest.toml
 │   └── main.py
 ```
@@ -109,30 +118,48 @@ plugins/
 | 框架功能 | 覆盖插件 |
 |---------|---------|
 | NcatBotPlugin + manifest.toml | 全部 |
-| on_load / on_close 生命周期 | common/01, common/02, qq/09 |
+| on_load / on_close 生命周期 | common/01, common/02, common/09 |
 | registrar.on_*() 通用装饰器 | common/* |
 | registrar.qq.* 子注册器 | qq/* |
-| CommandHook 参数绑定 | common/01, qq/01, ai/01, qq/04, common/02, common/03 |
 | registrar.bilibili.* 子注册器 | bilibili/* |
 | registrar.github.* 子注册器 | github/* |
 | registrar.lark.* 子注册器 | lark/* |
-| EventMixin.events() 事件流 | qq/02 |
-| EventMixin.wait_event() | qq/02, common/06, qq/07 |
+| CommandHook 参数绑定 | qq/02, common/01, common/07, ai/01 |
+| on_command / on_group_command / on_private_command | qq/01, qq/02 |
+| on_message / on_group_message / on_private_message | qq/01 |
+| on_notice / on_request + 细粒度装饰器 | qq/01, qq/05 |
+| priority / ignore_case | qq/01, qq/02 |
 | MessageArray 链式构造 | qq/03, qq/08 |
-| Forward / ForwardConstructor | qq/03, qq/08 |
-| self.api.qq.* | qq/01–09 |
+| Sugar 发送方法 (send_group_text / image / file 等) | qq/03 |
+| Forward / ForwardConstructor | qq/04 |
+| 通知事件 (increase/decrease/recall/poke/emoji_like) | qq/05 |
+| 请求事件 (friend_request/group_request) | qq/05 |
+| wait_session_reply / wait_session_event | qq/06, qq/07 |
+| SessionResult (ok/text/timed_out/cancelled) | qq/06, qq/07 |
+| session_prompt / session_choose | qq/07 |
+| 谓词 (from_event/has_keyword/msg_in/msg_matches) | qq/06 |
+| 谓词组合运算 (& \| ~) | qq/06 |
+| MessageArray.filter / filter_text / filter_at / filter_image | qq/08 |
+| Attachment (download/as_bytes/to_segment) | qq/08, qq/11 |
+| event.message.text / is_at 消息解析 | qq/08 |
+| 群管理 API (kick/ban/admin/card/title/notice/essence) | qq/09 |
+| 信息查询 API (group/member/friend/login/history) | qq/10 |
+| 文件 API (upload/download/folder/file_url) | qq/11 |
+| self.api.qq.* | qq/01–11 |
 | self.api.bilibili.* | bilibili/01–07 |
 | self.api.github.* | github/01–02, cross_platform/03 |
 | self.api.lark.* | lark/01 |
 | self.api.ai.* | ai/01 |
-| ConfigMixin | common/02, qq/06, common/07, qq/09, cross_platform/03 |
-| DataMixin | common/02, common/06, qq/07, qq/08, qq/09 |
-| RBACMixin | common/04, qq/06, qq/09 |
-| TimeTaskMixin | common/05, qq/08, qq/09 |
+| ConfigMixin | common/02, common/06, qq/09 |
+| DataMixin | common/02, common/09, qq/07 |
+| RBACMixin | common/04, qq/09 |
+| TimeTaskMixin | common/05 |
+| DispatchFilterMixin | common/08 |
+| 插件动态管理 | common/09 |
 | Hook（自定义） | common/03 |
+| CommandGroupHook 命令组 | common/07 |
 | Trait 跨平台编程 | common/01, cross_platform/02 |
 | 多平台适配器 | cross_platform/01, cross_platform/03 |
 | 跨平台双向桥接 | cross_platform/03 |
-| 多步对话 | common/06, qq/07 |
-| 外部 HTTP API | common/07 |
+| 外部 HTTP API | common/06 |
 | MessageArray.filter(Json) 小程序卡片解析 | bilibili/06 |
