@@ -1,0 +1,6 @@
+name = "receive_attachment_qq"
+version = "1.0.0"
+main = "main.py"
+entry_class = "ReceiveAttachmentPlugin"
+author = "NcatBot"
+description = "QQ 消息接收与附件处理演示"

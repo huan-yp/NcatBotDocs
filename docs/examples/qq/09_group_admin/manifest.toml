@@ -1,0 +1,6 @@
+name = "group_admin_qq"
+version = "1.0.0"
+main = "main.py"
+entry_class = "GroupAdminPlugin"
+author = "NcatBot"
+description = "QQ 群管理小助手"
