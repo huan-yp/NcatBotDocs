@@ -1,0 +1,6 @@
+name = "dialog_and_menu_qq"
+version = "1.0.0"
+main = "main.py"
+entry_class = "DialogAndMenuPlugin"
+author = "NcatBot"
+description = "QQ 多步对话与菜单交互演示"

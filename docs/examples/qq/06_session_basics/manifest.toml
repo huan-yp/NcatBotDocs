@@ -1,0 +1,6 @@
+name = "session_basics_qq"
+version = "1.0.0"
+main = "main.py"
+entry_class = "SessionBasicsPlugin"
+author = "NcatBot"
+description = "QQ 会话等待与过滤基础"
