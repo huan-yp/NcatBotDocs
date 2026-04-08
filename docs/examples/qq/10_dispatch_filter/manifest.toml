@@ -1,6 +1,0 @@
-name = "dispatch_filter_qq"
-version = "1.0.0"
-main = "main.py"
-entry_class = "DispatchFilterPlugin"
-author = "NcatBot"
-description = "分发过滤演示 — 按群/用户禁用插件或命令（QQ）"

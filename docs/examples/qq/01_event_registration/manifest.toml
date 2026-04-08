@@ -1,0 +1,6 @@
+name = "event_registration_qq"
+version = "1.0.0"
+main = "main.py"
+entry_class = "EventRegistrationPlugin"
+author = "NcatBot"
+description = "QQ 事件注册方式演示"

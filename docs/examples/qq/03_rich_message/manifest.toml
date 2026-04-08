@@ -1,0 +1,6 @@
+name = "rich_message_qq"
+version = "1.0.0"
+main = "main.py"
+entry_class = "RichMessagePlugin"
+author = "NcatBot"
+description = "QQ 富文本消息发送演示"

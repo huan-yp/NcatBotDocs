@@ -1,0 +1,6 @@
+name = "command_binding_qq"
+version = "1.0.0"
+main = "main.py"
+entry_class = "CommandBindingPlugin"
+author = "NcatBot"
+description = "QQ 命令参数绑定体系演示"
