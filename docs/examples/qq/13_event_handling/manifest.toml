@@ -1,0 +1,6 @@
+name = "event_handling_qq"
+version = "1.0.0"
+main = "main.py"
+entry_class = "EventHandlingPlugin"
+author = "NcatBot"
+description = "QQ 事件处理示例 — 装饰器命令、事件流、wait_event"

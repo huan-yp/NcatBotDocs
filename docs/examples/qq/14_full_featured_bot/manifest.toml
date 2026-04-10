@@ -1,0 +1,6 @@
+name = "full_featured_bot_qq"
+version = "1.0.0"
+main = "main.py"
+entry_class = "FullFeaturedPlugin"
+author = "NcatBot"
+description = "QQ 多功能 Bot 示例 — 签到/积分/关键词/配置/帮助"
