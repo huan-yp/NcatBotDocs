@@ -31,6 +31,11 @@ ncatbot adapter disable <type>    # 禁用适配器
 ncatbot adapter status            # 查看已配置适配器状态
 ```
 
+`ncatbot init` 同样支持多适配器选择——通过 checkbox 多选后，依次调用各适配器的 `cli_configure()` 钩子完成配置。部分适配器含智能跳过逻辑：
+
+- **NapCat**：选择自动安装时跳过 WS/WebUI 地址输入（启动时自动配置）
+- **Bilibili**：选择扫码登录时跳过 sessdata 等凭据手动输入（扫码自动获取）
+
 完整 CLI 命令说明见 [CLI 命令详解](<../8. 命令行工具/1. 命令.md>)。
 
 也可以直接编辑 `config.yaml` 的 `adapters` 列表：

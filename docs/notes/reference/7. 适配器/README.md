@@ -59,6 +59,18 @@ graph LR
 | `get_api` | `() → IAPIClient` | *abstract* — 返回 API 客户端 |
 | `connected` | `@property → bool` | *abstract* — 连接状态 |
 | `set_event_callback` | `(callback) → None` | 设置事件数据回调 |
+| `cli_configure` | `@classmethod () → Dict[str, Any]` | CLI 交互式配置钩子（`ncatbot init` / `adapter enable` 调用） |
+
+### cli_configure — CLI 配置钩子
+
+`BaseAdapter.cli_configure()` 是各适配器为 CLI 命令（`ncatbot init`、`ncatbot adapter enable`）提供的交互式配置入口。子类覆盖此方法以实现平台特有的配置流程，返回可序列化到 `config.yaml` 中 `adapters[].config` 的字典。
+
+| 适配器 | 交互流程 | 智能跳过逻辑 |
+|--------|---------|-------------|
+| NapCat | 询问是否自动安装 → WS/WebUI 配置 | 选择自动安装时跳过 WS/WebUI 输入，使用默认值（启动时 `configure_all()` 自动配置） |
+| Bilibili | 询问是否扫码登录 → 凭据/数据源配置 | 选择扫码时跳过 sessdata 等凭据手动输入（扫码自动获取） |
+| GitHub | Token → 仓库 → 模式（Webhook/Polling） | — |
+| Lark | App ID → App Secret | — |
 
 ### AdapterRegistry 方法
 
