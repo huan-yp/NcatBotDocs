@@ -32,10 +32,7 @@ permalink: /guide/txmbm7xd/
 | `ncatbot plugin remove <name>` | 删除插件 |
 | `ncatbot plugin on` / `off` | 全局开关插件加载 |
 | **适配器管理** | |
-| `ncatbot adapter list` | 列出可用适配器及启用状态 |
-| `ncatbot adapter enable <type>` | 交互式启用适配器 |
-| `ncatbot adapter disable <type>` | 禁用适配器 |
-| `ncatbot adapter status` | 显示已配置适配器状态摘要 |
+| `ncatbot adapter` | 进入副屏交互式适配器管理（启用/禁用/配置） |
 | **NapCat 管理** | |
 | `ncatbot napcat install [--yes]` | 安装 NapCat + QQ |
 | `ncatbot napcat diagnose [ws\|webui]` | NapCat 连接诊断 |

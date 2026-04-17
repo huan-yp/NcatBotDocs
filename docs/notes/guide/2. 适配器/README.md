@@ -24,14 +24,12 @@ permalink: /guide/vagz7643/
 推荐使用 CLI 管理适配器：
 
 ```bash
-ncatbot adapter list              # 查看可用适配器及启用状态
-ncatbot adapter enable bilibili   # 交互式启用（Bilibili 扫码登录）
-ncatbot adapter enable github     # 交互式启用（GitHub 填写 PAT）
-ncatbot adapter disable <type>    # 禁用适配器
-ncatbot adapter status            # 查看已配置适配器状态
+ncatbot adapter                   # 进入副屏交互式管理（启用/禁用/配置一站式完成）
 ```
 
-`ncatbot init` 同样支持多适配器选择——通过 checkbox 多选后，依次调用各适配器的 `cli_configure()` 钩子完成配置。部分适配器含智能跳过逻辑：
+副屏中 ↑/↓ 移动光标，空格切换启用/禁用，Enter 进入配置流程，q 保存退出。
+
+`ncatbot init` 的适配器配置也使用相同的副屏交互界面。部分适配器含智能跳过逻辑：
 
 - **NapCat**：选择自动安装时跳过 WS/WebUI 地址输入（启动时自动配置）
 - **Bilibili**：选择扫码登录时跳过 sessdata 等凭据手动输入（扫码自动获取）
