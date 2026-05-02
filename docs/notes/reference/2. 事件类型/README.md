@@ -45,7 +45,7 @@ from ncatbot.event.qq import GroupMessageEvent, PrivateMessageEvent, NoticeEvent
 | 事件类 | Trait 组合 | 关键属性 |
 |--------|-----------|----------|
 | `MessageEvent` | Replyable, Deletable, HasSender | `message_id`, `message`, `raw_message` |
-| `GroupMessageEvent` | + GroupScoped, Kickable, Bannable | `group_id`, `anonymous` |
+| `GroupMessageEvent` | + GroupScoped, Kickable, Bannable | `group_id`, `group_name?`, `anonymous` |
 | `PrivateMessageEvent` | *(同 MessageEvent)* | — |
 | `NoticeEvent` | HasSender, GroupScoped | `notice_type`, `group_id?` |
 | `GroupIncreaseEvent` | + Kickable | `sub_type`, `operator_id` |
