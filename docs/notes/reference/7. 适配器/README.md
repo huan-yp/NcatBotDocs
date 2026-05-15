@@ -11,7 +11,7 @@ permalink: /reference/qd57aoql/
 ## Quick Reference
 
 ```python
-from ncatbot.adapter import BaseAdapter, NapCatAdapter, MockAdapter
+from ncatbot.adapter import BaseAdapter, NapCatAdapter, SnowLumaAdapter, MockAdapter
 from ncatbot.adapter.bilibili import BilibiliAdapter
 from ncatbot.adapter.github import GitHubAdapter
 from ncatbot.adapter.lark import LarkAdapter
@@ -22,6 +22,7 @@ from ncatbot.adapter.lark import LarkAdapter
 | 适配器 | `platform` | 协议 | 用途 | 使用指南 |
 |---|---|---|---|---|
 | `NapCatAdapter` | `"qq"` | OneBot v11 (WebSocket) | QQ 群聊/私聊 Bot | [NapCat 指南](<../../guide/2. 适配器/1. NapCat QQ.md>) |
+| `SnowLumaAdapter` | `"qq"` | OneBot v11 (WebSocket) | 独立 OneBot v11 协议端 / QQ Bot | [SnowLuma 指南](<../../guide/2. 适配器/7. SnowLuma QQ.md>) |
 | `BilibiliAdapter` | `"bilibili"` | bilibili-api-python | 直播弹幕 / 私信 / 评论 | [Bilibili 指南](<../../guide/2. 适配器/2. Bilibili.md>) |
 | `GitHubAdapter` | `"github"` | Webhook / REST Polling | Issue/PR/Push 事件处理 | [GitHub 指南](<../../guide/2. 适配器/3. GitHub.md>) |
 | `LarkAdapter` | `"lark"` | lark-oapi SDK (WebSocket) | 飞书群聊/私聊 Bot | [Lark 指南](<../../guide/2. 适配器/6. Lark.md>) |
@@ -29,20 +30,25 @@ from ncatbot.adapter.lark import LarkAdapter
 
 ```mermaid
 graph LR
-    QQ[QQ / NapCat] <-->|WebSocket| A1[NapCatAdapter<br>platform=qq]
+    QQ[QQ / OneBot v11] <-->|WebSocket| A1[NapCatAdapter<br>platform=qq]
+    QQ <-->|WebSocket| A5[SnowLumaAdapter<br>platform=qq]
     Bili[Bilibili] <-->|WS + REST| A2[BilibiliAdapter<br>platform=bilibili]
     GH[GitHub] <-->|Webhook / Polling| A3[GitHubAdapter<br>platform=github]
     LK[飞书] <-->|WebSocket| A4[LarkAdapter<br>platform=lark]
     A1 -->|BaseEventData| Dispatcher[Dispatcher 分发器]
+    A5 -->|BaseEventData| Dispatcher
     A2 -->|BaseEventData| Dispatcher
     A3 -->|BaseEventData| Dispatcher
     A4 -->|BaseEventData| Dispatcher
     A1 -.->|IAPIClient| BotAPIClient[BotAPIClient 多平台门面]
+    A5 -.->|IAPIClient| BotAPIClient
     A2 -.->|IAPIClient| BotAPIClient
     A3 -.->|IAPIClient| BotAPIClient
     A4 -.->|IAPIClient| BotAPIClient
     BotAPIClient -.-> Plugin[插件 / 服务]
 ```
+
+> `NapCatAdapter` 与 `SnowLumaAdapter` 的 `platform` 都是 `qq`，同一个 `BotClient` 内不能同时启用。SnowLuma 的协议层实现复用 NapCat 的连接与协议模块，差异主要体现在 `setup/` 流程。
 
 ### BaseAdapter 抽象接口
 
@@ -68,6 +74,7 @@ graph LR
 | 适配器 | 交互流程 | 智能跳过逻辑 |
 |--------|---------|-------------|
 | NapCat | 询问是否自动安装 → WS/WebUI 配置 | 选择自动安装时跳过 WS/WebUI 输入，使用默认值（启动时 `configure_all()` 自动配置） |
+| SnowLuma | 询问是否自动安装 → WS/WebUI 配置 | 选择自动安装时跳过 WS/WebUI 输入，返回默认值；首次启动仍需在 WebUI 手动启用 OneBot v11 |
 | Bilibili | 询问是否扫码登录 → 凭据/数据源配置 | 选择扫码时跳过 sessdata 等凭据手动输入（扫码自动获取） |
 | GitHub | Token → 仓库 → 模式（Webhook/Polling） | — |
 | Lark | App ID → App Secret | — |
@@ -227,5 +234,5 @@ MockAdapter 根据 `platform` 参数自动选择对应的 Mock API 子类：
 
 | 文件 | 说明 |
 |------|------|
-| [1. 连接](<1. 连接.md>) | WebSocket 连接管理 — NapCatWebSocket、重连策略、NapCatLauncher 进程管理 |
-| [2. 协议](<2. 协议.md>) | 协议处理 — OB11Protocol 请求-响应匹配、事件解析、NapCatBotAPI 实现 |
+| [1. 连接](<1. 连接.md>) | WebSocket 连接管理 — NapCatWebSocket、重连策略、NapCat / SnowLuma 启动编排 |
+| [2. 协议](<2. 协议.md>) | 协议处理 — OB11Protocol 请求-响应匹配、事件解析、NapCatBotAPI 实现（SnowLuma 共用） |

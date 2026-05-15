@@ -4,7 +4,7 @@ createTime: 2026/03/19 17:26:45
 permalink: /guide/txmbm7xd/
 ---
 
-> 通过 `ncatbot` 命令完成项目初始化、启动、插件管理、适配器管理、配置管理和 NapCat 诊断。
+> 通过 `ncatbot` 命令完成项目初始化、启动、插件管理、适配器管理、配置管理和 NapCat / SnowLuma 诊断。
 
 ## Quick Reference
 
@@ -36,6 +36,10 @@ permalink: /guide/txmbm7xd/
 | **NapCat 管理** | |
 | `ncatbot napcat install [--yes]` | 安装 NapCat + QQ |
 | `ncatbot napcat diagnose [ws\|webui]` | NapCat 连接诊断 |
+| **SnowLuma 管理** | |
+| `ncatbot snowluma install [--yes] [--lite]` | 安装 SnowLuma |
+| `ncatbot snowluma diagnose [ws\|webui]` | SnowLuma 连接诊断 |
+| `ncatbot snowluma version` | 查看已安装版本与最新 release |
 | **参考资料** | |
 | `ncatbot ref [--vscode\|--trae\|--cursor]` | 下载 AI 用户参考资料（按 IDE 适配） |
 

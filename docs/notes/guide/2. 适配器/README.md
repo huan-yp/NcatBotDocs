@@ -13,6 +13,7 @@ permalink: /guide/vagz7643/
 | 适配器 | 平台 | 认证方式 | 协议 | 适用场景 |
 |--------|------|---------|------|---------|
 | [NapCat](<1. NapCat QQ.md>) | QQ | WebUI 扫码 / 快速登录 | OneBot v11 (WebSocket) | QQ 群聊/私聊 Bot |
+| [SnowLuma](<7. SnowLuma QQ.md>) | QQ | WebUI 手动启用 OneBot v11 + 扫码登录 | OneBot v11 (WebSocket) | 独立协议端 / 外部 OneBot 服务 |
 | [Bilibili](<2. Bilibili.md>) | Bilibili | 终端扫码 | bilibili-api-python | 直播弹幕 / 私信 / 视频评论 |
 | [GitHub](<3. GitHub.md>) | GitHub | Personal Access Token | Webhook / REST Polling | Issue/PR/Push 事件处理 |
 | [Lark](<6. Lark.md>) | 飞书 | App ID + App Secret | lark-oapi SDK (WebSocket) | 飞书群聊/私聊 Bot |
@@ -32,6 +33,7 @@ ncatbot adapter                   # 进入副屏交互式管理（启用/禁用/
 `ncatbot init` 的适配器配置也使用相同的副屏交互界面。部分适配器含智能跳过逻辑：
 
 - **NapCat**：选择自动安装时跳过 WS/WebUI 地址输入（启动时自动配置）
+- **SnowLuma**：选择自动安装时跳过 WS/WebUI 地址输入，返回默认连接参数；首次启动仍需在 WebUI 手动启用 OneBot v11 端点
 - **Bilibili**：选择扫码登录时跳过 sessdata 等凭据手动输入（扫码自动获取）
 
 完整 CLI 命令说明见 [CLI 命令详解](<../8. 命令行工具/1. 命令.md>)。
@@ -75,11 +77,14 @@ adapters:
       completion_model: "gpt-4"
 ```
 
+> 同一 `BotClient` 内 `platform` 必须唯一，因此 `napcat` 与 `snowluma` 不能同时启用。
+
 ## 本目录索引
 
 | 文档 | 说明 | 难度 |
 |------|------|------|
 | [1_napcat_qq.md](<1. NapCat QQ.md>) | NapCat/QQ — Setup/Connect 两种模式、WebUI 登录、诊断 | ⭐ |
+| [7_snowluma_qq.md](<7. SnowLuma QQ.md>) | SnowLuma/QQ — 独立 OneBot v11 协议端、WebUI 手动启用、诊断 | ⭐ |
 | [2_bilibili.md](<2. Bilibili.md>) | Bilibili — 扫码登录、凭据持久化、多数据源配置 | ⭐ |
 | [3_github.md](<3. GitHub.md>) | GitHub — Token 认证、Webhook/Polling 双模式、内网穿透 | ⭐⭐ |
 | [6_lark.md](<6. Lark.md>) | Lark — 飞书企业应用创建、WebSocket 长连接、群聊/私聊 | ⭐ |
