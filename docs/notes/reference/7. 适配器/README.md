@@ -74,7 +74,7 @@ graph LR
 | 适配器 | 交互流程 | 智能跳过逻辑 |
 |--------|---------|-------------|
 | NapCat | 询问是否自动安装 → WS/WebUI 配置 | 选择自动安装时跳过 WS/WebUI 输入，使用默认值（启动时 `configure_all()` 自动配置） |
-| SnowLuma | 询问是否自动安装 → WS/WebUI 配置 | 选择自动安装时跳过 WS/WebUI 输入，返回默认值；首次启动仍需在 WebUI 手动启用 OneBot v11 |
+| SnowLuma | 询问是否自动安装 → WS/WebUI 配置 | 选择自动安装时跳过 WS/WebUI 输入，返回默认值；首次启动进入交互式引导，等待用户在 WebUI 完成配置后按回车继续 |
 | Bilibili | 询问是否扫码登录 → 凭据/数据源配置 | 选择扫码时跳过 sessdata 等凭据手动输入（扫码自动获取） |
 | GitHub | Token → 仓库 → 模式（Webhook/Polling） | — |
 | Lark | App ID → App Secret | — |
