@@ -1,7 +1,5 @@
 ---
 title: 通用 API
-createTime: 2026/08/07 13:35:26
-permalink: /reference/uxpfy6no/
 ---
 
 > 跨平台 Trait 协议参考。

@@ -1,7 +1,5 @@
 ---
 title: CLI 参考
-createTime: 2026/08/07 13:35:26
-permalink: /reference/qdcgc47l/
 ---
 
 > NcatBot 命令行工具完整参考。
