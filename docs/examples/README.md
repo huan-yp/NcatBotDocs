@@ -81,11 +81,12 @@
 
 ### ai/ — AI 平台
 
-使用 `api.ai.*` 调用 LLM 提供商 API（Chat / Embeddings / Image Generation）。
+使用 `api.ai.*` 调用 LLM 提供商 API（Chat / Embeddings / Image Generation / MCP 工具）。
 
 | # | 插件 | 演示功能 | 难度 |
 |---|------|---------|------|
 | 01 | [hello_world](ai/01_hello_world/) | Chat Completion、Embeddings、图像生成、参数自动绑定 | ⭐ |
+| 02 | [mcp_tools](ai/02_mcp_tools/) | MCP 工具调用（模型自动调用外部工具、max_tool_calls 上限） | ⭐⭐ |
 
 ### cross_platform/ — 跨平台操作
 
