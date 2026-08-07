@@ -1,0 +1,6 @@
+name = "mcp_tools_ai"
+version = "1.0.0"
+main = "main.py"
+entry_class = "AIMCPToolsPlugin"
+author = "NcatBot"
+description = "AI 适配器 MCP 工具调用 — 模型自动调用外部 MCP 工具"
