@@ -69,6 +69,8 @@ from ncatbot.plugin import NcatBotPlugin
 | | `list_scheduled_tasks` | `() → List[str]` | 列出任务 |
 | **EventMixin** | `events` | `(event_type=) → EventStream` | 创建事件流 |
 | | `wait_event` | `async (predicate=, timeout=) → Event` | 等待匹配事件 |
+| | `wait_group_message_event` | `async (predicate=, timeout=) → GroupMessageEvent` | 等待 QQ 群消息实体 |
+| | `wait_private_message_event` | `async (predicate=, timeout=) → PrivateMessageEvent` | 等待 QQ 私聊消息实体 |
 
 ---
 
