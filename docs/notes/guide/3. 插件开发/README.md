@@ -31,7 +31,8 @@ class HelloPlugin(NcatBotPlugin):
 | 钩子 | 说明 |
 |------|------|
 | `_init_()` | 同步初始化（on_load 之前） |
-| `on_load()` | 异步初始化（注册权限、定时任务等） |
+| `on_load()` | 单个插件加载期间执行；API 和服务已可用，Handler 尚未刷新 |
+| `@registrar.on_startup()` | 首次启动时所有插件和 Handler 就绪后执行；运行中加载或热重载时该插件加载完成后执行 |
 | `on_close()` | 异步清理 |
 | `_close_()` | 同步清理 |
 
@@ -46,9 +47,10 @@ class HelloPlugin(NcatBotPlugin):
 
 ### Registrar 装饰器
 
-| 装饰器 | 监听事件 |
+| 装饰器 | 用途 |
 |--------|---------|
 | `@registrar.on_group_command("cmd")` | 群命令 |
+| `@registrar.on_startup()` | 插件就绪回调（异步实例方法） |
 | `@registrar.on_private_command("cmd")` | 私聊命令 |
 | `@registrar.on_command("cmd")` | 群+私聊命令 |
 | `@registrar.on_group_message()` | 群消息 |
@@ -103,7 +105,7 @@ class HelloPlugin(NcatBotPlugin):
 |------|------|------|
 | [1. 快速开始](<1. 快速开始.md>) | 环境准备、安装、5 分钟跑通第一个插件 | ⭐ |
 | [2. 插件结构](<2. 插件结构.md>) | manifest.toml 详解、基类选择、多文件组织 | ⭐ |
-| [3. 生命周期](<3. 生命周期.md>) | 加载流程、卸载流程、生命周期钩子 | ⭐ |
+| [3. 生命周期](<3. 生命周期.md>) | 加载与卸载流程、`on_load()` 与就绪回调的区别 | ⭐ |
 | [4. 事件注册](<4. 事件注册.md>) | 事件类型体系、装饰器路由、优先级 | ⭐⭐ |
 | [5. 事件高级](<5. 事件高级.md>) | 事件流、wait_event、实战组合 | ⭐⭐ |
 | [6. 谓词 DSL](<6. 谓词 DSL.md>) | 谓词组合、P 基类、工厂函数 | ⭐⭐ |

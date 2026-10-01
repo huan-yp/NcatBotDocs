@@ -38,6 +38,7 @@ from ncatbot.plugin import NcatBotPlugin
 |------|------|------|
 | `_init_` | `() → None` | 同步初始化 |
 | `on_load` | `async () → None` | 异步初始化 |
+| `@registrar.on_startup()` | `async def callback(self) → None` | 插件就绪后运行的实例方法；首次启动等待所有插件与 Handler |
 | `on_close` | `async () → None` | 异步清理 |
 | `_close_` | `() → None` | 同步清理 |
 | `meta_data` | `@property → Dict` | 插件元数据字典 |
