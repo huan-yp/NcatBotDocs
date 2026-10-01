@@ -56,6 +56,19 @@ await self.api.qq.manage.set_group_kick(group_id, user_id)
 await self.api.qq.manage.kick_and_block(group_id, user_id, message_id)
 ```
 
+### 设置在线状态
+
+推荐使用 `OnlineStatus` 枚举，避免手写状态数字。可在插件 `on_load()` 中调用：
+
+```python
+from ncatbot.types.qq import OnlineStatus
+
+async def on_load(self):
+    await self.api.qq.manage.set_online_status(OnlineStatus.ONLINE)
+```
+
+原有整数调用（如 `set_online_status(10)`）保持兼容。电量状态默认补齐为 `0`，也可通过 `battery_status=75` 指定。全部枚举成员及参数见 [管理 API 参考](<../../../reference/1. Bot API/2. QQ/2. 管理 API.md>#set_online_status)。
+
 ### 信息查询
 
 ```python
