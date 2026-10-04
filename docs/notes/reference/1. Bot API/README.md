@@ -108,6 +108,7 @@ BotAPIClient                        ← 多平台路由（纯门面，无业务�
 | 文件 | 说明 |
 |------|------|
 | [AI API](<5. AI/1. API.md>) | IAIAPIClient 完整方法签名（Chat / Embeddings / Image Generation） |
+| [AI 视频 API](<5. AI/2. 视频生成.md>) | 视频生成任务、状态查询与内容下载 |
 
 ### 杂项工具
 
